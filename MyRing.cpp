@@ -70,6 +70,7 @@ int MyRing::getRightNeighbour()
 }
 void MyRing::InitBGThread()
 {
+
 	{
 		DataTuple* _2right_dtuple = (DataTuple*)malloc(sizeof(DataTuple));
 		strcpy(_2right_dtuple->data_name, "Test2Right");
@@ -82,11 +83,12 @@ void MyRing::InitBGThread()
 		int i = 0;
 		for (i = 0; i < _2right_dtuple->data_num; i++ )
 		{
-			fdata[i] = 1.2 + static_cast<float>(this->ring_rank);
+			fdata[i] =  i * 0.1 + static_cast<float>(this->ring_rank);
 		}
 		_2right_dtuple->data = static_cast<void*>(fdata);
 		new_queue.push(_2right_dtuple);
 	}
+
 
 	{
 		DataTuple*  _2left_dtuple  = (DataTuple*)malloc(sizeof(DataTuple));
@@ -100,7 +102,8 @@ void MyRing::InitBGThread()
 		int i = 0;
 		for (i = 0; i < _2left_dtuple->data_num; i++ )
 		{
-			fdata[i] = 1.3 + static_cast<float>(this->ring_rank);
+			fdata[i] = 0.5 + i * 0.1 + static_cast<float>(this->ring_rank);
+			//fdata[i] = 0.5;
 		}
 		_2left_dtuple->data = static_cast<void*>(fdata);
 		new_queue.push(_2left_dtuple);
@@ -266,7 +269,7 @@ void MyRing::BackGroundThreadCallback()
 
 				if (!process_queues[stage_id].empty())
 				{
-					printf("stage_id %d has \n", stage_id );
+					//printf("stage_id %d has \n", stage_id );
 				}
 
 				while (!process_queues[stage_id].empty())
@@ -274,7 +277,7 @@ void MyRing::BackGroundThreadCallback()
 					void* msg = process_queues[stage_id].front();
 					DataTuple* dt  = static_cast<DataTuple*>(msg);
 					string kstr = dt->data_name;
-					//printf("key str  %s\n", kstr.c_str() );
+					//printf("key str  %s map  %ld\n", kstr.c_str(), recv_buf_map.size());
 					vit = recv_buf_map.find(kstr);
 					//std::cout << "find " << kstr << std::endl;
 					if (vit != recv_buf_map.end())
@@ -303,7 +306,7 @@ void MyRing::BackGroundThreadCallback()
 				pair<void*, void*> pit = result_qu.front();
 				if (pit.second == NULL)
 				{
-					printf("Is here?  map_size=%ld  map\n", recv_buf_map.size() );
+					//printf("Is here?  map_size=%ld  map\n", recv_buf_map.size() );
 					process_queues[stage_id].push(pit.first);
 				}
 				else
@@ -311,12 +314,13 @@ void MyRing::BackGroundThreadCallback()
 					//printf("OK ELE  %p  %p\n", pit.second, static_cast<DataTuple*>(pit.second)->data );
 					printf("Before Process stage_id = %d\n", stage_id );
 					ProcessStageData(pit.first, pit.second, stage_id);
+					printf(" q1.size = %ld  q2.size=%ld\n", process_queues[0].size(), process_queues[1].size());
 				}
 				result_qu.pop();
 			}
 		}
 		std::this_thread::sleep_for(std::chrono::seconds(1));
-		getchar();
+		//getchar();
 	}
 
 
@@ -349,7 +353,10 @@ void MyRing::Send2RightThreadCallback()
 
 			DataTuple* dtuple = static_cast<DataTuple*>(msg);
 			size_t len = sizeof(DataTuple) + (dtuple->data_num) * (sizeoftype(dtuple->data_type));
-			printf("Sending2Right len=%ld\n", len );
+
+			printf("Sending2Right len=%ld  %d\n", len, this->from_left_port_arrs[right_idx]);
+			//OutPutTuple(dtuple);
+			//getchar();
 			int nwt = write(send_fd, msg, len );
 			if (nwt < 0)
 			{
@@ -394,7 +401,9 @@ void MyRing::Send2LeftThreadCallback()
 		{
 			DataTuple* dtuple = static_cast<DataTuple*>(msg);
 			size_t len = sizeof(DataTuple) + (dtuple->data_num) * (sizeoftype(dtuple->data_type));
-			printf("Sending2Left len=%ld\n", len );
+			printf("Sending2Left len=%ld  port=%d\n", len, this->from_right_port_arrs[left_idx]  );
+			//OutPutTuple(dtuple);
+			//getchar();
 			int nwt = write(send_fd, msg, len );
 			if (nwt < 0)
 			{
@@ -570,7 +579,17 @@ int MyRing::sizeoftype(DataType dt)
 }
 void MyRing::EnqueSendQ(DataTuple* dt)
 {
-	int send_block_idx = (this->ring_rank - dt->scatter_gather_counter) % (this->ring_num);
+	int send_block_idx;
+	if (dt->toRight)
+	{
+		send_block_idx = (this->ring_num + this->ring_rank - dt->scatter_gather_counter) % (this->ring_num);
+	}
+	else
+	{
+		send_block_idx = (this->ring_num + dt->scatter_gather_counter +  this->ring_rank) % (this->ring_num);
+	}
+
+	printf("send_block_idx = %d  scatter_gather_counter = %d\n", send_block_idx, dt->scatter_gather_counter );
 	int NumOfEle = dt->data_num;
 	int share_num = (dt->data_num) / (this->ring_num);
 	int start_idx = send_block_idx * share_num;
@@ -674,6 +693,14 @@ void MyRing::MergeData(void* local_buf, void* recvbuf, bool isScatter)
 		}
 		printf("\n");
 		**/
+		printf("Before Merging...\n");
+		for (i = 0; i < 6; i++)
+		{
+
+			printf("%lf\t", my_data[i] );
+
+		}
+		printf("\n");
 		for (i = 0; i < data_num; i++)
 		{
 
@@ -687,6 +714,14 @@ void MyRing::MergeData(void* local_buf, void* recvbuf, bool isScatter)
 			}
 
 		}
+		printf("After Merging...\n");
+		for (i = 0; i < 6; i++)
+		{
+
+			printf("%lf\t", my_data[i] );
+
+		}
+		printf("\n");
 		break;
 	}
 	default:
