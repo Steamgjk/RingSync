@@ -1,7 +1,7 @@
 CC = g++  
 CFLAGS = -Wall -g -std=c++11  
 LDFLAGS = -lm -pthread 
-PROC_NAME = proc
+PROC_NAME = gjk_proc
 CSOURCE=Main.cpp MyRing.cpp 
 HEAD=MyRing.h
 OBJS=$(subst .cpp,.o,$(CSOURCE))

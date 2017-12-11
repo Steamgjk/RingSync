@@ -67,11 +67,10 @@ class MyRing
 {
 public:
 
-	MyRing();
+	MyRing(int rn, int rr);
 
 	int sizeoftype(DataType dt);
-	int send2Right();
-	int recv4Left();
+
 	int getLeftNeighbour();
 	int getRightNeighbour();
 	void InitBGThread();
@@ -110,7 +109,6 @@ private:
 	static map<string, void*> recv_buf_map;
 	static const int header_name_len = 100;
 	constexpr static  char* ip_arrs[MAX_NUM] = { (char*)"127.0.0.1", (char*)"127.0.0.1", (char*)"127.0.0.1", (char*)"127.0.0.1", (char*)"127.0.0.1", (char*)"127.0.0.1", (char*)"127.0.0.1", (char*)"127.0.0.1", (char*)"127.0.0.1"};
-	constexpr static  int port_arrs[MAX_NUM] = {7000, 7001, 7002, 7003, 7004, 7005, 7006, 7007, 7008};
 	constexpr static  int from_left_port_arrs[MAX_NUM] = {7000, 7002, 7004, 7006, 7008, 7010, 7012, 7014, 7016};
 	constexpr static  int from_right_port_arrs[MAX_NUM] = {7001, 7003, 7005, 7007, 7009, 7011, 7013, 7015, 7017};
 
@@ -121,6 +119,9 @@ private:
 
 	static std::queue<void*> new_queue;
 	static std::mutex new_queue_mtx;
+
+	static std::queue<void*>new_queue_to_right;
+	static std::mutex new_queue_to_right_mutex;
 
 	static vector<queue<void*>> process_queues;
 
