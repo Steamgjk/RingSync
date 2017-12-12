@@ -1,6 +1,6 @@
 #include "MyRing.h"
-map<string, void*> MyRing::recv_buf_map;
-std::mutex MyRing:: mtx;
+//map<string, void*> MyRing::recv_buf_map;
+//std::mutex MyRing:: mtx;
 const int MyRing::header_name_len;
 constexpr char* MyRing::ip_arrs[MAX_NUM];
 constexpr int MyRing::from_left_port_arrs[MAX_NUM];
@@ -19,11 +19,27 @@ std::mutex MyRing::right_queue_mtx;
 std::queue<void*> MyRing::to_left_queue;
 std::mutex MyRing::left_queue_mtx;
 
-vector<queue<void*>> MyRing::process_queues;
+
+std::mutex MyRing::map_mtx_to_left;
+map<string, void*> MyRing::recv_buf_map_to_left;
+
+std::mutex MyRing::map_mtx_to_right;
+map<string, void*> MyRing::recv_buf_map_to_right;
+
+std::queue<void*> MyRing::new_queue_to_left;
+std::mutex MyRing::new_queue_to_left_mutex;
+
+std::queue<void*> MyRing::new_queue_to_right;
+std::mutex MyRing::new_queue_to_right_mutex;
+
+//vector<queue<void*>> MyRing::process_queues;
+
+vector<queue<void*>> MyRing::process_queues_to_left;
+vector<queue<void*>> MyRing::process_queues_to_right;
 
 
-std::queue<void*> MyRing::new_queue;
-std::mutex MyRing::new_queue_mtx;
+//std::queue<void*> MyRing::new_queue;
+//std::mutex MyRing::new_queue_mtx;
 //void* MyRing::to_right_queue[QueueLen];
 //void* MyRing::to_left_queue[QueueLen];
 
@@ -35,7 +51,10 @@ MyRing::MyRing(int rn, int rr)
 	this->ring_rank = rr % this->ring_num;
 
 	this->stage_num = (this->ring_num - 1) * 2;
-	process_queues.resize(this->stage_num);
+	//process_queues.resize(this->stage_num);
+	process_queues_to_right.resize(this->stage_num);
+	process_queues_to_left.resize(this->stage_num);
+
 	printf("ring_num = %d rank = %d   from_left_port = %d  from_right_port=%d\n", this->ring_num, this->ring_rank, this->from_left_port_arrs[ring_rank], from_right_port_arrs[ring_rank] );
 	//this->from_left_queue_front = 0;
 	//this->from_left_queue_tail = 0;
@@ -86,7 +105,8 @@ void MyRing::InitBGThread()
 			fdata[i] =  i * 0.1 + static_cast<float>(this->ring_rank);
 		}
 		_2right_dtuple->data = static_cast<void*>(fdata);
-		new_queue.push(_2right_dtuple);
+		//new_queue.push(_2right_dtuple);
+		new_queue_to_right.push(_2right_dtuple);
 	}
 
 
@@ -106,7 +126,8 @@ void MyRing::InitBGThread()
 			//fdata[i] = 0.5;
 		}
 		_2left_dtuple->data = static_cast<void*>(fdata);
-		new_queue.push(_2left_dtuple);
+		//new_queue.push(_2left_dtuple);
+		new_queue_to_left.push(_2left_dtuple);
 	}
 
 
@@ -115,21 +136,19 @@ void MyRing::InitBGThread()
 
 
 	std::thread td3(&MyRing::Recv4LeftThreadCallback, this);
-
 	std::thread td4(&MyRing::Recv4RightThreadCallback, this);
-
 	std::thread td1(&MyRing::Send2RightThreadCallback, this);
-
 	std::thread td2(&MyRing::Send2LeftThreadCallback, this);
-
-	std::thread td5(&MyRing::BackGroundThreadCallback, this);
+	//std::thread td5(&MyRing::BackGroundThreadCallback, this);
+	std::thread td5(&MyRing::BackGround2RightThreadCallback, this);
+	std::thread td6(&MyRing::BackGround2LeftThreadCallback, this);
 
 	td1.join();
 	td2.join();
 	td3.join();
 	td4.join();
 	td5.join();
-
+	td6.join();
 }
 int MyRing::InitConnection(char* ip_addr, int port)
 {
@@ -190,6 +209,7 @@ bool MyRing::isScatterStage(int stage_id)
 void MyRing::OutPutTuple(void* dataTuple)
 {
 	DataTuple* dtp = static_cast<DataTuple*>(dataTuple);
+	printf("Direction  toRight? %d\n", dtp->toRight );
 	int i;
 	int len = dtp->data_num;
 	switch (dtp->data_type)
@@ -210,15 +230,15 @@ void MyRing::OutPutTuple(void* dataTuple)
 	}
 	}
 }
-void MyRing::ProcessStageData(void* local_data, void* recv_data, int cur_statge)
+void MyRing::ProcessStageData(void* local_data, void* recv_data, int cur_stage)
 {
-	printf("Process cur_stage = %d\n", cur_statge );
+	printf("Process cur_stage = %d\n", cur_stage );
 	{
 		//printf("In Process %p  %p\n", recv_data, static_cast<DataTuple*>(recv_data)->data );
 	}
-	bool isScatter = isScatterStage(cur_statge);
+	bool isScatter = isScatterStage(cur_stage);
 	MergeData(local_data, recv_data, isScatter);
-	if (cur_statge == this->stage_num - 1)
+	if (cur_stage == this->stage_num - 1)
 	{
 		//ok
 		printf("OK-FIN:\n");
@@ -227,15 +247,186 @@ void MyRing::ProcessStageData(void* local_data, void* recv_data, int cur_statge)
 	else
 	{
 		DataTuple* dt = static_cast<DataTuple*>(local_data);
-		dt->scatter_gather_counter = cur_statge + 1;
+		dt->scatter_gather_counter = cur_stage + 1;
 		//Put to sendQ
 		EnqueSendQ(dt);
 		//move upward
-		process_queues[cur_statge + 1].push(local_data);
+		//process_queues[cur_statge + 1].push(local_data);
+		if (dt->toRight)
+		{
+			process_queues_to_right[cur_stage + 1].push(local_data);
+		}
+		else
+		{
+			process_queues_to_left[cur_stage + 1].push(local_data);
+		}
 	}
 
 
 }
+void MyRing::BackGround2LeftThreadCallback()
+{
+	while (1 == 1)
+	{
+		{
+			std::lock_guard<std::mutex> lock(new_queue_to_left_mutex);
+			while (!new_queue_to_left.empty())
+			{
+				//printf("Enter \n");
+				void* msg = new_queue_to_left.front();
+				DataTuple* dt = static_cast<DataTuple*>(msg);
+				dt->scatter_gather_counter = 0;
+				//printf("put to sendQ\n");
+				EnqueSendQ(dt);
+				//process_queues[0].push(msg);
+				process_queues_to_left[0].push(msg);
+				new_queue_to_left.pop();
+			}
+		}
+		int stage_id ;
+		for ( stage_id = this->stage_num - 1; stage_id >= 0; stage_id--)
+		{
+			//printf("stage_id %d\n", stage_id );
+			queue<pair<void*, void*>> result_qu;
+			std::map<string, void*>::iterator vit;
+			{
+				std::lock_guard<std::mutex> lock(map_mtx_to_left);
+				while (!process_queues_to_left[stage_id].empty())
+				{
+					void* msg = process_queues_to_left[stage_id].front();
+					DataTuple* dt  = static_cast<DataTuple*>(msg);
+					printf("dt =%p\n", dt );
+					if (!(dt->toRight))
+					{
+						string kstr = dt->data_name;
+						//printf("key str  %s map  %ld\n", kstr.c_str(), recv_buf_map.size());
+						vit = recv_buf_map_to_left.find(kstr);
+						//std::cout << "find " << kstr << std::endl;
+						if (vit != recv_buf_map_to_left.end())
+						{
+							pair<void*, void*> pitem = make_pair(msg, vit->second);
+							result_qu.push(pitem);
+							recv_buf_map_to_left.erase(vit);
+							//printf("Erase one mapsize  %ld\n", recv_buf_map_to_left.size());
+						}
+						else
+						{
+							void* nptr = NULL;
+							pair<void*, void*> pitem = make_pair(msg, nptr);
+							result_qu.push(pitem);
+						}
+					}
+
+					process_queues_to_left[stage_id].pop();
+				}
+				//printf("OK: empty  %d\n", process_queues[stage_id].empty() );
+			}
+			while (!result_qu.empty())
+			{
+				pair<void*, void*> pit = result_qu.front();
+				if (pit.second == NULL)
+				{
+					//printf("Is here?  map_size=%ld  map\n", recv_buf_map_to_left.size() );
+					process_queues_to_left[stage_id].push(pit.first);
+				}
+				else
+				{
+					//printf("OK ELE  %p  %p\n", pit.second, static_cast<DataTuple*>(pit.second)->data );
+					printf("Before Process stage_id = %d\n", stage_id );
+					ProcessStageData(pit.first, pit.second, stage_id);
+					printf(" q1.size = %ld  q2.size=%ld\n", process_queues_to_left[0].size(), process_queues_to_left[1].size());
+				}
+				result_qu.pop();
+			}
+		}
+		std::this_thread::sleep_for(std::chrono::seconds(1));
+		//getchar();
+	}
+
+
+}
+void MyRing::BackGround2RightThreadCallback()
+{
+	while (1 == 1)
+	{
+		//std::cerr << "BackGroundThreadCallback"  << std::endl;
+		//getchar();
+		//send new data
+		{
+			std::lock_guard<std::mutex> lock(new_queue_to_right_mutex);
+			while (!new_queue_to_right.empty())
+			{
+				void* msg = new_queue_to_right.front();
+				DataTuple* dt = static_cast<DataTuple*>(msg);
+				dt->scatter_gather_counter = 0;
+				//printf("put to sendQ\n");
+				EnqueSendQ(dt);
+				process_queues_to_right[0].push(msg);
+				new_queue_to_right.pop();
+			}
+		}
+		int stage_id ;
+		for ( stage_id = this->stage_num - 1; stage_id >= 0; stage_id--)
+		{
+			//printf("stage_id %d\n", stage_id );
+			queue<pair<void*, void*>> result_qu;
+			std::map<string, void*>::iterator vit;
+			{
+				std::lock_guard<std::mutex> lock(map_mtx_to_right);
+				while (!process_queues_to_right[stage_id].empty())
+				{
+					void* msg = process_queues_to_right[stage_id].front();
+					DataTuple* dt  = static_cast<DataTuple*>(msg);
+					string kstr = dt->data_name;
+					//printf("key str  %s map  %ld\n", kstr.c_str(), recv_buf_map.size());
+					vit = recv_buf_map_to_right.find(kstr);
+					//std::cout << "find " << kstr << std::endl;
+					if (vit != recv_buf_map_to_right.end())
+					{
+						//printf("Ok FOUND\n");
+						pair<void*, void*> pitem = make_pair(msg, vit->second);
+						//printf("OK FOUND  %p  %p\n", vit->second, static_cast<DataTuple*>(vit->second)->data );
+						result_qu.push(pitem);
+						//printf("OK PIT  %p  %p\n", pitem.second, static_cast<DataTuple*>(pitem.second)->data );
+						recv_buf_map_to_right.erase(vit);
+						printf("Erase one mapsize  %ld\n", recv_buf_map_to_right.size());
+					}
+					else
+					{
+						//printf("Not FOUND\n");
+						void* nptr = NULL;
+						pair<void*, void*> pitem = make_pair(msg, nptr);
+						result_qu.push(pitem);
+					}
+					process_queues_to_right[stage_id].pop();
+				}
+				//printf("OK: empty  %d\n", process_queues[stage_id].empty() );
+			}
+			while (!result_qu.empty())
+			{
+				pair<void*, void*> pit = result_qu.front();
+				if (pit.second == NULL)
+				{
+					//printf("Is here?  map_size=%ld  map\n", recv_buf_map.size() );
+					process_queues_to_right[stage_id].push(pit.first);
+				}
+				else
+				{
+					//printf("OK ELE  %p  %p\n", pit.second, static_cast<DataTuple*>(pit.second)->data );
+					printf("Before Process stage_id = %d\n", stage_id );
+					ProcessStageData(pit.first, pit.second, stage_id);
+					printf(" q1.size = %ld  q2.size=%ld\n", process_queues_to_right[0].size(), process_queues_to_right[1].size());
+				}
+				result_qu.pop();
+			}
+		}
+		std::this_thread::sleep_for(std::chrono::seconds(1));
+		//getchar();
+	}
+
+
+}
+/*
 void MyRing::BackGroundThreadCallback()
 {
 	while (1 == 1)
@@ -267,10 +458,6 @@ void MyRing::BackGroundThreadCallback()
 			{
 				std::lock_guard<std::mutex> lock(mtx);
 
-				if (!process_queues[stage_id].empty())
-				{
-					//printf("stage_id %d has \n", stage_id );
-				}
 
 				while (!process_queues[stage_id].empty())
 				{
@@ -325,6 +512,7 @@ void MyRing::BackGroundThreadCallback()
 
 
 }
+**/
 void MyRing::Send2RightThreadCallback()
 {
 	//std::cerr << "Send2RightThreadCallback" << std::endl;
@@ -503,10 +691,22 @@ void MyRing::ProcessRecvData(int connected_fd)
 	//got a complete data  block and insert to the map
 	//should locked
 	{
-		std::lock_guard<std::mutex>lock(mtx);
-		printf("Before Insert Map %ld  %s\n", recv_buf_map.size(), keyname.c_str());
-		recv_buf_map.insert(make_pair(keyname, static_cast<void*>(dtuple)));
-		printf("Insert Map %ld\n", recv_buf_map.size());
+
+		if (dtuple->toRight)
+		{
+			std::lock_guard<std::mutex>lock(map_mtx_to_right);
+			printf("Before Insert Map %ld  %s\n", recv_buf_map_to_right.size(), keyname.c_str());
+			recv_buf_map_to_right.insert(make_pair(keyname, static_cast<void*>(dtuple)));
+			printf("Insert Map %ld\n", recv_buf_map_to_right.size());
+		}
+		else
+		{
+			std::lock_guard<std::mutex>lock(map_mtx_to_left);
+			printf("Before Insert Map %ld  %s\n", recv_buf_map_to_left.size(), keyname.c_str());
+			recv_buf_map_to_left.insert(make_pair(keyname, static_cast<void*>(dtuple)));
+			printf("Insert Map %ld\n", recv_buf_map_to_left.size());
+		}
+
 		/*
 		std::map<string, void*>::iterator vit = recv_buf_map.find(keyname);
 		if (vit != recv_buf_map.end())
@@ -582,10 +782,12 @@ void MyRing::EnqueSendQ(DataTuple* dt)
 	int send_block_idx;
 	if (dt->toRight)
 	{
+		printf("ToRight EnSendQ\n");
 		send_block_idx = (this->ring_num + this->ring_rank - dt->scatter_gather_counter) % (this->ring_num);
 	}
 	else
 	{
+		printf("ToLeft EnSendQ\n");
 		send_block_idx = (this->ring_num + dt->scatter_gather_counter +  this->ring_rank) % (this->ring_num);
 	}
 

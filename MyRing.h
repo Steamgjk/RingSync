@@ -82,7 +82,9 @@ public:
 	int Wait4Connection(int bind_port);
 	char* RecvFixedData(int connected_fd, size_t len);
 	void ProcessRecvData(int connected_fd);
-	void BackGroundThreadCallback();
+	//void BackGroundThreadCallback();
+	void BackGround2LeftThreadCallback();
+	void BackGround2RightThreadCallback();
 	bool isScatterStage(int stage_id);
 	void EnqueSendQ(DataTuple* dt);
 	void OutPutTuple(void* dataTuple);
@@ -105,8 +107,8 @@ private:
 	static int to_left_queue_tail;
 
 
-	static std::mutex mtx;
-	static map<string, void*> recv_buf_map;
+	//static std::mutex mtx;
+	//static map<string, void*> recv_buf_map;
 	static const int header_name_len = 100;
 	constexpr static  char* ip_arrs[MAX_NUM] = { (char*)"127.0.0.1", (char*)"127.0.0.1", (char*)"127.0.0.1", (char*)"127.0.0.1", (char*)"127.0.0.1", (char*)"127.0.0.1", (char*)"127.0.0.1", (char*)"127.0.0.1", (char*)"127.0.0.1"};
 	constexpr static  int from_left_port_arrs[MAX_NUM] = {7000, 7002, 7004, 7006, 7008, 7010, 7012, 7014, 7016};
@@ -117,13 +119,28 @@ private:
 	static std::queue<void*> to_left_queue;
 	static std::mutex left_queue_mtx;
 
-	static std::queue<void*> new_queue;
-	static std::mutex new_queue_mtx;
+	//static std::queue<void*> new_queue;
+	//static std::mutex new_queue_mtx;
+
+
+
+	static std::mutex map_mtx_to_left;
+	static map<string, void*> recv_buf_map_to_left;
+
+	static std::mutex map_mtx_to_right;
+	static map<string, void*> recv_buf_map_to_right;
+
+	static std::queue<void*>new_queue_to_left;
+	static std::mutex new_queue_to_left_mutex;
 
 	static std::queue<void*>new_queue_to_right;
 	static std::mutex new_queue_to_right_mutex;
 
-	static vector<queue<void*>> process_queues;
+	//static vector<queue<void*>> process_queues;
+
+	static vector<queue<void*>> process_queues_to_left;
+	static vector<queue<void*>> process_queues_to_right;
+
 
 	//static void* from_left_queue[QueueLen];
 	//static void* to_right_queue[QueueLen];
