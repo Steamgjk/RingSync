@@ -46,7 +46,6 @@ vector<queue<void*>> MyRing::process_queues_to_right;
 MyRing::MyRing(int rn, int rr)
 {
 	//just for test
-
 	this->ring_num = rn;
 	this->ring_rank = rr % this->ring_num;
 
@@ -56,14 +55,6 @@ MyRing::MyRing(int rn, int rr)
 	process_queues_to_left.resize(this->stage_num);
 
 	printf("ring_num = %d rank = %d   from_left_port = %d  from_right_port=%d\n", this->ring_num, this->ring_rank, this->from_left_port_arrs[ring_rank], from_right_port_arrs[ring_rank] );
-	//this->from_left_queue_front = 0;
-	//this->from_left_queue_tail = 0;
-	//this->to_right_queue_front = 0;
-	//this->to_right_queue_tail = 0;
-	//this->from_right_queue_front = 0;
-	//this->from_right_queue_tail = 0;
-	//this->to_left_queue_front = 0;
-	//this->to_left_queue_tail = 0;
 
 }
 
@@ -87,6 +78,11 @@ int MyRing::getRightNeighbour()
 	}
 	return (rank) % (this->ring_num);
 }
+/*
+DataTuple* MyRing::EncodeData(){
+
+}
+**/
 void MyRing::InitBGThread()
 {
 
@@ -97,6 +93,7 @@ void MyRing::InitBGThread()
 		_2right_dtuple->toRight = true;
 		_2right_dtuple->data_type = FLOAT32;
 		_2right_dtuple->data_num = 6;
+		_2right_dtuple->op = RING_ALLREDUCE;
 		//
 		float* fdata = (float*)malloc(sizeof(float) * (_2right_dtuple->data_num));
 		int i = 0;
@@ -117,6 +114,8 @@ void MyRing::InitBGThread()
 		_2left_dtuple->toRight = false;
 		_2left_dtuple->data_type = FLOAT32;
 		_2left_dtuple->data_num = 6;
+		_2left_dtuple->op = RING_ALLREDUCE;
+
 		//
 		float* fdata = (float*)malloc(sizeof(float) * (_2left_dtuple->data_num));
 		int i = 0;
@@ -129,11 +128,31 @@ void MyRing::InitBGThread()
 		//new_queue.push(_2left_dtuple);
 		new_queue_to_left.push(_2left_dtuple);
 	}
+	/*
+		{
+			DataTuple*  _2left_broadcast_dtuple  = (DataTuple*)malloc(sizeof(DataTuple));
+			strcpy(_2left_broadcast_dtuple->data_name, "Test2Left");
+			_2left_broadcast_dtuple->start_idx = 0;
+			_2left_broadcast_dtuple->toRight = false;
+			_2left_broadcast_dtuple->data_type = FLOAT32;
+			_2left_broadcast_dtuple->data_num = 6;
+			_2left_broadcast_dtuple->op = RING_BROADCAST;
 
-
+			//
+			float* fdata = (float*)malloc(sizeof(float) * (_2left_dtuple->data_num));
+			int i = 0;
+			for (i = 0; i < _2left_dtuple->data_num; i++ )
+			{
+				fdata[i] = 0.5 + i * 0.1 + static_cast<float>(this->ring_rank);
+				//fdata[i] = 0.5;
+			}
+			_2left_broadcast_dtuple->data = static_cast<void*>(fdata);
+			//new_queue.push(_2left_dtuple);
+			new_queue_to_left.push(_2left_dtuple);
+		}
+	**/
 
 	printf("Enque Success\n");
-
 
 	std::thread td3(&MyRing::Recv4LeftThreadCallback, this);
 	std::thread td4(&MyRing::Recv4RightThreadCallback, this);
@@ -168,7 +187,9 @@ int MyRing::InitConnection(char* ip_addr, int port)
 	local_in.sin_family = AF_INET;
 
 	//inet_pton(AF_INET, local_eth.c_str(), &local_in.sin_addr);
+#ifdef GJK_DEBUG
 	printf("ip = %s  port = %d\n", ip_addr, port );
+#endif
 	while (bind(tmp_skfd, (struct sockaddr*) & (local_in), sizeof(local_in)) != 0)
 	{
 		printf("error in bind local addr\n");
@@ -209,19 +230,23 @@ bool MyRing::isScatterStage(int stage_id)
 void MyRing::OutPutTuple(void* dataTuple)
 {
 	DataTuple* dtp = static_cast<DataTuple*>(dataTuple);
+
 	printf("Direction  toRight? %d\n", dtp->toRight );
 	int i;
 	int len = dtp->data_num;
+
 	switch (dtp->data_type)
 	{
 	case FLOAT32:
 	{
 		float* arr = static_cast<float*>(dtp->data);
+
 		for ( i = 0; i < len; i++)
 		{
 			printf("%lf\t", arr[i] );
 		}
 		printf("\n");
+
 		break;
 	}
 	default:
@@ -232,10 +257,12 @@ void MyRing::OutPutTuple(void* dataTuple)
 }
 void MyRing::ProcessStageData(void* local_data, void* recv_data, int cur_stage)
 {
+#ifdef GJK_DEBUG
 	printf("Process cur_stage = %d\n", cur_stage );
 	{
 		//printf("In Process %p  %p\n", recv_data, static_cast<DataTuple*>(recv_data)->data );
 	}
+#endif
 	bool isScatter = isScatterStage(cur_stage);
 	MergeData(local_data, recv_data, isScatter);
 	if (cur_stage == this->stage_num - 1)
@@ -295,7 +322,7 @@ void MyRing::BackGround2LeftThreadCallback()
 				{
 					void* msg = process_queues_to_left[stage_id].front();
 					DataTuple* dt  = static_cast<DataTuple*>(msg);
-					printf("dt =%p\n", dt );
+					//printf("dt =%p\n", dt );
 					if (!(dt->toRight))
 					{
 						string kstr = dt->data_name;
@@ -332,9 +359,9 @@ void MyRing::BackGround2LeftThreadCallback()
 				else
 				{
 					//printf("OK ELE  %p  %p\n", pit.second, static_cast<DataTuple*>(pit.second)->data );
-					printf("Before Process stage_id = %d\n", stage_id );
+					//printf("Before Process stage_id = %d\n", stage_id );
 					ProcessStageData(pit.first, pit.second, stage_id);
-					printf(" q1.size = %ld  q2.size=%ld\n", process_queues_to_left[0].size(), process_queues_to_left[1].size());
+					//printf(" q1.size = %ld  q2.size=%ld\n", process_queues_to_left[0].size(), process_queues_to_left[1].size());
 				}
 				result_qu.pop();
 			}
@@ -389,7 +416,7 @@ void MyRing::BackGround2RightThreadCallback()
 						result_qu.push(pitem);
 						//printf("OK PIT  %p  %p\n", pitem.second, static_cast<DataTuple*>(pitem.second)->data );
 						recv_buf_map_to_right.erase(vit);
-						printf("Erase one mapsize  %ld\n", recv_buf_map_to_right.size());
+						//printf("Erase one mapsize  %ld\n", recv_buf_map_to_right.size());
 					}
 					else
 					{
@@ -413,9 +440,9 @@ void MyRing::BackGround2RightThreadCallback()
 				else
 				{
 					//printf("OK ELE  %p  %p\n", pit.second, static_cast<DataTuple*>(pit.second)->data );
-					printf("Before Process stage_id = %d\n", stage_id );
+					//printf("Before Process stage_id = %d\n", stage_id );
 					ProcessStageData(pit.first, pit.second, stage_id);
-					printf(" q1.size = %ld  q2.size=%ld\n", process_queues_to_right[0].size(), process_queues_to_right[1].size());
+					//printf(" q1.size = %ld  q2.size=%ld\n", process_queues_to_right[0].size(), process_queues_to_right[1].size());
 				}
 				result_qu.pop();
 			}
@@ -426,101 +453,21 @@ void MyRing::BackGround2RightThreadCallback()
 
 
 }
-/*
-void MyRing::BackGroundThreadCallback()
-{
-	while (1 == 1)
-	{
-		//std::cerr << "BackGroundThreadCallback"  << std::endl;
-		//getchar();
-		//send new data
-		{
-			std::lock_guard<std::mutex> lock(new_queue_mtx);
-			while (!new_queue.empty())
-			{
-				//printf("Enter \n");
-				void* msg = new_queue.front();
-				DataTuple* dt = static_cast<DataTuple*>(msg);
-				dt->scatter_gather_counter = 0;
-				//printf("put to sendQ\n");
-				EnqueSendQ(dt);
 
-				process_queues[0].push(msg);
-				new_queue.pop();
-			}
-		}
-		int stage_id ;
-		for ( stage_id = this->stage_num - 1; stage_id >= 0; stage_id--)
-		{
-			//printf("stage_id %d\n", stage_id );
-			queue<pair<void*, void*>> result_qu;
-			std::map<string, void*>::iterator vit;
-			{
-				std::lock_guard<std::mutex> lock(mtx);
-
-
-				while (!process_queues[stage_id].empty())
-				{
-					void* msg = process_queues[stage_id].front();
-					DataTuple* dt  = static_cast<DataTuple*>(msg);
-					string kstr = dt->data_name;
-					//printf("key str  %s map  %ld\n", kstr.c_str(), recv_buf_map.size());
-					vit = recv_buf_map.find(kstr);
-					//std::cout << "find " << kstr << std::endl;
-					if (vit != recv_buf_map.end())
-					{
-						//printf("Ok FOUND\n");
-						pair<void*, void*> pitem = make_pair(msg, vit->second);
-						//printf("OK FOUND  %p  %p\n", vit->second, static_cast<DataTuple*>(vit->second)->data );
-						result_qu.push(pitem);
-						//printf("OK PIT  %p  %p\n", pitem.second, static_cast<DataTuple*>(pitem.second)->data );
-						recv_buf_map.erase(vit);
-						printf("Erase one mapsize  %ld\n", recv_buf_map.size());
-					}
-					else
-					{
-						//printf("Not FOUND\n");
-						void* nptr = NULL;
-						pair<void*, void*> pitem = make_pair(msg, nptr);
-						result_qu.push(pitem);
-					}
-					process_queues[stage_id].pop();
-				}
-				//printf("OK: empty  %d\n", process_queues[stage_id].empty() );
-			}
-			while (!result_qu.empty())
-			{
-				pair<void*, void*> pit = result_qu.front();
-				if (pit.second == NULL)
-				{
-					//printf("Is here?  map_size=%ld  map\n", recv_buf_map.size() );
-					process_queues[stage_id].push(pit.first);
-				}
-				else
-				{
-					//printf("OK ELE  %p  %p\n", pit.second, static_cast<DataTuple*>(pit.second)->data );
-					printf("Before Process stage_id = %d\n", stage_id );
-					ProcessStageData(pit.first, pit.second, stage_id);
-					printf(" q1.size = %ld  q2.size=%ld\n", process_queues[0].size(), process_queues[1].size());
-				}
-				result_qu.pop();
-			}
-		}
-		std::this_thread::sleep_for(std::chrono::seconds(1));
-		//getchar();
-	}
-
-
-}
-**/
 void MyRing::Send2RightThreadCallback()
 {
 	//std::cerr << "Send2RightThreadCallback" << std::endl;
+#ifdef GJK_DEBUG
 	printf("Send2RightThreadCallback\n");
+#endif
 	int right_idx = this->getRightNeighbour();
+#ifdef GJK_DEBUG
 	printf("Connecting 2Right %s  %d\n", this->ip_arrs[right_idx], this->from_left_port_arrs[right_idx] );
+#endif
 	int send_fd =  InitConnection(this->ip_arrs[right_idx], this->from_left_port_arrs[right_idx]);
+#ifdef GJK_DEBUG
 	printf("Connected 2Right %s  %d\n", this->ip_arrs[right_idx], this->from_left_port_arrs[right_idx] );
+#endif
 	while (1 == 1)
 	{
 		void* msg = NULL;
@@ -541,8 +488,9 @@ void MyRing::Send2RightThreadCallback()
 
 			DataTuple* dtuple = static_cast<DataTuple*>(msg);
 			size_t len = sizeof(DataTuple) + (dtuple->data_num) * (sizeoftype(dtuple->data_type));
-
+#ifdef GJK_DEBUG
 			printf("Sending2Right len=%ld  %d\n", len, this->from_left_port_arrs[right_idx]);
+#endif
 			//OutPutTuple(dtuple);
 			//getchar();
 			int nwt = write(send_fd, msg, len );
@@ -561,12 +509,18 @@ void MyRing::Send2RightThreadCallback()
 void MyRing::Send2LeftThreadCallback()
 {
 	//std::cerr << "Send2LeftThreadCallback" << std::endl;
+#ifdef GJK_DEBUG
 	printf("Send2LeftThreadCallback");
+#endif
 	int left_idx = this->getLeftNeighbour();
+#ifdef GJK_DEBUG
 	printf("left_idx=%d\n", left_idx );
 	printf("Connecting 2Left  %s  %d\n", this->ip_arrs[left_idx], this->from_right_port_arrs[left_idx]);
+#endif
 	int send_fd =  InitConnection(this->ip_arrs[left_idx], this->from_right_port_arrs[left_idx]);
+#ifdef GJK_DEBUG
 	printf("Connected 2Left  %s  %d\n", this->ip_arrs[left_idx], this->from_right_port_arrs[left_idx]);
+#endif
 	while (1 == 1)
 	{
 		void* msg = NULL;
@@ -589,7 +543,9 @@ void MyRing::Send2LeftThreadCallback()
 		{
 			DataTuple* dtuple = static_cast<DataTuple*>(msg);
 			size_t len = sizeof(DataTuple) + (dtuple->data_num) * (sizeoftype(dtuple->data_type));
+#ifdef GJK_DEBUG
 			printf("Sending2Left len=%ld  port=%d\n", len, this->from_right_port_arrs[left_idx]  );
+#endif
 			//OutPutTuple(dtuple);
 			//getchar();
 			int nwt = write(send_fd, msg, len );
@@ -644,8 +600,10 @@ char* MyRing::RecvFixedData(int connected_fd, size_t len)
 	while (remain_len > 0)
 	{
 		ans_len = recv(connected_fd, data_ptr + cur_len, remain_len, 0 );
+#ifdef GJK_DEBUG
 		if (ans_len > 0)
 			printf("len = %ld ans_len = %d\n", len, ans_len );
+#endif
 		if (ans_len > 0)
 		{
 			cur_len += ans_len;
@@ -695,68 +653,75 @@ void MyRing::ProcessRecvData(int connected_fd)
 		if (dtuple->toRight)
 		{
 			std::lock_guard<std::mutex>lock(map_mtx_to_right);
+#ifdef GJK_DEBUG
 			printf("Before Insert Map %ld  %s\n", recv_buf_map_to_right.size(), keyname.c_str());
+#endif
 			recv_buf_map_to_right.insert(make_pair(keyname, static_cast<void*>(dtuple)));
+#ifdef GJK_DEBUG
 			printf("Insert Map %ld\n", recv_buf_map_to_right.size());
+#endif
 		}
 		else
 		{
 			std::lock_guard<std::mutex>lock(map_mtx_to_left);
+#ifdef GJK_DEBUG
 			printf("Before Insert Map %ld  %s\n", recv_buf_map_to_left.size(), keyname.c_str());
+#endif
 			recv_buf_map_to_left.insert(make_pair(keyname, static_cast<void*>(dtuple)));
+#ifdef GJK_DEBUG
 			printf("Insert Map %ld\n", recv_buf_map_to_left.size());
+#endif
 		}
 
-		/*
-		std::map<string, void*>::iterator vit = recv_buf_map.find(keyname);
-		if (vit != recv_buf_map.end())
-		{
-			DataTuple* dd = static_cast<DataTuple*>(vit->second);
-
-			float* fd = static_cast<float*>(dd->data);
-			for (int i = 0; i < dd->data_num; i++)
-			{
-				printf("%lf\t", fd[i] );
-			}
-			printf("\n");
-			printf("dd = %p  %p  datga = %p\n",  dd, vit->second, dd->data);
-			getchar();
-
-		}
-		**/
 	}
 	//lock will be released auytomatically
 }
 void MyRing::Recv4LeftThreadCallback()
 {
 	//std::cerr << "Recv4LeftThreadCallback" << std::endl;
+#ifdef GJK_DEBUG
 	printf("Recv4LeftThreadCallback\n");
+#endif
 	int bind_port = this->from_left_port_arrs[this->ring_rank];
 	int connected_fd = this->Wait4Connection(bind_port);
+#ifdef GJK_DEBUG
 	int left_recved = 0;
+#endif
 	while (1 == 1)
 	{
+#ifdef GJK_DEBUG
 		printf("Recving Left Complete Msg\n");
+#endif
 		ProcessRecvData(connected_fd);
+#ifdef GJK_DEBUG
 		left_recved++;
 		printf("Recved Left Complete Msg  %d\n", left_recved);
+#endif
 		std::this_thread::sleep_for(std::chrono::seconds(1));
 	}
 
 }
 void MyRing::Recv4RightThreadCallback()
 {
+#ifdef GJK_DEBUG
 	//std::cerr << "Recv4RightThreadCallback" << std::endl;
 	printf("Recv4RightThreadCallback\n");
+#endif
 	int bind_port = this->from_right_port_arrs[this->ring_rank];
 	int connected_fd = this->Wait4Connection(bind_port);
+#ifdef GJK_DEBUG
 	int right_recvd = 0;
+#endif
 	while (1 == 1)
 	{
+#ifdef GJK_DEBUG
 		printf("Recving Right Complete Msg\n");
+#endif
 		ProcessRecvData(connected_fd);
+#ifdef GJK_DEBUG
 		right_recvd++;
 		printf("Recved Right Complete Msg %d\n", right_recvd);
+#endif
 		std::this_thread::sleep_for(std::chrono::seconds(1));
 	}
 
@@ -782,16 +747,21 @@ void MyRing::EnqueSendQ(DataTuple* dt)
 	int send_block_idx;
 	if (dt->toRight)
 	{
+#ifdef GJK_DEBUG
 		printf("ToRight EnSendQ\n");
+#endif
 		send_block_idx = (this->ring_num + this->ring_rank - dt->scatter_gather_counter) % (this->ring_num);
 	}
 	else
 	{
+#ifdef GJK_DEBUG
 		printf("ToLeft EnSendQ\n");
+#endif
 		send_block_idx = (this->ring_num + dt->scatter_gather_counter +  this->ring_rank) % (this->ring_num);
 	}
-
+#ifdef GJK_DEBUG
 	printf("send_block_idx = %d  scatter_gather_counter = %d\n", send_block_idx, dt->scatter_gather_counter );
+#endif
 	int NumOfEle = dt->data_num;
 	int share_num = (dt->data_num) / (this->ring_num);
 	int start_idx = send_block_idx * share_num;
@@ -832,8 +802,9 @@ void MyRing::EnqueSendQ(DataTuple* dt)
 	}
 	if (toright)
 	{
+#ifdef GJK_DEBUG
 		printf("toright\n");
-
+#endif
 		{
 			std::lock_guard<std::mutex>lock(right_queue_mtx);
 			to_right_queue.push((void*)tosend_buf);
@@ -841,7 +812,9 @@ void MyRing::EnqueSendQ(DataTuple* dt)
 	}
 	else
 	{
+#ifdef GJK_DEBUG
 		printf("toleft\n");
+#endif
 		{
 			std::lock_guard<std::mutex>lock(left_queue_mtx);
 			to_left_queue.push((void*)tosend_buf);
@@ -851,7 +824,9 @@ void MyRing::EnqueSendQ(DataTuple* dt)
 
 void MyRing::MergeData(void* local_buf, void* recvbuf, bool isScatter)
 {
+#ifdef GJK_DEBUG
 	printf("Merging data... isScatter  %d\n", isScatter);
+#endif
 	// add
 	DataTuple* recvTuple = static_cast<DataTuple*>(recvbuf);
 	DataTuple* localTuple = static_cast<DataTuple*>(local_buf);
@@ -879,7 +854,9 @@ void MyRing::MergeData(void* local_buf, void* recvbuf, bool isScatter)
 	//printf("data_num = %d\n", data_num );
 	DataType dt = recvTuple->data_type;
 	//printf("dt = %d\n", dt );
+#ifdef GJK_DEBUG
 	printf("s_idx %d  data_num  %d\n", s_idx, data_num);
+#endif
 	switch (dt)
 	{
 	case FLOAT32:
@@ -895,6 +872,7 @@ void MyRing::MergeData(void* local_buf, void* recvbuf, bool isScatter)
 		}
 		printf("\n");
 		**/
+#ifdef GJK_DEBUG
 		printf("Before Merging...\n");
 		for (i = 0; i < 6; i++)
 		{
@@ -903,6 +881,7 @@ void MyRing::MergeData(void* local_buf, void* recvbuf, bool isScatter)
 
 		}
 		printf("\n");
+#endif
 		for (i = 0; i < data_num; i++)
 		{
 
@@ -916,6 +895,7 @@ void MyRing::MergeData(void* local_buf, void* recvbuf, bool isScatter)
 			}
 
 		}
+#ifdef GJK_DEBUG
 		printf("After Merging...\n");
 		for (i = 0; i < 6; i++)
 		{
@@ -924,6 +904,7 @@ void MyRing::MergeData(void* local_buf, void* recvbuf, bool isScatter)
 
 		}
 		printf("\n");
+#endif
 		break;
 	}
 	default:

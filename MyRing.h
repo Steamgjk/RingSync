@@ -13,6 +13,7 @@
 #include <cstring>
 #include <map>
 #include <string>
+#include <vector>
 
 #include <sys/types.h>
 #include <unistd.h>
@@ -43,6 +44,7 @@
 #endif
 #define DATA_NAME_LEN 100
 enum DataType { FLOAT32 = 1, FLOAT64, INTEGER, LONGINT};
+enum RING_OP {RING_BROADCAST = 1, RING_ALLGATHER, RING_ALLREDUCE };
 struct  Tensor
 {
 	void* data;
@@ -53,9 +55,11 @@ struct DataTuple
 	int scatter_gather_counter;
 	int start_idx;
 	bool toRight;
+	RING_OP op;
 	DataType data_type;
 	int data_num;
 	void* data;
+	std::vector<void*> replica_ptrs;
 
 };
 #define IP_ADDR "127.0.0.1"
