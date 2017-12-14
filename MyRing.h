@@ -21,6 +21,7 @@
 
 #include <mutex>
 #include <stdexcept>
+#include <sstream>
 
 #define TENSORFLOW 0
 #define HAVE_CUDA 0
@@ -51,6 +52,8 @@ struct  Tensor
 };
 struct DataTuple
 {
+	int rank;
+	int broadcast_rank;
 	char data_name[DATA_NAME_LEN];
 	int scatter_gather_counter;
 	int start_idx;
@@ -75,8 +78,8 @@ public:
 
 	int sizeoftype(DataType dt);
 
-	int getLeftNeighbour();
-	int getRightNeighbour();
+	int getLeftNeighbour(int my_rank);
+	int getRightNeighbour(int my_rank);
 	void InitBGThread();
 	int InitConnection(char* ip_addr, int port);
 	void Send2RightThreadCallback();
@@ -94,6 +97,13 @@ public:
 	void OutPutTuple(void* dataTuple);
 	void ProcessStageData(void* local_data, void* recv_data, int cur_statge);
 	void MergeData(void* local_buf, void* recvbuf, bool isScatter);
+	void RingAllReduceMerge(DataTuple* recvTuple, DataTuple* localTuple, bool isScatter);
+	void RingAllGatherMerge(DataTuple* recvTuple, DataTuple* localTuple);
+	void RingBroadCastMerge(DataTuple* recvTuple, DataTuple* localTuple);
+	void FreeDataTuple(DataTuple* dtuple);
+	void* GenAllReduceBuf(DataTuple* dtuple);
+	void* GenAllGatherBuf(DataTuple* dtuple);
+	void* GenBroadCastBuf(DataTuple* dtuple);
 	~MyRing();
 private:
 	static int ring_rank;
