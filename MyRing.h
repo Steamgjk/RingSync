@@ -22,7 +22,6 @@
 #include <mutex>
 #include <stdexcept>
 #include <sstream>
-
 #define TENSORFLOW 0
 #define HAVE_CUDA 0
 #define HAVE_NCCL 0
@@ -104,6 +103,8 @@ public:
 	void* GenAllReduceBuf(DataTuple* dtuple);
 	void* GenAllGatherBuf(DataTuple* dtuple);
 	void* GenBroadCastBuf(DataTuple* dtuple);
+	void EnqueReduceQueue(int ele_num);
+	void Reduce_test(int thread_num);
 	~MyRing();
 private:
 	static int ring_rank;
@@ -132,6 +133,7 @@ private:
 	static std::mutex right_queue_mtx;
 	static std::queue<void*> to_left_queue;
 	static std::mutex left_queue_mtx;
+	static std::mutex out_mutex;
 
 	//static std::queue<void*> new_queue;
 	//static std::mutex new_queue_mtx;

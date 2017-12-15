@@ -19,6 +19,7 @@ std::mutex MyRing::right_queue_mtx;
 std::queue<void*> MyRing::to_left_queue;
 std::mutex MyRing::left_queue_mtx;
 
+std::mutex MyRing::out_mutex;
 
 std::mutex MyRing::map_mtx_to_left;
 map<string, void*> MyRing::recv_buf_map_to_left;
@@ -83,6 +84,14 @@ DataTuple* MyRing::EncodeData(){
 
 }
 **/
+void MyRing::EnqueReduceQueue(int ele_num)
+{
+
+}
+void MyRing::Reduce_test(int thread_num)
+{
+
+}
 void MyRing::InitBGThread()
 {
 
@@ -94,11 +103,21 @@ void MyRing::InitBGThread()
 		_2right_dtuple->broadcast_rank = 0;
 		_2right_dtuple->toRight = true;
 		_2right_dtuple->data_type = FLOAT32;
-		_2right_dtuple->data_num = 6;
-		_2right_dtuple->op = RING_BROADCAST;
-		//
-		float* fdata = (float*)malloc(sizeof(float) * (_2right_dtuple->data_num));
+		_2right_dtuple->data_num = 8;
+		_2right_dtuple->op = RING_ALLREDUCE;
+		_2right_dtuple->replica_ptrs.resize(this->ring_num);
 		int i = 0;
+		for (i = 0; i < this->ring_num; i++ )
+		{
+			_2right_dtuple->replica_ptrs[i] = NULL;
+			if (i == _2right_dtuple->rank)
+			{
+				_2right_dtuple->replica_ptrs[i] = static_cast<void*>(_2right_dtuple);
+			}
+		}
+
+		float* fdata = (float*)malloc(sizeof(float) * (_2right_dtuple->data_num));
+
 		for (i = 0; i < _2right_dtuple->data_num; i++ )
 		{
 			fdata[i] =  i * 0.1 + static_cast<float>(this->ring_rank);
@@ -117,12 +136,21 @@ void MyRing::InitBGThread()
 		_2left_dtuple->broadcast_rank = 0;
 		_2left_dtuple->toRight = false;
 		_2left_dtuple->data_type = FLOAT32;
-		_2left_dtuple->data_num = 6;
-		_2left_dtuple->op = RING_BROADCAST;
-
+		_2left_dtuple->data_num = 7;
+		_2left_dtuple->op = RING_ALLREDUCE;
+		_2left_dtuple->replica_ptrs.resize(this->ring_num);
+		int i = 0;
+		for (i = 0; i < this->ring_num; i++ )
+		{
+			_2left_dtuple->replica_ptrs[i] = NULL;
+			if (i == _2left_dtuple->rank)
+			{
+				_2left_dtuple->replica_ptrs[i] = static_cast<void*>(_2left_dtuple );
+			}
+		}
 		//
 		float* fdata = (float*)malloc(sizeof(float) * (_2left_dtuple->data_num));
-		int i = 0;
+
 		for (i = 0; i < _2left_dtuple->data_num; i++ )
 		{
 			fdata[i] = 0.5 + i * 0.1 + static_cast<float>(this->ring_rank);
@@ -132,29 +160,7 @@ void MyRing::InitBGThread()
 		//new_queue.push(_2left_dtuple);
 		new_queue_to_left.push(_2left_dtuple);
 	}
-	/*
-		{
-			DataTuple*  _2left_broadcast_dtuple  = (DataTuple*)malloc(sizeof(DataTuple));
-			strcpy(_2left_broadcast_dtuple->data_name, "Test2Left");
-			_2left_broadcast_dtuple->start_idx = 0;
-			_2left_broadcast_dtuple->toRight = false;
-			_2left_broadcast_dtuple->data_type = FLOAT32;
-			_2left_broadcast_dtuple->data_num = 6;
-			_2left_broadcast_dtuple->op = RING_BROADCAST;
 
-			//
-			float* fdata = (float*)malloc(sizeof(float) * (_2left_dtuple->data_num));
-			int i = 0;
-			for (i = 0; i < _2left_dtuple->data_num; i++ )
-			{
-				fdata[i] = 0.5 + i * 0.1 + static_cast<float>(this->ring_rank);
-				//fdata[i] = 0.5;
-			}
-			_2left_broadcast_dtuple->data = static_cast<void*>(fdata);
-			//new_queue.push(_2left_dtuple);
-			new_queue_to_left.push(_2left_dtuple);
-		}
-	**/
 
 	printf("Enque Success\n");
 
@@ -233,50 +239,83 @@ bool MyRing::isScatterStage(int stage_id)
 }
 void MyRing::OutPutTuple(void* dataTuple)
 {
+
 	DataTuple* dtp = static_cast<DataTuple*>(dataTuple);
 	std::ostringstream ss;
-
-	int i;
-	int len = dtp->data_num;
+	std::lock_guard<std::mutex> lock(out_mutex);
+	size_t i, j;
+	size_t len = dtp->data_num;
 	ss << std::this_thread::get_id();
 	std::string idstr = ss.str();
 	printf("OutPUT(%s):\n", idstr.c_str());
-	printf("%s Direction  toRight? %d   len %d\n", idstr.c_str(), dtp->toRight, len );
-
-	switch (dtp->data_type)
+	printf("%s Direction  toRight? %d   len %ld\n", idstr.c_str(), dtp->toRight, len );
+	if (dtp->op == RING_ALLGATHER)
 	{
-	case FLOAT32:
-	{
-		float* arr = static_cast<float*>(dtp->data);
-
-		for ( i = 0; i < len; i++)
+		for (i = 0; i < dtp->replica_ptrs.size(); i++)
 		{
-			printf("%lf\t", arr[i] );
-		}
-		printf("\n");
+			printf("%ld:\t", i);
+			DataTuple* ditem = static_cast<DataTuple*>(dtp->replica_ptrs[i]);
+			switch (ditem->data_type)
+			{
+			case FLOAT32:
+			{
+				float* arr = static_cast<float*>(ditem->data);
 
-		break;
+				for ( j = 0; j < len; j++)
+				{
+					printf("%lf\t", arr[j] );
+				}
+				printf("\n");
+
+				break;
+			}
+			default:
+			{
+				break;
+			}
+			}
+		}
+
 	}
-	default:
+	else
 	{
-		break;
+		switch (dtp->data_type)
+		{
+		case FLOAT32:
+		{
+			float* arr = static_cast<float*>(dtp->data);
+
+			for ( i = 0; i < len; i++)
+			{
+				printf("%lf\t", arr[i] );
+			}
+			printf("\n");
+
+			break;
+		}
+		default:
+		{
+			break;
+		}
+		}
 	}
-	}
+
 }
 void MyRing::ProcessStageData(void* local_data, void* recv_data, int cur_stage)
 {
 #ifdef GJK_DEBUG
 	printf("Process cur_stage = %d\n", cur_stage );
-	{
-		//printf("In Process %p  %p\n", recv_data, static_cast<DataTuple*>(recv_data)->data );
-	}
 #endif
 	bool isScatter = isScatterStage(cur_stage);
+
 	MergeData(local_data, recv_data, isScatter);
+
 	DataTuple* dt = static_cast<DataTuple*>(local_data);
+	//DataTuple* r_dt = static_cast<DataTuple*>(recv_data);
+
 	if ( (dt->op == RING_ALLREDUCE && dt->scatter_gather_counter == this->stage_num - 1 )
 	        || (dt->op == RING_BROADCAST && dt->scatter_gather_counter ==  0 )
-	        || (dt->op == RING_ALLREDUCE && dt->scatter_gather_counter ==  0 ) )
+	        || (dt->op == RING_ALLGATHER && dt->scatter_gather_counter ==  this->ring_num - 1 ) )
 	{
 		//ok
 		std::ostringstream ss;
@@ -291,29 +330,51 @@ void MyRing::ProcessStageData(void* local_data, void* recv_data, int cur_stage)
 		switch (dt->op)
 		{
 		case RING_ALLREDUCE:
+		{
+			EnqueSendQ(dt);
+		}
 
-			break;
+		break;
 		case RING_ALLGATHER:
+		{
+			if (cur_stage == 0)
+			{
+				//for my own data, only send once to the next neighbour
+				printf("Before Enque1\n");
+				EnqueSendQ(dt);
+				printf("After Enque1\n");
+			}
 
-			break;
+		}
+		break;
 		case RING_BROADCAST:
-
-			break;
+		{
+			if (dt->rank == dt->broadcast_rank)
+			{
+				//Actually, no one will come here except the broadcaster
+				EnqueSendQ(dt);
+			}
+		}
+		break;
 		default:
 			break;
 		}
 
 
 		//Put to sendQ
+		/*
 		if ( (!(dt->op == RING_BROADCAST && dt->rank != dt->broadcast_rank)))
 		{
 			printf("Yes Enque\n");
 			EnqueSendQ(dt);
 		}
+
 		else
 		{
 			printf("No Emq\n");
 		}
+		**/
+		///
 		dt->scatter_gather_counter = cur_stage + 1;
 		//move upward
 		//process_queues[cur_statge + 1].push(local_data);
@@ -906,50 +967,13 @@ void* MyRing::GenAllReduceBuf(DataTuple* dtuple)
 }
 void* MyRing::GenAllGatherBuf(DataTuple* dtuple)
 {
-	/*
-	size_t i = 0;
-	size_t sz = 0;
-	sz += sizeof(DataTuple);
-	for (i = 0; i < (dtuple->replica_ptrs).size(); i++)
-	{
-		DataTuple* dtuple_item = static_cast<DataTuple*>(dtuple->replica_ptrs[i]);
-		if (dtuple_item != NULL)
-		{
-			sz += sizeof(DataTuple);
-			sz += sizeoftype(dtuple_item->data_type) * dtuple_item->data_num;
-		}
-	}
-	char* tosend_buf = (char*)malloc(sz);
-	size_t cur_len = 0;
-	memcpy(tosend_buf, dtuple, sizeof(DataTuple));
-	cur_len += sizeof(DataTuple);
-	for (i = 0; i < (dtuple->replica_ptrs).size(); i++)
-	{
-		DataTuple* dtuple_item = static_cast<DataTuple*>(dtuple->replica_ptrs[i]);
-		if (dtuple_item != NULL)
-		{
-			memcpy(tosend_buf + cur_len, dtuple_item, sizeof(DataTuple));
-			cur_len += sizeof(DataTuple);
-			size_t data_sz =  (dtuple_item->data_num) * sizeoftype(dtuple_item->data_type) ;
-			memcpy(tosend_buf + cur_len, dtuple_item->data, data_sz);
-			cur_len += data_sz;
-		}
-	}
-	return tosend_buf;
-	**/
+
 	size_t sz = 0;
 	sz += sizeof(DataTuple);
 	size_t data_sz = dtuple->data_num * sizeoftype(dtuple->data_type);
 	sz += data_sz;
 	char* tosend_buf = (char*)malloc(sz);
 	memcpy(tosend_buf, dtuple, sizeof(DataTuple));
-	DataTuple* tmp = static_cast<DataTuple*>(static_cast<void*>(tosend_buf));
-	size_t i = 0;
-	for (i = 0; i < tmp->replica_ptrs.size(); i++ )
-	{
-		tmp->replica_ptrs[i] = NULL;
-	}
-	tmp->replica_ptrs[tmp->rank] = tmp;
 	memcpy(tosend_buf + sizeof(DataTuple), dtuple->data, data_sz);
 	return tosend_buf;
 
@@ -1084,11 +1108,13 @@ void MyRing::RingAllGatherMerge(DataTuple* recvTuple, DataTuple* localTuple)
 {
 	int rank = recvTuple->rank;
 	localTuple->replica_ptrs[rank] = static_cast<void*>(recvTuple);
-	if ( (!(localTuple->toRight == true &&  getLeftNeighbour(localTuple->broadcast_rank) == localTuple->rank) )
-	        && (!(localTuple->toRight == false &&  getRightNeighbour(localTuple->broadcast_rank) == localTuple->rank) )
+	if ( (!(recvTuple->toRight == true &&  getRightNeighbour(localTuple->rank) == recvTuple->rank) )
+	        && (!(recvTuple->toRight == false &&  getLeftNeighbour(localTuple->rank) == recvTuple->rank) )
 	   )
 	{
-		EnqueSendQ(localTuple);
+		printf("Before Enque2\n");
+		EnqueSendQ(recvTuple);
+		printf("After Enque2\n");
 	}
 
 	return;
