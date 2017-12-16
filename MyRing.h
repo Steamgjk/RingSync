@@ -22,6 +22,7 @@
 #include <mutex>
 #include <stdexcept>
 #include <sstream>
+#include <stdlib.h>
 #define TENSORFLOW 0
 #define HAVE_CUDA 0
 #define HAVE_NCCL 0
@@ -103,8 +104,10 @@ public:
 	void* GenAllReduceBuf(DataTuple* dtuple);
 	void* GenAllGatherBuf(DataTuple* dtuple);
 	void* GenBroadCastBuf(DataTuple* dtuple);
-	void EnqueReduceQueue(int ele_num);
-	void Reduce_test(int thread_num);
+	//string GenUniqueKey(DataTuple: dtuple);
+	string getOp(RING_OP op);
+	static void EnqueQueue(int id, int ele_num, bool toRight, RING_OP r_op);
+	void bench_test(size_t thread_num);
 	~MyRing();
 private:
 	static int ring_rank;
