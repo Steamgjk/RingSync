@@ -18,7 +18,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <fcntl.h>
-
+#include <assert.h>
 #include <mutex>
 #include <stdexcept>
 #include <sstream>
@@ -50,6 +50,7 @@ struct  Tensor
 {
 	void* data;
 };
+#define MAX_RING_NUM 20
 struct DataTuple
 {
 	int rank;
@@ -62,7 +63,8 @@ struct DataTuple
 	DataType data_type;
 	int data_num;
 	void* data;
-	std::vector<void*> replica_ptrs;
+	void* replica_ptrs[MAX_RING_NUM];
+	int ring_num;
 
 };
 #define IP_ADDR "127.0.0.1"
@@ -94,7 +96,7 @@ public:
 	void BackGround2RightThreadCallback();
 	bool isScatterStage(int stage_id);
 	void EnqueSendQ(DataTuple* dt);
-	void OutPutTuple(void* dataTuple);
+	void OutPutTuple(void* dataTuple, bool freeMem);
 	void ProcessStageData(void* local_data, void* recv_data, int cur_statge);
 	void MergeData(void* local_buf, void* recvbuf, bool isScatter);
 	void RingAllReduceMerge(DataTuple* recvTuple, DataTuple* localTuple, bool isScatter);
@@ -106,7 +108,7 @@ public:
 	void* GenBroadCastBuf(DataTuple* dtuple);
 	//string GenUniqueKey(DataTuple: dtuple);
 	string getOp(RING_OP op);
-	static void EnqueQueue(int id, int ele_num, bool toRight, RING_OP r_op);
+	static void EnqueQueue(size_t thread_rank, int ele_num, bool toRight, RING_OP r_op);
 	void bench_test(size_t thread_num);
 	~MyRing();
 private:
@@ -124,7 +126,8 @@ private:
 	static int to_left_queue_front;
 	static int to_left_queue_tail;
 
-
+	static bool to_right_connected;
+	static bool to_left_connected;
 	//static std::mutex mtx;
 	//static map<string, void*> recv_buf_map;
 	static const int header_name_len = 100;
