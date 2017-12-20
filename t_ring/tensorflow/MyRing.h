@@ -23,17 +23,38 @@
 #include <stdexcept>
 #include <sstream>
 #include <stdlib.h>
-#define TENSORFLOW 0
+#include <math.h>
+#define TENSORFLOW 1
 #define HAVE_CUDA 0
 #define HAVE_NCCL 0
 #define QueueLen 1000
-#if TENSORFLOW
+
+//#if TENSORFLOW
 #include "tensorflow/core/framework/op.h"
 #include "tensorflow/core/framework/op_kernel.h"
 #include "tensorflow/core/framework/shape_inference.h"
-#endif
+
 
 #define EIGEN_USE_THREADS
+
+#if HAVE_CUDA
+#include "tensorflow/stream_executor/stream.h"
+#include <cuda_runtime.h>
+#endif
+using namespace tensorflow;
+
+#define __have__tensorflow__
+
+#ifdef __have__tensorflow__
+typedef std::function<void(const Status&)> Status_callback;
+#endif
+
+// Use void pointer for ready event if CUDA is not present to avoid linking
+// error.
+
+//#endif
+
+
 
 #if HAVE_CUDA
 #include "tensorflow/stream_executor/stream.h"
@@ -43,13 +64,26 @@
 #if HAVE_NCCL
 #include <nccl.h>
 #endif
-#define DATA_NAME_LEN 100
-enum DataType { FLOAT32 = 1, FLOAT64, INTEGER, LONGINT};
+#define DATA_NAME_LEN 300
+
+#if HAVE_CUDA
+#define GPU_EVENT_IF_CUDA perftools::gputools::Event*
+#else
+#define GPU_EVENT_IF_CUDA void*
+#endif
+
 enum RING_OP {RING_BROADCAST = 1, RING_ALLGATHER, RING_ALLREDUCE };
-struct  Tensor
+typedef enum
 {
-	void* data;
-};
+	T_VOID    = 0,  T_BOOL    = 1,
+	T_UINIT8  = 2,  T_INIT8   = 3,
+	T_UINT16  = 4,  T_INT16   = 5,
+	T_UINT32  = 6,  T_INT32   = 7,
+	T_UINT64  = 8,  T_INT64   = 9,
+	T_FLOAT32 = 10, T_FLOAT64 = 11
+} TENSOR_TYPE;
+
+typedef TENSOR_TYPE RING_TYPE;
 #define MAX_RING_NUM 20
 struct DataTuple
 {
@@ -60,13 +94,43 @@ struct DataTuple
 	int start_idx;
 	bool toRight;
 	RING_OP op;
-	DataType data_type;
+	RING_TYPE data_type;
 	int data_num;
 	void* data;
 	void* replica_ptrs[MAX_RING_NUM];
 	int ring_num;
 
 };
+
+struct TensorRingStruct
+{
+	string tensor_name;
+	DataTuple* left_dtuple;
+	DataTuple* right_dtuple;
+	bool left_finished;
+	bool right_finished;
+#ifdef __have__tensorflow__
+	OpKernelContext* context;/*context for tensor*/
+	Tensor tensor;/*Input tensor.*/
+	Tensor* output;/* Pre-allocated output tensor. */
+	int device;
+	GPU_EVENT_IF_CUDA ready_event;// Event indicating that data is ready.
+	Status_callback callback;
+#endif
+};
+
+static  int TYPE_SIZE[] =
+{
+	4,				sizeof(bool),
+	sizeof(uint8_t), sizeof(int8_t),
+	sizeof(uint16_t), sizeof(int16_t),
+	sizeof(uint32_t), sizeof(int32_t),
+	sizeof(uint64_t), sizeof(int64_t),
+	sizeof(float_t), sizeof(double_t)
+};
+
+
+
 #define IP_ADDR "127.0.0.1"
 #define BASE_PORT 7000
 #define MAX_NUM 9
@@ -75,13 +139,19 @@ using namespace std;
 class MyRing
 {
 public:
-
 	MyRing(int rn, int rr);
 
-	int sizeoftype(DataType dt);
-
+	int sizeoftype(RING_TYPE dt);
+	void OutPutTrs();
+	int getRingNum();
+	int getRingRank();
+	bool get2LeftConnected();
+	bool get2RightConnected();
 	int getLeftNeighbour(int my_rank);
 	int getRightNeighbour(int my_rank);
+	void EnqueNewQueue2Left(DataTuple* dtuple);
+	void EnqueNewQueue2Right(DataTuple* dtuple);
+	void InsertTrs(TensorRingStruct& trs);
 	void InitBGThread();
 	int InitConnection(char* ip_addr, int port);
 	void Send2RightThreadCallback();
@@ -97,11 +167,13 @@ public:
 	bool isScatterStage(int stage_id);
 	void EnqueSendQ(DataTuple* dt);
 	void OutPutTuple(void* dataTuple, bool freeMem);
+	void FinishedTuple(void* dataTuple,  bool freeMem);
 	void ProcessStageData(void* local_data, void* recv_data, int cur_statge);
 	void MergeData(void* local_buf, void* recvbuf, bool isScatter);
 	void RingAllReduceMerge(DataTuple* recvTuple, DataTuple* localTuple, bool isScatter);
 	void RingAllGatherMerge(DataTuple* recvTuple, DataTuple* localTuple);
 	void RingBroadCastMerge(DataTuple* recvTuple, DataTuple* localTuple);
+	void Release_src(TensorRingStruct* trs, bool freeMem);
 	void FreeDataTuple(DataTuple* dtuple);
 	void* GenAllReduceBuf(DataTuple* dtuple);
 	void* GenAllGatherBuf(DataTuple* dtuple);
@@ -110,6 +182,7 @@ public:
 	string getOp(RING_OP op);
 	static void EnqueQueue(size_t thread_rank, int ele_num, bool toRight, RING_OP r_op);
 	void bench_test(size_t thread_num);
+	void ShutDown();
 	~MyRing();
 private:
 	static int ring_rank;
@@ -128,9 +201,11 @@ private:
 
 	static bool to_right_connected;
 	static bool to_left_connected;
+
+	static bool shut_down;
 	//static std::mutex mtx;
 	//static map<string, void*> recv_buf_map;
-	static const int header_name_len = 100;
+	static const int header_name_len = DATA_NAME_LEN;
 	constexpr static  char* ip_arrs[MAX_NUM] = { (char*)"127.0.0.1", (char*)"127.0.0.1", (char*)"127.0.0.1", (char*)"127.0.0.1", (char*)"127.0.0.1", (char*)"127.0.0.1", (char*)"127.0.0.1", (char*)"127.0.0.1", (char*)"127.0.0.1"};
 	constexpr static  int from_left_port_arrs[MAX_NUM] = {7000, 7002, 7004, 7006, 7008, 7010, 7012, 7014, 7016};
 	constexpr static  int from_right_port_arrs[MAX_NUM] = {7001, 7003, 7005, 7007, 7009, 7011, 7013, 7015, 7017};
@@ -163,6 +238,11 @@ private:
 	static vector<queue<void*>> process_queues_to_left;
 	static vector<queue<void*>> process_queues_to_right;
 
+
+	static std::mutex trs_mutex;
+	static map<string, TensorRingStruct> trs_map;
+
+	static std::vector<std::thread> thread_vec;
 
 	//static void* from_left_queue[QueueLen];
 	//static void* to_right_queue[QueueLen];

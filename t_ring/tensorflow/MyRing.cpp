@@ -39,6 +39,12 @@ std::mutex MyRing::new_queue_to_right_mutex;
 vector<queue<void*>> MyRing::process_queues_to_left;
 vector<queue<void*>> MyRing::process_queues_to_right;
 
+std::vector<std::thread> MyRing::thread_vec;
+
+
+std::mutex MyRing::trs_mutex;
+map<string, TensorRingStruct> MyRing::trs_map;
+
 //void MyRing::EnqueReduceQueue(int ele_num, bool toRight);
 //std::queue<void*> MyRing::new_queue;
 //std::mutex MyRing::new_queue_mtx;
@@ -46,6 +52,8 @@ vector<queue<void*>> MyRing::process_queues_to_right;
 //void* MyRing::to_left_queue[QueueLen];
 bool MyRing::to_right_connected;
 bool MyRing::to_left_connected;
+bool MyRing::shut_down;
+
 MyRing::MyRing(int rn, int rr)
 {
 	//just for test
@@ -56,16 +64,57 @@ MyRing::MyRing(int rn, int rr)
 
 	to_right_connected = false;
 	to_left_connected = false;
+	shut_down = false;
 	//process_queues.resize(this->stage_num);
 	process_queues_to_right.resize(this->stage_num);
 	process_queues_to_left.resize(this->stage_num);
 
 	printf("ring_num = %d rank = %d   from_left_port = %d  from_right_port=%d\n", this->ring_num, this->ring_rank, this->from_left_port_arrs[ring_rank], from_right_port_arrs[ring_rank] );
-
+	this->InitBGThread();
+	printf("Finished InitBG\n");
 }
+void MyRing::OutPutTrs()
+{
+	printf("++++++++++++++++++++++++++++++++\n");
+	printf("MAP_SZ %d\n", trs_map.size() );
+	//std::lock_guard<std::mutex> lock(trs_mutex);
+	//map<string, void*> trs_map1 = trs_map;
+	std::map<string,  TensorRingStruct>::iterator iter = trs_map.begin();
+	/*
+	while (vit != trs_map.end())
+	{
+		TensorRingStruct* titem = static_cast<TensorRingStruct*>(vit->second);
+		printf("na = %s   out = %p\n", titem->tensor_name.c_str(), titem->output);
+		vit++;
 
+	}**/
+	for (iter = trs_map.begin(); iter != trs_map.end(); iter++)
+	{
+		//std::cout << iter->first << " : " << (iter->second).output << std::endl;
 
+		DataTuple* ll = (iter->second).left_dtuple;
+		DataTuple* rr = (iter->second).right_dtuple;
+		printf("%s   %p  %p  %p\n", (iter->second).tensor_name.c_str(), (iter->second).output,  ll->data, rr->data );
+	}
 
+	printf("++++++++++++++++++++++++++++++++\n");
+}
+bool MyRing::get2LeftConnected()
+{
+	return this->to_left_connected;
+}
+bool MyRing::get2RightConnected()
+{
+	return this->to_right_connected;
+}
+int MyRing::getRingNum()
+{
+	return this->ring_num;
+}
+int MyRing::getRingRank()
+{
+	return this->ring_rank;
+}
 int MyRing::getLeftNeighbour(int myrank)
 {
 	int rank = myrank - 1;
@@ -89,6 +138,272 @@ DataTuple* MyRing::EncodeData(){
 
 }
 **/
+void MyRing::InsertTrs(TensorRingStruct& trs)
+{
+#ifdef GJK_DEBUG
+	printf("Enter Check=\n");
+#endif
+	{
+		std::lock_guard<std::mutex> lock(trs_mutex);
+
+		//printf("Before Insert name = %s    output=%p  left_data=%p  right_data =%p\n", trs.tensor_name.c_str(), trs.output, trs.left_dtuple->data, trs.right_dtuple->data);
+		//OutPutTrs();
+		string kstr = trs.tensor_name;
+		std::map<string, TensorRingStruct>::iterator vit = trs_map.find(kstr);
+		//assert(vit == trs_map.end());
+		if (vit == trs_map.end())
+		{
+			trs_map.insert(make_pair(kstr, std::move(trs)));
+		}
+
+		//printf("Insert name= %s  output2= %p\n", trs.tensor_name.c_str(), trs.output );
+		//getchar();
+
+		//OutPutTrs();
+	}
+
+	EnqueNewQueue2Left(trs.left_dtuple);
+	EnqueNewQueue2Right(trs.right_dtuple);
+}
+
+void MyRing::FinishedTuple(void* dtp,  bool freeMem = true)
+{
+#ifdef GJK_DEBUG
+	printf("Finished Tuple\n");
+#endif
+	DataTuple* dataTuple = static_cast<DataTuple*>(dtp);
+	char tensor_name[DATA_NAME_LEN];
+	int len = strlen(dataTuple->data_name);
+	len -= 5; //_to_0
+	strncpy(tensor_name, (dataTuple->data_name), len );
+	tensor_name[len] = '\0';
+#ifdef GJK_DEBUG
+	printf("tensor_name = %s\n", tensor_name);
+#endif
+	TensorRingStruct* trs_ptr = NULL;
+	bool canRet = false;
+	string kstr = tensor_name;
+	std::map<string, TensorRingStruct>::iterator vit;
+
+	/*
+
+		{
+			std::lock_guard<std::mutex> lock(trs_mutex);
+			printf("++++++++++++++++++++++++++++++++\n");
+			printf("MAP_SZ %d\n", trs_map.size() );
+			std::map<string,  TensorRingStruct>::iterator iter = trs_map.begin();
+
+			for (iter = trs_map.begin(); iter != trs_map.end(); iter++)
+			{
+				//std::cout << iter->first << " : " << (iter->second).output << std::endl;
+
+				DataTuple* ll = (iter->second).left_dtuple;
+				DataTuple* rr = (iter->second).right_dtuple;
+				printf("%s   %p  %p  %p\n", (iter->second).tensor_name.c_str(), (iter->second).output,  ll->data, rr->data );
+			}
+
+			printf("++++++++++++++++++++++++++++++++\n");
+		}
+
+
+	**/
+
+	{
+		std::lock_guard<std::mutex> lock(trs_mutex);
+
+
+
+#ifdef GJK_DEBUG
+		printf("FIN Check 0.1\n");
+		std::cout << "thisis \t" << kstr << "\n";
+
+		//getchar();
+#endif
+		//vit = trs_map.find("test");
+		//printf("Test OK\n");
+
+		vit = trs_map.find(kstr);
+
+		//printf("FIN CHECK 0.15\n");
+		assert(vit != trs_map.end());
+
+		if (vit != trs_map.end())
+		{
+#ifdef GJK_DEBUG
+			printf("FIN Check-0.2 = \n");
+#endif
+			//trs = static_cast<TensorRingStruct*>(vit->second);
+			auto& trs = vit->second;
+			if (dataTuple->toRight)
+			{
+				trs.right_finished = true;
+			}
+			else
+			{
+
+				trs.left_finished = true;
+			}
+			if (trs.left_finished  && trs.right_finished)
+			{
+				canRet = true;
+				trs_ptr = &trs;
+
+			}
+
+		}
+
+	}
+
+//if (trs->left_finished && trs->right_finished)
+	if (canRet)
+	{
+#ifdef GJK_DEBUG
+		printf("FIN Check-0.9\n");
+#endif
+		//switch (trs->left_dtuple->op)
+		switch (trs_ptr->left_dtuple->op)
+		{
+		case RING_ALLREDUCE:
+		case RING_BROADCAST:
+		{
+//#ifdef GJK_DEBUG
+			//printf("FIN Check-1/0  name=%s  dtp-name=%s output =%p\n", trs_ptr->tensor_name.c_str(), dataTuple->data_name, trs_ptr->output);
+
+//#endif
+			char* raw_data = (char*)(trs_ptr->output->tensor_data().data());
+
+
+
+#ifdef GJK_DEBUG
+			printf("FIN Check-1.9\n");
+#endif
+
+			size_t left_sz = (trs_ptr->left_dtuple->data_num) * sizeoftype(trs_ptr->left_dtuple->data_type);
+			size_t right_sz = (trs_ptr->right_dtuple->data_num) * sizeoftype(trs_ptr->right_dtuple->data_type);
+#ifdef GJK_DEBUG
+			printf("FIN Check1 =\n");
+#endif
+			memcpy( raw_data, trs_ptr->left_dtuple->data, left_sz );
+#ifdef GJK_DEBUG
+			printf("FIN Check2 =\n");
+#endif
+			memcpy(raw_data + left_sz, trs_ptr->right_dtuple->data, right_sz);
+#ifdef GJK_DEBUG
+			printf("FIN Check3 =\n");
+#endif
+			break;
+		}
+
+		case RING_ALLGATHER:
+		{
+
+			printf("RING_ALLGATHER  to be completed\n");
+			/* all_gather need the shape of every tensor, which has not been included in the ring framework
+			size_t data_sz = 0;
+			int k = 0;
+			DataTuple* ldt = trs->left_dtuple;
+			DataTuple* rdt = trs->right_dtuple;
+
+			TensorShape tensor_shape, single_slice_shape;
+			int64_t dims_without_0 = 0;
+			std::vector<int64_t> tensor_sz;
+
+			for (k = 0; k < this->ring_num; k++)
+			{
+				DataTuple* lditem = static_cast<DataTuple*>(ldt->replica_ptrs[k]);
+				DataTuple* rditem = static_cast<DataTuple*>(rdt->replica_ptrs[k]);
+				int64_t ldz = lditem->data_num * sizeoftype(lditem->data_type);
+				int64_t rdz = rditem->data_num * sizeoftype(rditem->data_type);
+				int64_t dz = ldz + rdz;
+				tensor_sz.push_back(dz);
+			}
+			for (auto& res : tensor_sz)
+			{
+				dims_without_0 += res;
+			}
+			for (size_t index = 1; index < tensor_sz.size(); index++)
+			{
+				single_slice_shape.AddDim(tensor_sz[index]);
+			}
+			tensor_shape.AddDim(dims_without_0);
+			tensor_shape.AppendShape(single_slice_shape);
+
+			status = trs->context->allocate_output(0, tensor_shape, &(trs->output));
+			if (!status.ok())
+			{
+				trs->callback(status);
+				return;
+			}
+			#if HAVE_CUDA
+			// On GPU allocation is asynchronous, we need to wait for it to complete.
+			auto device_context = e.context->op_device_context();
+			if (device_context != nullptr)
+			{
+				device_context->stream()->BlockHostUntilDone();
+			}
+			#endif
+			char* dst_ptr = (char*)(trs->output->tensor_data().data());
+			for (auto& _a_ : e.gather_tensor)
+			{
+				std::memcpy(dst_ptr, _a_.tensor_ptr, _a_.tensor_shape);
+				dst_ptr += _a_.tensor_shape;
+			}
+			**/
+			break;
+		}
+		}
+#ifdef GJK_DEBUG
+		printf("FIN before releasing \n");
+#endif
+
+
+		{
+			std::lock_guard<std::mutex> lock(trs_mutex);
+			vit = trs_map.find(trs_ptr->tensor_name);
+			if (vit != trs_map.end())
+			{
+				trs_ptr = &(vit->second);
+				trs_ptr->callback(Status::OK());
+				Release_src(trs_ptr, freeMem);
+				trs_map.erase(vit);
+			}
+
+		}
+#ifdef GJK_DEBUG
+		printf("Finished ... %s\n", tensor_name);
+#endif
+
+
+		//OutPutTuple(dataTuple, freeMem);
+	}
+
+}
+
+
+void MyRing::EnqueNewQueue2Left(DataTuple* dtuple)
+{
+#ifdef GJK_DEBUG
+	printf("Enter Left  %d\n", new_queue_to_left.size() );
+	//OutPutTrs();
+#endif
+	std::lock_guard<std::mutex> lock(new_queue_to_left_mutex);
+	new_queue_to_left.push(dtuple);
+#ifdef GJK_DEBUG
+	printf("Enque Left  %d\n", new_queue_to_left.size() );
+#endif
+}
+void MyRing::EnqueNewQueue2Right(DataTuple* dtuple)
+{
+#ifdef GJK_DEBUG
+	printf("Enter right  %d\n", new_queue_to_right.size() );
+	//OutPutTrs();
+#endif
+	std::lock_guard<std::mutex> lock(new_queue_to_right_mutex);
+	new_queue_to_right.push(dtuple);
+#ifdef GJK_DEBUG
+	printf("Enque right  %d\n", new_queue_to_right.size() );
+#endif
+}
 void MyRing::EnqueQueue(size_t thread_rank, int ele_num, bool toRight, RING_OP r_op)
 {
 	int cnt = 0;
@@ -115,7 +430,7 @@ void MyRing::EnqueQueue(size_t thread_rank, int ele_num, bool toRight, RING_OP r
 		dtuple->rank = ring_rank;
 		dtuple->broadcast_rank = 0;
 		dtuple->toRight = toRight;
-		dtuple->data_type = FLOAT32;
+		dtuple->data_type = T_FLOAT32;
 		dtuple->data_num = ele_num;
 		dtuple->op = r_op;
 		dtuple->ring_num = ring_num;
@@ -146,7 +461,7 @@ void MyRing::EnqueQueue(size_t thread_rank, int ele_num, bool toRight, RING_OP r
 
 		}
 		cnt++;
-		if (cnt > 5)
+		if (cnt > 100)
 		{
 			break;
 		}
@@ -190,24 +505,33 @@ void MyRing::bench_test(size_t thread_num)
 void MyRing::InitBGThread()
 {
 
+	/*
+		std::thread td3(&MyRing::Recv4LeftThreadCallback, this);
+		std::thread td4(&MyRing::Recv4RightThreadCallback, this);
+		std::thread td1(&MyRing::Send2RightThreadCallback, this);
+		std::thread td2(&MyRing::Send2LeftThreadCallback, this);
+		//std::thread td5(&MyRing::BackGroundThreadCallback, this);
+		std::thread td5(&MyRing::BackGround2RightThreadCallback, this);
+		std::thread td6(&MyRing::BackGround2LeftThreadCallback, this);
+	**/
+	thread_vec.push_back(std::thread(&MyRing::Recv4LeftThreadCallback, this));
+	thread_vec.push_back(std::thread(&MyRing::Recv4RightThreadCallback, this));
+	thread_vec.push_back(std::thread(&MyRing::Send2RightThreadCallback, this));
+	thread_vec.push_back(std::thread(&MyRing::Send2LeftThreadCallback, this));
+	thread_vec.push_back(std::thread(&MyRing::BackGround2RightThreadCallback, this));
+	thread_vec.push_back(std::thread(&MyRing::BackGround2LeftThreadCallback, this));
 
-	std::thread td3(&MyRing::Recv4LeftThreadCallback, this);
-	std::thread td4(&MyRing::Recv4RightThreadCallback, this);
-	std::thread td1(&MyRing::Send2RightThreadCallback, this);
-	std::thread td2(&MyRing::Send2LeftThreadCallback, this);
-	//std::thread td5(&MyRing::BackGroundThreadCallback, this);
-	std::thread td5(&MyRing::BackGround2RightThreadCallback, this);
-	std::thread td6(&MyRing::BackGround2LeftThreadCallback, this);
 	sleep(1);
-	bench_test(10);
+	//bench_test(10);
 	printf("Enque Success\n");
-	td1.join();
-	td2.join();
-	td3.join();
-	td4.join();
-	td5.join();
-	td6.join();
-
+	/*
+		td1.join();
+		td2.join();
+		td3.join();
+		td4.join();
+		td5.join();
+		td6.join();
+	**/
 
 }
 int MyRing::InitConnection(char* ip_addr, int port)
@@ -243,14 +567,10 @@ int MyRing::InitConnection(char* ip_addr, int port)
 		int connect_count = 0;
 		while (connect(tmp_skfd, (struct sockaddr*) & (ser_in), sizeof(ser_in)) != 0)
 		{
+			printf("COnnected Failed\n");
 			//std::cerr << "waiting to connect to server...." << ++connect_count << std::endl;
 			std::this_thread::sleep_for(std::chrono::seconds(1));
-			if (connect_count == -1)
-			{
-				std::cerr << "error in connect to server" << std::endl;
-				//close(tmp_skfd);
-				//exit(0);
-			}
+
 
 		}
 
@@ -280,6 +600,65 @@ string MyRing::getOp(RING_OP op)
 		return "RING_ALLGATHER";
 	}
 	return "";
+}
+
+void MyRing::Release_src(TensorRingStruct* trs, bool freeMem = false)
+{
+	DataTuple* left_dtuple =  trs->left_dtuple;
+	DataTuple* right_dtuple = trs->right_dtuple;
+#ifdef GJK_DEBUG
+	printf("Release_src check1=\n");
+#endif
+	if (left_dtuple->op == RING_ALLGATHER)
+	{
+		int i = 0;
+		for (i = 0; i < left_dtuple->ring_num; i++)
+		{
+			DataTuple* ditem = static_cast<DataTuple*>(left_dtuple->replica_ptrs[i]);
+			if (ditem->rank == left_dtuple->rank)
+			{
+				//self should be freed at last
+				continue;
+			}
+#ifdef GJK_DEBUG
+			printf("Release_src lcheck1= i=%d\n", i);
+#endif
+			FreeDataTuple(ditem);
+		}
+	}
+	else
+	{
+#ifdef GJK_DEBUG
+		printf("Release_src lcheck\n");
+#endif
+		FreeDataTuple(left_dtuple);
+	}
+	if (right_dtuple->op == RING_ALLGATHER)
+	{
+		int i = 0;
+		for (i = 0; i < left_dtuple->ring_num; i++)
+		{
+			DataTuple* ditem = static_cast<DataTuple*>(right_dtuple->replica_ptrs[i]);
+			if (ditem->rank == right_dtuple->rank)
+			{
+				//self should be freed at last
+				continue;
+			}
+			FreeDataTuple(ditem);
+		}
+	}
+	else
+	{
+#ifdef GJK_DEBUG
+		printf("Release_src rcheck\n");
+#endif
+		FreeDataTuple(right_dtuple);
+	}
+#ifdef GJK_DEBUG
+	printf("Release_src lrcheck\n");
+#endif
+	//free(trs);
+
 }
 void MyRing::OutPutTuple(void* dataTuple,  bool freeMem = true)
 {
@@ -384,6 +763,7 @@ void MyRing::ProcessStageData(void* local_data, void* recv_data, int cur_stage)
 {
 #ifdef GJK_DEBUG
 	printf("Process cur_stage = %d\n", cur_stage );
+
 #endif
 	bool isScatter = isScatterStage(cur_stage);
 
@@ -400,8 +780,9 @@ void MyRing::ProcessStageData(void* local_data, void* recv_data, int cur_stage)
 		std::ostringstream ss;
 		ss << std::this_thread::get_id();
 		std::string idstr = ss.str();
-		printf("OK-FIN(%s):\n", idstr.c_str());
-		OutPutTuple(local_data);
+		//printf("OK-FIN(%s):\n", idstr.c_str());
+		FinishedTuple(local_data);
+		//OutPutTuple(local_data);
 	}
 	else
 	{
@@ -464,18 +845,23 @@ void MyRing::ProcessStageData(void* local_data, void* recv_data, int cur_stage)
 }
 void MyRing::BackGround2LeftThreadCallback()
 {
-	while (1 == 1)
+	while (!shut_down)
 	{
 		{
+#ifdef GJK_DEBUG
 			//printf("BackGround2LeftThreadCallback\n");
+#endif
 			std::lock_guard<std::mutex> lock(new_queue_to_left_mutex);
 			while (!new_queue_to_left.empty())
 			{
-				//printf("Enter \n");
+				//printf("Enter new_queue_to_left\n");
 				void* msg = new_queue_to_left.front();
 				DataTuple* dt = static_cast<DataTuple*>(msg);
 				dt->scatter_gather_counter = 0;
 				//printf("put to sendQ\n");
+				{
+					//OutPutTrs();
+				}
 				if ( (!(dt->op == RING_BROADCAST && dt->rank != dt->broadcast_rank)))
 				{
 #ifdef GJK_DEBUG
@@ -487,7 +873,7 @@ void MyRing::BackGround2LeftThreadCallback()
 #ifdef GJK_DEBUG
 				else
 				{
-					printf("No Emq\n");
+					//printf("No Emq\n");
 				}
 #endif
 				//EnqueSendQ(dt);
@@ -517,8 +903,9 @@ void MyRing::BackGround2LeftThreadCallback()
 
 						if (dt->op == RING_BROADCAST && dt->broadcast_rank == this->ring_rank)
 						{
-							printf("OK-fin2\n");
-							OutPutTuple(dt);
+							//printf("OK-fin2\n");
+							FinishedTuple(dt);
+							//OutPutTuple(dt);
 							continue;
 						}
 
@@ -577,31 +964,35 @@ void MyRing::BackGround2LeftThreadCallback()
 		//std::this_thread::sleep_for(std::chrono::seconds(1));
 		//getchar();
 	}
-
+	printf("Terminated BackGround2LeftThreadCallback\n");
 
 }
 void MyRing::BackGround2RightThreadCallback()
 {
-	while (1 == 1)
+	while (!shut_down)
 	{
-		//std::cerr << "BackGroundThreadCallback"  << std::endl;
+#ifdef GJK_DEBUG
+		//printf("BackGroundThreadCallback\n");
+#endif
 		//getchar();
 		//printf("BackGround2RightThreadCallback\n");
 		//send new data
 		{
+
 			std::lock_guard<std::mutex> lock(new_queue_to_right_mutex);
 			while (!new_queue_to_right.empty())
 			{
 				void* msg = new_queue_to_right.front();
 				DataTuple* dt = static_cast<DataTuple*>(msg);
 				dt->scatter_gather_counter = 0;
-				//printf("put to sendQ\n");
-
+				//printf("put to sendQ right\n");
+				{
+					//OutPutTrs();
+				}
 				if ( (!(dt->op == RING_BROADCAST && dt->rank != dt->broadcast_rank)))
 				{
 #ifdef GJK_DEBUG
 					printf("Enque1-right\n");
-					assert(dt-> rank <= 3 && dt-> rank >= 0);
 #endif
 
 					EnqueSendQ(dt);
@@ -610,7 +1001,7 @@ void MyRing::BackGround2RightThreadCallback()
 #ifdef GJK_DEBUG
 				else
 				{
-					printf("No Emq\n");
+					//printf("No Emq\n");
 				}
 #endif
 				process_queues_to_right[0].push(msg);
@@ -634,8 +1025,9 @@ void MyRing::BackGround2RightThreadCallback()
 
 					if (dt->op == RING_BROADCAST && dt->broadcast_rank == this->ring_rank)
 					{
-						printf("OK-Fin2\n");
-						OutPutTuple(dt);
+						//printf("OK-Fin2\n");
+						FinishedTuple(dt);
+						//OutPutTuple(dt);
 						continue;
 					}
 
@@ -644,7 +1036,7 @@ void MyRing::BackGround2RightThreadCallback()
 					char full_name[header_name_len];
 					sprintf(full_name, "%s_%d", dt->data_name, stage_id);
 					string kstr = full_name;
-					//printf("key str  %s map  %ld\n", kstr.c_str(), recv_buf_map.size());
+
 					//printf("Right Finding %s\n", dt->data_name );
 					vit = recv_buf_map_to_right.find(kstr);
 					//std::cout << "find " << kstr << std::endl;
@@ -675,11 +1067,12 @@ void MyRing::BackGround2RightThreadCallback()
 				pair<void*, void*> pit = result_qu.front();
 				if (pit.second == NULL)
 				{
-					//printf("Is here?  map_size=%ld  map\n", recv_buf_map.size() );
+
 					process_queues_to_right[stage_id].push(pit.first);
 				}
 				else
 				{
+
 					//printf("OK ELE  %p  %p\n", pit.second, static_cast<DataTuple*>(pit.second)->data );
 					//printf("Before Process stage_id = %d\n", stage_id );
 					ProcessStageData(pit.first, pit.second, stage_id);
@@ -691,7 +1084,7 @@ void MyRing::BackGround2RightThreadCallback()
 		//std::this_thread::sleep_for(std::chrono::seconds(1));
 		//getchar();
 	}
-
+	printf("Terminated BackGround2RightThreadCallback\n");
 
 }
 
@@ -700,6 +1093,7 @@ void MyRing::Send2RightThreadCallback()
 	//std::cerr << "Send2RightThreadCallback" << std::endl;
 #ifdef GJK_DEBUG
 	printf("Send2RightThreadCallback\n");
+	//OutPutTrs();
 #endif
 	int right_idx = this->getRightNeighbour(this->ring_rank);
 #ifdef GJK_DEBUG
@@ -710,7 +1104,7 @@ void MyRing::Send2RightThreadCallback()
 	printf("Connected 2Right %s  %d\n", this->ip_arrs[right_idx], this->from_left_port_arrs[right_idx] );
 #endif
 	to_right_connected = true;
-	while (1 == 1)
+	while (!shut_down)
 	{
 		void* msg = NULL;
 		//Data Name, scatter_gather_counter,  dataType, data-length, data
@@ -756,13 +1150,15 @@ void MyRing::Send2RightThreadCallback()
 		//getchar();
 		//std::this_thread::sleep_for(std::chrono::seconds(1));
 	}
+	printf("Terminated  Send2RightThreadCallback\n");
 }
 void MyRing::Send2LeftThreadCallback()
 {
 	//std::cerr << "Send2LeftThreadCallback" << std::endl;
-//#ifdef GJK_DEBUG
-	printf("Send2LeftThreadCallback");
-//#endif
+#ifdef GJK_DEBUG
+	printf("Send2LeftThreadCallback\n");
+	//OutPutTrs();
+#endif
 	int left_idx = this->getLeftNeighbour(this->ring_rank);
 #ifdef GJK_DEBUG
 	printf("left_idx=%d\n", left_idx );
@@ -773,7 +1169,7 @@ void MyRing::Send2LeftThreadCallback()
 	printf("Connected 2Left  %s  %d\n", this->ip_arrs[left_idx], this->from_right_port_arrs[left_idx]);
 #endif
 	to_left_connected = true;
-	while (1 == 1)
+	while (!shut_down)
 	{
 		void* msg = NULL;
 		{
@@ -820,6 +1216,7 @@ void MyRing::Send2LeftThreadCallback()
 		//std::this_thread::sleep_for(std::chrono::seconds(1));
 		//Tensor recved  = this.from_left_queue.front();
 	}
+	printf("Terminated  Send2LeftThreadCallback\n");
 }
 int MyRing::Wait4Connection(int bind_port)
 {
@@ -857,7 +1254,7 @@ char* MyRing::RecvFixedData(int connected_fd, size_t len)
 	int cur_len = 0;
 	int remain_len = len;
 	int ans_len = 0;
-	while (remain_len > 0)
+	while ( (!shut_down) && remain_len > 0)
 	{
 		ans_len = recv(connected_fd, data_ptr + cur_len, remain_len, 0 );
 
@@ -880,18 +1277,20 @@ char* MyRing::RecvFixedData(int connected_fd, size_t len)
 }
 void MyRing::ProcessRecvData(int connected_fd)
 {
+	//printf("ProcessRecvData\n");
 	//set non-block
 	int flags = fcntl(connected_fd, F_GETFL, 0);
 	flags |= O_NONBLOCK;
 	fcntl(connected_fd, F_SETFL, flags);
-	//int header_len = header_name_len + sizeof(int) + sizeof(DataType) + sizeof(int);
+	//int header_len = header_name_len + sizeof(int) + sizeof(RING_TYPE) + sizeof(int);
 	int header_len = sizeof(DataTuple);
 	char* header_msg = this->RecvFixedData(connected_fd, header_len);
 
 	if (header_msg == NULL)
 	{
 		printf("header_msg NULL\n");
-		exit(1);
+		//exit(1);
+		return;
 	}
 	DataTuple* dtuple = static_cast<DataTuple*>( static_cast<void*>(header_msg) );
 
@@ -901,6 +1300,7 @@ void MyRing::ProcessRecvData(int connected_fd)
 #endif
 	//printf("Received Name  %s  rank %d\n", dtuple->data_name, dtuple->rank );
 	int data_len = (dtuple->data_num) * this->sizeoftype(dtuple->data_type);
+	//printf("data_num = %d   data_len = %d\n", dtuple->data_num, data_len );
 	char* data_msg = this->RecvFixedData(connected_fd, data_len);
 	dtuple->data = data_msg;
 
@@ -911,6 +1311,8 @@ void MyRing::ProcessRecvData(int connected_fd)
 	//got a complete data  block and insert to the map
 	//should locked
 	{
+
+
 
 		if (dtuple->toRight)
 		{
@@ -970,13 +1372,14 @@ void MyRing::Recv4LeftThreadCallback()
 	//std::cerr << "Recv4LeftThreadCallback" << std::endl;
 #ifdef GJK_DEBUG
 	printf("Recv4LeftThreadCallback\n");
+	//OutPutTrs();
 #endif
 	int bind_port = this->from_left_port_arrs[this->ring_rank];
 	int connected_fd = this->Wait4Connection(bind_port);
 #ifdef GJK_DEBUG
 	int left_recved = 0;
 #endif
-	while (1 == 1)
+	while (!shut_down)
 	{
 #ifdef GJK_DEBUG
 		printf("Recving Left Complete Msg\n");
@@ -988,6 +1391,7 @@ void MyRing::Recv4LeftThreadCallback()
 #endif
 		//std::this_thread::sleep_for(std::chrono::seconds(1));
 	}
+	printf("Terminated  Recv4LeftThreadCallback\n");
 
 }
 void MyRing::Recv4RightThreadCallback()
@@ -995,13 +1399,14 @@ void MyRing::Recv4RightThreadCallback()
 #ifdef GJK_DEBUG
 	//std::cerr << "Recv4RightThreadCallback" << std::endl;
 	printf("Recv4RightThreadCallback\n");
+	//OutPutTrs();
 #endif
 	int bind_port = this->from_right_port_arrs[this->ring_rank];
 	int connected_fd = this->Wait4Connection(bind_port);
 #ifdef GJK_DEBUG
 	int right_recvd = 0;
 #endif
-	while (1 == 1)
+	while (!shut_down)
 	{
 #ifdef GJK_DEBUG
 		printf("Recving Right Complete Msg\n");
@@ -1013,10 +1418,12 @@ void MyRing::Recv4RightThreadCallback()
 #endif
 		//std::this_thread::sleep_for(std::chrono::seconds(1));
 	}
+	printf("Terminated  Recv4RightThreadCallback\n");
 
 }
-int MyRing::sizeoftype(DataType dt)
+int MyRing::sizeoftype(RING_TYPE dt)
 {
+	/*
 	switch (dt)
 	{
 	case FLOAT32:
@@ -1030,6 +1437,8 @@ int MyRing::sizeoftype(DataType dt)
 	default:
 		return -1;
 	}
+	**/
+	return TYPE_SIZE[dt];
 }
 
 void* MyRing::GenAllReduceBuf(DataTuple* dtuple)
@@ -1041,14 +1450,14 @@ void* MyRing::GenAllReduceBuf(DataTuple* dtuple)
 	if (dtuple->toRight)
 	{
 
-		send_block_idx = (this->ring_num + this->ring_rank - dtuple->scatter_gather_counter) % (this->ring_num);
+		send_block_idx = (2 * this->ring_num + this->ring_rank - dtuple->scatter_gather_counter) % (this->ring_num);
 	}
 	else
 	{
-		send_block_idx = (this->ring_num + dtuple->scatter_gather_counter +  this->ring_rank) % (this->ring_num);
+		send_block_idx = (2 * this->ring_num + dtuple->scatter_gather_counter +  this->ring_rank) % (this->ring_num);
 	}
 #ifdef GJK_DEBUG
-	printf("CHeck2\n");
+	printf("CHeck2 rn %d  rr  %d  sc  %d  tpr  %d  sb %d\n", this->ring_num, this->ring_rank, dtuple->scatter_gather_counter, dtuple->toRight, send_block_idx);
 #endif
 	int share_num = (dtuple->data_num) / (this->ring_num);
 	int rest_num = (dtuple->data_num) % (this->ring_num);
@@ -1067,7 +1476,7 @@ void* MyRing::GenAllReduceBuf(DataTuple* dtuple)
 		{
 			temp_arr[p] = share_num;
 		}
-
+		//printf("temp p %d  %d\n", p, temp_arr[p] );
 	}
 #ifdef GJK_DEBUG
 	printf("CHeck4\n");
@@ -1081,20 +1490,21 @@ void* MyRing::GenAllReduceBuf(DataTuple* dtuple)
 	printf("CHeck5\n");
 #endif
 	int cnt = temp_arr[send_block_idx];
-	DataType dtp = dtuple->data_type;
+	RING_TYPE dtp = dtuple->data_type;
 	char* tosend_buf = NULL;
 	int unit_size = sizeoftype(dtp);
 	//printf("EnQ \n");
 	//float* fdata = (float*) dtuple->data;
 	char* ch_data = (char*)dtuple->data;
 #ifdef GJK_DEBUG
-	printf("CHeck6  char  %d\n", sizeof(char));
+	printf("CHeck6  char  %d  sendblock %d  cnt=%d datype = %d, size=%ld\n", sizeof(char), send_block_idx, cnt, dtuple->data_type, sizeoftype(dtuple->data_type) );
 #endif
 ///
 	tosend_buf = (char*)malloc(sizeof(DataTuple) + sizeoftype(dtuple->data_type) * cnt);
+#ifdef GJK_DEBUG
 	size_t numOfe = sizeof(DataTuple) + sizeoftype(dtuple->data_type) * cnt;
 	//tosend_buf = (char*)calloc(numOfe, sizeof(char));
-#ifdef GJK_DEBUG
+
 	printf("numofe....%ld\n\n", numOfe);
 #endif
 	//tosend_buf = (char*)std::malloc(numOfe);
@@ -1141,7 +1551,7 @@ void* MyRing::GenAllReduceBuf(DataTuple* dtuple)
 	//memcpy(tosend_buf, tupleheader, sizeof(DataTuple));
 
 #ifdef GJK_DEBUG
-	printf("CHeck11\n");
+	printf("CHeck11 start_idx = %ld unit_size=%ld  cnt=%ld  dtsz = %ld\n", start_idx, unit_size, cnt,  sizeof(DataTuple));
 #endif
 	memcpy(tosend_buf + sizeof(DataTuple), ch_data + start_idx * unit_size, unit_size * cnt);
 #ifdef GJK_DEBUG
@@ -1185,46 +1595,47 @@ void* MyRing::GenAllGatherBuf(DataTuple* dtuple)
 }
 void* MyRing::GenBroadCastBuf(DataTuple* dtuple)
 {
+
 #ifdef GJK_DEBUG
-	printf("B_CHECK1\n");
+	//printf("B_CHECK1\n");
 #endif
 	size_t sz = 0;
 	sz += sizeof(DataTuple);
 #ifdef GJK_DEBUG
-	printf("B_CHECK2\n");
+	//printf("B_CHECK2\n");
 #endif
 	size_t data_sz = dtuple->data_num * sizeoftype(dtuple->data_type);
 #ifdef GJK_DEBUG
-	printf("B_CHECK3\n");
+	//printf("B_CHECK3\n");
 #endif
 	sz += data_sz;
 #ifdef GJK_DEBUG
-	printf("B_CHECK4\n");
+	//printf("B_CHECK4\n");
 #endif
 	char* tosend_buf = (char*)malloc(sz);
+	assert(tosend_buf != NULL);
 #ifdef GJK_DEBUG
-	printf("B_CHECK5\n");
+	//printf("B_CHECK5\n");
 #endif
 	memcpy(tosend_buf, dtuple, sizeof(DataTuple));
 #ifdef GJK_DEBUG
-	printf("B_CHECK6 name  %s rank  %d sca %d\n", dtuple->data_name, dtuple->rank, dtuple->scatter_gather_counter);
+	//printf("B_CHECK6 name  %s rank  %d sca %d  dtuple  %p data  %p\n", dtuple->data_name, dtuple->rank, dtuple->scatter_gather_counter, dtuple, dtuple->data);
 #endif
 	memcpy(tosend_buf + sizeof(DataTuple), dtuple->data, data_sz); //Why
 #ifdef GJK_DEBUG
-	printf("B_CHECK7\n");
+	//printf("B_CHECK7\n");
 #endif
+
 	return tosend_buf;
 }
 void MyRing::EnqueSendQ(DataTuple* dtuple)
 {
 #ifdef GJK_DEBUG
 	printf("EnqueuSendQ-1\n");
-	assert(dtuple->rank <= 3 && dtuple->rank >= 0);
 #endif
 	void* tosend_buf = NULL;
 #ifdef GJK_DEBUG
-	printf("EnqueuSendQ-2\n");
-	printf("EnqueuSendQ-3  op  %d  vrankk  %d\n", dtuple->op, dtuple->rank);
+	printf("EnqueuSendQ-3  op  %d  dtuple  %p vrank  %d  broadcastrank = %d  data  %p\n",  dtuple->op, dtuple, dtuple->rank, dtuple->broadcast_rank, dtuple->data);
 #endif
 	switch (dtuple->op)
 	{
@@ -1249,9 +1660,6 @@ void MyRing::EnqueSendQ(DataTuple* dtuple)
 	{
 #ifdef GJK_DEBUG
 		printf("toright\n");
-		assert(dtuple->rank >= 0 && dtuple->rank <= 3);
-		DataTuple* test = static_cast<DataTuple*>(static_cast<void*>(tosend_buf));
-		assert(test->rank >= 0 && test->rank <= 3);
 #endif
 		{
 			std::lock_guard<std::mutex>lock(right_queue_mtx);
@@ -1285,14 +1693,14 @@ void MyRing::RingAllReduceMerge(DataTuple* recvTuple, DataTuple* localTuple, boo
 	//printf("s_idx =%d\n", s_idx);
 	int data_num = recvTuple->data_num;
 	//printf("data_num = %d\n", data_num );
-	DataType dt = recvTuple->data_type;
+	RING_TYPE dt = recvTuple->data_type;
 	//printf("dt = %d\n", dt );
 #ifdef GJK_DEBUG
 	printf("s_idx %d  data_num  %d  counter = %d\n", s_idx, data_num, localTuple->scatter_gather_counter);
 #endif
 	switch (dt)
 	{
-	case FLOAT32:
+	case T_FLOAT32:
 	{
 		float* recv_float_data = static_cast<float*>(recvTuple->data);
 		float* my_data = static_cast<float*>(localTuple->data);
@@ -1338,7 +1746,9 @@ void MyRing::RingAllReduceMerge(DataTuple* recvTuple, DataTuple* localTuple, boo
 		break;
 	}
 	//getchar();
+	//printf("Before Freeing recvTuple\n");
 	FreeDataTuple(recvTuple);
+	//printf("After FG\n");
 
 }
 void MyRing::RingAllGatherMerge(DataTuple* recvTuple, DataTuple* localTuple)
@@ -1386,32 +1796,75 @@ void MyRing::RingBroadCastMerge(DataTuple* recvTuple, DataTuple* localTuple)
 {
 	if (localTuple->data != NULL)
 	{
+		//printf("double %p\n", localTuple->data );
 		free(localTuple->data);
 	}
 	localTuple->data = recvTuple->data;
 #ifdef GJK_DEBUG
 	printf("In RingBroadCast\n");
-	OutPutTuple(localTuple, false);
+
 #endif
 	//then the broadcast data should continue to be delivered to the next hop
 	if ( (!(localTuple->toRight == true &&  getLeftNeighbour(localTuple->broadcast_rank) == localTuple->rank) )
 	        && (!(localTuple->toRight == false &&  getRightNeighbour(localTuple->broadcast_rank) == localTuple->rank) )
 	   )
 	{
-		printf("Here Enque IT\n");
+		//printf("Here Enque IT\n");
 		EnqueSendQ(localTuple);
 	}
+	/*
+		{
+			char kchar[DATA_NAME_LEN];
+			int len = strlen(localTuple->data_name);
+			printf("len = %d\n", len );
+			len -= 5;
+			strncpy(kchar, localTuple->data_name, len);
+			kchar[len] = '\0';
+			string kstr = kchar;
+			std::lock_guard<std::mutex> lock(trs_mutex);
+			{
+				printf("In BroadMerge\n");
+
+				std::map<string, void*>::iterator vit = trs_map.find(kstr);
+				assert(vit != trs_map.end());
+				TensorRingStruct* ddd = static_cast<TensorRingStruct*>(vit->second);
+				printf("Check in BroadMerege  name=%s  out1=%p\n", ddd->tensor_name.c_str(), ddd->output);
+			}
+		}
+		**/
 //!@!!!!!
 	free(recvTuple);
 }
 void MyRing::MergeData(void* local_buf, void* recvbuf, bool isScatter)
 {
 
+
+
 	// add  sendQ OP
 	DataTuple* recvTuple = static_cast<DataTuple*>(recvbuf);
 	DataTuple* localTuple = static_cast<DataTuple*>(local_buf);
+	/*
+		{
+			char kchar[DATA_NAME_LEN];
+			int len = strlen(localTuple->data_name);
+			printf("len = %d\n", len );
+			len -= 5;
+			strncpy(kchar, localTuple->data_name, len);
+			kchar[len] = '\0';
+			string kstr = kchar;
+			std::lock_guard<std::mutex> lock(trs_mutex);
+			{
+				printf("In BroadMerge\n");
+
+				std::map<string, void*>::iterator vit = trs_map.find(kstr);
+				assert(vit != trs_map.end());
+				TensorRingStruct* ddd = static_cast<TensorRingStruct*>(vit->second);
+				printf("Check in MergeData  name=%s  out1=%p\n", ddd->tensor_name.c_str(), ddd->output);
+			}
+		}
+		**/
 #ifdef GJK_DEBUG
-	printf("Merging data... op  %d rank  %d \n", recvTuple->op, recvTuple->rank);
+	printf("Merging data... name %s op  %d rank  %d  braodrank =%d\n", recvTuple->data_name, recvTuple->op, recvTuple->rank, recvTuple->broadcast_rank);
 #endif
 	switch (recvTuple->op)
 	{
@@ -1441,18 +1894,33 @@ void MyRing::FreeDataTuple(DataTuple* dtuple)
 	// non-recursive
 	if (dtuple != NULL)
 	{
+
 		if (dtuple->data != NULL)
 		{
+			//printf("freeing  dtuple-data  %p  name=%s\n", dtuple->data, dtuple->data_name );
 			free(dtuple->data);
+			//printf("freed dtuple->data %p  name=%s\n", dtuple->data, dtuple->data_name);
 			dtuple->data = NULL;
 		}
+		//printf("freeing dtuple %p   name  =%s\n", dtuple, dtuple->data_name );
 		free(dtuple);
+		//printf("freed dtuple   %p  name=%s\n", dtuple, dtuple->data_name );
+		dtuple = NULL;
 	}
 }
 
-
+void MyRing::ShutDown()
+{
+	shut_down = true;
+	for (auto& tid : thread_vec)
+	{
+		tid.join();
+	}
+	std::this_thread::sleep_for(std::chrono::seconds(1));
+}
 MyRing::~MyRing()
 {
+
 
 }
 
