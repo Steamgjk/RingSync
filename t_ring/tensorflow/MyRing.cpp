@@ -10,7 +10,7 @@ constexpr char* MyRing::to_left_ip_arrs[MAX_NUM];
 const int MyRing::listen_for_left_connection_port;
 const int MyRing::listen_for_right_connection_port;
 
-#define GJK_DEBUG 1
+//#define GJK_DEBUG 1
 int MyRing::ring_rank;
 int MyRing::ring_num;
 int MyRing::scatter_gather_counter;
