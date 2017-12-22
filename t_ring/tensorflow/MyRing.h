@@ -153,7 +153,7 @@ public:
 	void EnqueNewQueue2Right(DataTuple* dtuple);
 	void InsertTrs(TensorRingStruct& trs);
 	void InitBGThread();
-	int InitConnection(char* ip_addr, int port);
+	int InitConnection(char* local_ip, char* remote_ip, int remote_port);
 	void Send2RightThreadCallback();
 	void Send2LeftThreadCallback();
 	void Recv4LeftThreadCallback();
@@ -206,9 +206,13 @@ private:
 	//static std::mutex mtx;
 	//static map<string, void*> recv_buf_map;
 	static const int header_name_len = DATA_NAME_LEN;
-	constexpr static  char* ip_arrs[MAX_NUM] = { (char*)"127.0.0.1", (char*)"127.0.0.1", (char*)"127.0.0.1", (char*)"127.0.0.1", (char*)"127.0.0.1", (char*)"127.0.0.1", (char*)"127.0.0.1", (char*)"127.0.0.1", (char*)"127.0.0.1"};
-	constexpr static  int from_left_port_arrs[MAX_NUM] = {7000, 7002, 7004, 7006, 7008, 7010, 7012, 7014, 7016};
-	constexpr static  int from_right_port_arrs[MAX_NUM] = {7001, 7003, 7005, 7007, 7009, 7011, 7013, 7015, 7017};
+	constexpr static  char* ip_arrs[MAX_NUM] = { (char*)"192.168.13.246", (char*)"127.0.0.1", (char*)"127.0.0.1", (char*)"127.0.0.1", (char*)"127.0.0.1", (char*)"127.0.0.1", (char*)"127.0.0.1", (char*)"127.0.0.1", (char*)"127.0.0.1"};
+
+
+	constexpr static  char* to_right_ip_arrs[MAX_NUM] = { (char*)"192.168.13.246", (char*)"192.168.13.183", (char*)"192.168.13.27", (char*)"192.168.13.25", (char*)"192.168.13.23", (char*)"192.168.13.176", (char*)"192.168.13.179", (char*)"192.168.13.24", (char*)"192.168.13.26"};
+	constexpr static  char* to_left_ip_arrs[MAX_NUM] = { (char*)"192.168.13.44", (char*)"192.168.13.41", (char*)"192.168.13.43", (char*)"192.168.13.47", (char*)"192.168.13.45", (char*)"192.168.13.40", (char*)"192.168.13.42", (char*)"192.168.13.46", (char*)"192.168.13.39"};
+	const static int listen_for_left_connection_port = 9111; // to right ip
+	const static int listen_for_right_connection_port = 9112;
 
 	static std::queue<void*> to_right_queue;
 	static std::mutex right_queue_mtx;

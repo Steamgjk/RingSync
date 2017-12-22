@@ -3,10 +3,14 @@
 //std::mutex MyRing:: mtx;
 const int MyRing::header_name_len;
 constexpr char* MyRing::ip_arrs[MAX_NUM];
-constexpr int MyRing::from_left_port_arrs[MAX_NUM];
-constexpr int MyRing::from_right_port_arrs[MAX_NUM];
 
-//#define GJK_DEBUG 1
+
+constexpr char* MyRing::to_right_ip_arrs[MAX_NUM];
+constexpr char* MyRing::to_left_ip_arrs[MAX_NUM];
+const int MyRing::listen_for_left_connection_port;
+const int MyRing::listen_for_right_connection_port;
+
+#define GJK_DEBUG 1
 int MyRing::ring_rank;
 int MyRing::ring_num;
 int MyRing::scatter_gather_counter;
@@ -69,7 +73,9 @@ MyRing::MyRing(int rn, int rr)
 	process_queues_to_right.resize(this->stage_num);
 	process_queues_to_left.resize(this->stage_num);
 
-	printf("ring_num = %d rank = %d   from_left_port = %d  from_right_port=%d\n", this->ring_num, this->ring_rank, this->from_left_port_arrs[ring_rank], from_right_port_arrs[ring_rank] );
+	printf("ring_num = %d rank = %d  \n", this->ring_num, this->ring_rank );
+	printf("to_left_ip=%s to_right_ip=%s  \n", this->to_left_ip_arrs[ring_rank], this->to_right_ip_arrs[ring_rank]);
+	printf("listen_for_right_connection_port=%d listen_for_left_connection_port=%d", this->listen_for_right_connection_port, this->listen_for_left_connection_port);
 	this->InitBGThread();
 	printf("Finished InitBG\n");
 }
@@ -534,9 +540,9 @@ void MyRing::InitBGThread()
 	**/
 
 }
-int MyRing::InitConnection(char* ip_addr, int port)
+int MyRing::InitConnection(char* local_ip, char* remote_ip, int remote_port)
 {
-	printf("InitConnection  %s  %d\n", ip_addr, port );
+	printf("InitConnection  %s %s  %d\n", local_ip, remote_ip, remote_port );
 	struct sockaddr_in ser_in, local_in;/*server ip and local ip*/
 	memset(&ser_in, 0, sizeof(ser_in));
 	memset(&local_in, 0, sizeof(local_in));
@@ -545,16 +551,17 @@ int MyRing::InitConnection(char* ip_addr, int port)
 
 	/*bind remote socket*/
 	ser_in.sin_family = AF_INET;
-	ser_in.sin_port = htons(port);/*connect to public port remote*/
-	inet_pton(AF_INET, ip_addr, &ser_in.sin_addr);
+	ser_in.sin_port = htons(remote_port);/*connect to public port remote*/
+	inet_pton(AF_INET, remote_ip, &ser_in.sin_addr);
 
 	/*bind local part*/
 	local_in.sin_family = AF_INET;
+	//local_in.sin_port = htons();/*server listen public ports*/
+	//local_in.sin_addr.s_addr = INADDR_ANY;/*listen any connects*/
+	inet_pton(AF_INET, local_ip, &local_in.sin_addr);
 
-	//inet_pton(AF_INET, local_eth.c_str(), &local_in.sin_addr);
-#ifdef GJK_DEBUG
-	printf("ip = %s  port = %d\n", ip_addr, port );
-#endif
+
+
 	while (bind(tmp_skfd, (struct sockaddr*) & (local_in), sizeof(local_in)) != 0)
 	{
 		printf("error in bind local addr\n");
@@ -1097,11 +1104,11 @@ void MyRing::Send2RightThreadCallback()
 #endif
 	int right_idx = this->getRightNeighbour(this->ring_rank);
 #ifdef GJK_DEBUG
-	printf("Connecting 2Right %s  %d\n", this->ip_arrs[right_idx], this->from_left_port_arrs[right_idx] );
+	printf("local %s Connecting 2Right %s  %d\n", this->to_right_ip_arrs[this->ring_rank], this->to_right_ip_arrs[right_idx], this->listen_for_left_connection_port );
 #endif
-	int send_fd =  InitConnection(this->ip_arrs[right_idx], this->from_left_port_arrs[right_idx]);
+	int send_fd =  InitConnection(this->to_right_ip_arrs[this->ring_rank], this->to_right_ip_arrs[right_idx], this->listen_for_left_connection_port);
 #ifdef GJK_DEBUG
-	printf("Connected 2Right %s  %d\n", this->ip_arrs[right_idx], this->from_left_port_arrs[right_idx] );
+	printf("local %s Connected 2Right %s  %d\n", this->to_right_ip_arrs[this->ring_rank], this->to_right_ip_arrs[right_idx], this->listen_for_left_connection_port );
 #endif
 	to_right_connected = true;
 	while (!shut_down)
@@ -1162,11 +1169,11 @@ void MyRing::Send2LeftThreadCallback()
 	int left_idx = this->getLeftNeighbour(this->ring_rank);
 #ifdef GJK_DEBUG
 	printf("left_idx=%d\n", left_idx );
-	printf("Connecting 2Left  %s  %d\n", this->ip_arrs[left_idx], this->from_right_port_arrs[left_idx]);
+	printf("local %s Connecting 2Left  %s  %d\n",  this->to_left_ip_arrs[this->ring_rank], this->to_left_ip_arrs[left_idx], this->listen_for_right_connection_port);
 #endif
-	int send_fd =  InitConnection(this->ip_arrs[left_idx], this->from_right_port_arrs[left_idx]);
+	int send_fd =  InitConnection(this->to_left_ip_arrs[this->ring_rank], this->to_left_ip_arrs[left_idx], this->listen_for_right_connection_port);
 #ifdef GJK_DEBUG
-	printf("Connected 2Left  %s  %d\n", this->ip_arrs[left_idx], this->from_right_port_arrs[left_idx]);
+	printf("local %s Connected 2Left  %s  %d\n",  this->to_left_ip_arrs[this->ring_rank], this->to_left_ip_arrs[left_idx], this->listen_for_right_connection_port);
 #endif
 	to_left_connected = true;
 	while (!shut_down)
@@ -1192,7 +1199,7 @@ void MyRing::Send2LeftThreadCallback()
 			DataTuple* dtuple = static_cast<DataTuple*>(msg);
 			size_t len = sizeof(DataTuple) + (dtuple->data_num) * (sizeoftype(dtuple->data_type));
 #ifdef GJK_DEBUG
-			printf("Sending2Left len=%ld  port=%d  %s\n", len, this->from_right_port_arrs[left_idx], dtuple->data_name);
+
 			printf("Send2LefttThreadCallback\n");
 			assert(dtuple->rank <= 3 && dtuple->rank >= 0);
 #endif
@@ -1374,7 +1381,7 @@ void MyRing::Recv4LeftThreadCallback()
 	printf("Recv4LeftThreadCallback\n");
 	//OutPutTrs();
 #endif
-	int bind_port = this->from_left_port_arrs[this->ring_rank];
+	int bind_port = this->listen_for_left_connection_port;
 	int connected_fd = this->Wait4Connection(bind_port);
 #ifdef GJK_DEBUG
 	int left_recved = 0;
@@ -1401,7 +1408,7 @@ void MyRing::Recv4RightThreadCallback()
 	printf("Recv4RightThreadCallback\n");
 	//OutPutTrs();
 #endif
-	int bind_port = this->from_right_port_arrs[this->ring_rank];
+	int bind_port = this->listen_for_right_connection_port;
 	int connected_fd = this->Wait4Connection(bind_port);
 #ifdef GJK_DEBUG
 	int right_recvd = 0;
