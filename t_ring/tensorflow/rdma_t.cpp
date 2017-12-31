@@ -452,7 +452,7 @@ static void on_disconnect(struct rdma_cm_id *id)
 	free(ctx->msg);
 	free(ctx);
 }
-void server_wait4conn( rdma_event_channel *event_channel)
+void server_wait4conn(struct rdma_event_channel *event_channel)
 {
 	//bcube_struct& bs = bgs.bcube_s;
 	struct rdma_cm_event *event = NULL;
@@ -554,7 +554,7 @@ struct rdma_event_channel* rdma_server_init(int local_port)
 
 
 
-void* rdma_client_init(char* local_ip, char* remote_ip, int remote_port)
+struct rdma_cm_id* rdma_client_init(char* local_ip, char* remote_ip, int remote_port)
 {
 	std::cout << "client inited (RDMA) start" << std::endl;
 
