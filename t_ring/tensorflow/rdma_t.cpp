@@ -291,35 +291,7 @@ static void *recv_poll_cq(void *rtp)
 	}
 	return NULL;
 }
-static void *send_poll_cq(void *tmp_id)
-{
-	struct ibv_cq *cq = NULL;
-	struct ibv_wc wc;
-	struct rdma_cm_id *id = (struct rdma_cm_id *)tmp_id;
-	struct context *ctx = (struct context *)id->context;
-	void *ev_ctx = NULL;
 
-	while (1)
-	{
-		TEST_NZ(ibv_get_cq_event(ctx->comp_channel, &cq, &ev_ctx));
-		ibv_ack_cq_events(cq, 1);
-		TEST_NZ(ibv_req_notify_cq(cq, 0));
-
-		while (ibv_poll_cq(cq, 1, &wc))
-		{
-			if (wc.status == IBV_WC_SUCCESS)
-			{
-				send_by_RDMA(&wc);
-			}
-			else
-			{
-				printf("\nwc = %s\n", ibv_wc_status_str(wc.status));
-				rc_die("poll_cq: status is not IBV_WC_SUCCESS");
-			}
-		}
-	}
-	return NULL;
-}
 
 
 void *client_polling_send(struct rdma_cm_id *id)
