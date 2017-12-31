@@ -31,7 +31,7 @@ os.environ['T_RING_GPU_ALLREDUCE']='TCP'
 os.environ['T_RING_GPU_ALLGATHER']='TCP'
 os.environ['T_RING_GPU_BROADCAST']='TCP'
 
-os.environ['COM_TYPE'] = 'TCP';
+os.environ['COM_TYPE'] = 'RDMA';
 print(os.environ.get('T_RING_GPU_ALLREDUCE'))
 print(os.environ.get('T_RING_GPU_ALLGATHER'))
 print(os.environ.get('T_RING_GPU_BROADCAST'))

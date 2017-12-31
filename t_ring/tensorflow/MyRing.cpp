@@ -1216,7 +1216,7 @@ void MyRing::Send2LeftThreadCallback()
 #else
 void MyRing::Send2RightThreadCallback()
 {
-	//std::cerr << "Send2RightThreadCallback" << std::endl;
+	//std::cerr << "Send2RightThingreadCallback" << std::endl;
 #ifdef GJK_DEBUG
 	printf("Send2RightThreadCallback\n");
 	//OutPutTrs();
@@ -2107,13 +2107,14 @@ MyRing::~MyRing()
 
 //____________________________________________________________RDMA______________________________________________________
 
-struct rdma_cm_id* RDMA_InitConnection(char* local_ip, char* remote_ip, int remote_port) //as client
+#if HAVE_RDMA
+struct rdma_cm_id* MyRing::RDMA_InitConnection(char* local_ip, char* remote_ip, int remote_port) //as client
 {
 	struct rdma_cm_id* rc_id = rdma_client_init_connection(local_ip, remote_ip, remote_port);
 	return rc_id;
 }
 
-struct rdma_cm_id* RDMA_Wait4Connection(int listen_port) //as server
+struct rdma_cm_id* MyRing::RDMA_Wait4Connection(int listen_port) //as server
 {
 	struct rdma_event_channel* rec =  rdma_server_init(listen_port);
 	if (rec != NULL)
@@ -2130,11 +2131,13 @@ struct rdma_cm_id* RDMA_Wait4Connection(int listen_port) //as server
 	return NULL;
 }
 
-void RDMA_ProcessRecvData(struct rdma_cm_id* rc_id)
+void MyRing::RDMA_ProcessRecvData(struct rdma_cm_id* rc_id)
 {
 
 }
-void RDMA_RecvFixedData(struct rdma_cm_id* rc_id, size_t len)
+void MyRing::RDMA_RecvFixedData(struct rdma_cm_id* rc_id, size_t len)
 {
 
 }
+
+#endif
