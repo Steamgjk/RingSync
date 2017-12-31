@@ -83,7 +83,7 @@ MyRing::MyRing(int rn, int rr)
 	process_queues_to_left.resize(this->stage_num);
 	printf("ring_num = %d rank = %d  \n", this->ring_num, this->ring_rank );
 #if HAVE_RDMA
-	printf("rdma_to_left_ip=%s rdma_to_right_ip=%s  \n", rdma_to_left_ip[ring_rank], rdma_to_right_ip[ring_rank]);
+	printf("rdma_to_left_ip=%s rdma_to_right_ip=%s  \n", rdma_to_left_ip_arrs[ring_rank], rdma_to_right_ip_arrs[ring_rank]);
 	printf("rdma_listen_for_right_connection_port=%d rdma_listen_for_left_connection_port=%d", rdma_listen_for_right_connection_port, rdma_listen_for_left_connection_port);
 #else
 	printf("to_left_ip=%s to_right_ip=%s  \n", this->to_left_ip_arrs[ring_rank], this->to_right_ip_arrs[ring_rank]);
