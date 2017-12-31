@@ -47,14 +47,7 @@ static void rc_die(const char *reason)
 }
 
 #if HAVE_RDMA
-static void node_counts(bcube_struct& bcube_s)
-{
-	bcube_s.bcube_node_count = 1;
-	for (int lev = 0; lev < bcube_s.bcube_level; lev++)
-	{
-		bcube_s.bcube_node_count *= bcube_s.bcube0_size;
-	}
-}
+
 
 static node_item* get_new_node(void)
 {
