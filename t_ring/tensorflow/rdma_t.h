@@ -57,5 +57,12 @@ struct context
 };
 
 void test_rdma_header();
+void* rdma_client_init(char* local_ip, char* remote_ip, int remote_port);
+void* client_polling_send(struct rdma_cm_id *id);
+
+
+struct rdma_event_channel* rdma_server_init(int local_port);
+void server_wait4conn( rdma_event_channel *event_channel);
+
 #endif
 #endif
