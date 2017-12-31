@@ -1943,12 +1943,12 @@ MyRing::~MyRing()
 
 //____________________________________________________________RDMA______________________________________________________
 
-int RDMA_InitConnection(char* local_ip, char* remote_ip, int remote_port); //as client
+int RDMA_InitConnection(char* local_ip, char* remote_ip, int remote_port) //as client
 {
 	return 0;
 }
 
-int RDMA_Wait4Connection(int bind_port); //as server
+int RDMA_Wait4Connection(int bind_port) //as server
 {
 	return 0;
 }
