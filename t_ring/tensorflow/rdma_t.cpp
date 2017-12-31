@@ -442,7 +442,7 @@ void rdma_send_data(struct ibv_wc *wc, void* data2send, size_t data_len)
 			ctx->remote_idle = true;
 
 			//__send_str = data_gene(1024 * 1024 * 100);
-			send_tensor(id, data2send, data_len);
+			send_tensor(id, (char*)data2send, data_len);
 		}
 		else if (ctx->msg->id == MSG_DONE)
 		{
@@ -454,7 +454,7 @@ void rdma_send_data(struct ibv_wc *wc, void* data2send, size_t data_len)
 		{
 			ctx->remote_idle = true;
 
-			send_tensor(id, data2send, data_len);
+			send_tensor(id, (char*)data2send, data_len);
 		}
 		post_receive_client(id);
 	}
