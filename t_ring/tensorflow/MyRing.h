@@ -164,7 +164,10 @@ public:
 
 	char* RecvFixedData(int connected_fd, size_t len);
 	void ProcessRecvData(int connected_fd);
-	//void BackGroundThreadCallback();
+
+	void RDMA_ProcessRecvData(struct rdma_cm_id* rc_id);
+	void RDMA_RecvFixedData(struct rdma_cm_id* rc_id, size_t len);
+
 	void BackGround2LeftThreadCallback();
 	void BackGround2RightThreadCallback();
 	bool isScatterStage(int stage_id);

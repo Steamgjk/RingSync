@@ -423,6 +423,45 @@ static void *send_poll_cq(void *tmp_id)
 	return NULL;
 }
 
+void rdma_send_data(struct ibv_wc *wc, void* data2send, size_t data_len)
+{
+	struct rdma_cm_id *id = (struct rdma_cm_id *)(uintptr_t)wc->wr_id;
+	struct context *ctx = (struct context *)id->context;
+
+	if (wc->opcode == IBV_WC_RECV_RDMA_WITH_IMM)
+	{
+		printf("send thread %ld will never be here!!!!!\n", pthread_self());
+		exit(0);
+	}
+	else if (wc->opcode & IBV_WC_RECV)
+	{
+		if (ctx->msg->id == MSG_MR)
+		{
+			ctx->peer_addr = ctx->msg->data.mr.addr;
+			ctx->peer_rkey = ctx->msg->data.mr.rkey;
+			printf("received remote memory address and key\n");
+			ctx->remote_idle = true;
+
+			//__send_str = data_gene(1024 * 1024 * 100);
+			send_tensor(id, data2send, data_len);
+		}
+		else if (ctx->msg->id == MSG_DONE)
+		{
+			printf("received DONE, disconnecting\n");
+			rdma_disconnect(id);
+			return;
+		}
+		else if (ctx->msg->id == MSG_READY)
+		{
+			ctx->remote_idle = true;
+
+			send_tensor(id, data2send, data_len);
+		}
+		post_receive_client(id);
+	}
+	return;
+}
+
 
 
 
@@ -628,7 +667,7 @@ struct rdma_event_channel* rdma_server_init(int local_port)
 
 
 
-struct rdma_cm_id* rdma_client_init(char* local_ip, char* remote_ip, int remote_port)
+struct rdma_cm_id* rdma_client_init_connection(char* local_ip, char* remote_ip, int remote_port)
 {
 	std::cout << "client inited (RDMA) start" << std::endl;
 

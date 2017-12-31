@@ -1103,7 +1103,117 @@ void MyRing::BackGround2RightThreadCallback()
 	printf("Terminated BackGround2RightThreadCallback\n");
 
 }
+#if HAVE_RDMA
+void MyRing::Send2RightThreadCallback()
+{
+	int right_idx = this->getRightNeighbour(this->ring_rank);
+	printf("RDMA 2Right Connecting\n");
+	struct rdma_cm_id* send_rc_id =  RDMA_InitConnection(rdma_to_right_ip_arrs[this->ring_rank], rdma_to_right_ip_arrs[right_idx], rdma_listen_for_left_connection_port);
+	to_right_connected = true;
+	printf("RDMA 2Right Connected OK\n");
+	struct ibv_cq *cq = NULL;
+	struct ibv_wc wc;
+	//struct rdma_cm_id *id = (struct rdma_cm_id *)tmp_id;
+	struct context *ctx = (struct context *)send_rc_id->context;
+	void *ev_ctx = NULL;
 
+	while (!shut_down)
+	{
+		TEST_NZ(ibv_get_cq_event(ctx->comp_channel, &cq, &ev_ctx));
+		ibv_ack_cq_events(cq, 1);
+		TEST_NZ(ibv_req_notify_cq(cq, 0));
+
+		while (ibv_poll_cq(cq, 1, &wc))
+		{
+			if (wc.status == IBV_WC_SUCCESS)
+			{
+				//send_by_RDMA(&wc);
+				void* msg = NULL;
+				//Data Name, scatter_gather_counter,  dataType, data-length, data
+				{
+					std::lock_guard<std::mutex>lock(right_queue_mtx);
+					if (!to_right_queue.empty())
+					{
+						msg = to_right_queue.front();
+						to_right_queue.pop();
+					}
+				}
+				if (msg)
+				{
+					DataTuple* dtuple = static_cast<DataTuple*>(msg);
+					size_t len = sizeof(DataTuple) + (dtuple->data_num) * (sizeoftype(dtuple->data_type));
+					//int nwt = write(send_fd, msg, len );
+					printf("RDMA Sending Data\n");
+					rdma_send_data(&wc, msg, len);
+					free(msg);
+				}
+
+			}
+			else
+			{
+				printf("\nwc = %s\n", ibv_wc_status_str(wc.status));
+				rc_die("poll_cq: status is not IBV_WC_SUCCESS");
+			}
+		}
+	}
+	printf("Terminated  Send2RightThreadCallback\n");
+}
+void MyRing::Send2LeftThreadCallback()
+{
+	int left_idx = this->getLeftNeighbour(this->ring_rank);
+	printf("RDMA 2Left Connecting\n");
+	struct rdma_cm_id* send_rc_id =  RDMA_InitConnection(rdma_to_left_ip_arrs[this->ring_rank], rdma_to_left_ip_arrs[left_idx], rdma_listen_for_right_connection_port);
+	to_left_connected = true;
+	printf("RDMA 2Left Connected OK\n");
+	struct ibv_cq *cq = NULL;
+	struct ibv_wc wc;
+	//struct rdma_cm_id *id = (struct rdma_cm_id *)tmp_id;
+	struct context *ctx = (struct context *)send_rc_id->context;
+	void *ev_ctx = NULL;
+
+	while (!shut_down)
+	{
+		TEST_NZ(ibv_get_cq_event(ctx->comp_channel, &cq, &ev_ctx));
+		ibv_ack_cq_events(cq, 1);
+		TEST_NZ(ibv_req_notify_cq(cq, 0));
+
+		while (ibv_poll_cq(cq, 1, &wc))
+		{
+			if (wc.status == IBV_WC_SUCCESS)
+			{
+				void* msg = NULL;
+				{
+					std::lock_guard<std::mutex>lock(left_queue_mtx);
+					if (!to_left_queue.empty())
+					{
+						msg = to_left_queue.front();
+						to_left_queue.pop();
+					}
+
+				}
+
+				if (msg)
+				{
+					DataTuple* dtuple = static_cast<DataTuple*>(msg);
+					size_t len = sizeof(DataTuple) + (dtuple->data_num) * (sizeoftype(dtuple->data_type));
+					printf("RDMA Sending Data\n");
+					rdma_send_data(&wc, msg, len);
+					free(msg);
+				}
+
+			}
+			else
+			{
+				printf("\nwc = %s\n", ibv_wc_status_str(wc.status));
+				rc_die("poll_cq: status is not IBV_WC_SUCCESS");
+			}
+		}
+	}
+
+	printf("Terminated  Send2LeftThreadCallback\n");
+}
+
+#else
 void MyRing::Send2RightThreadCallback()
 {
 	//std::cerr << "Send2RightThreadCallback" << std::endl;
@@ -1234,6 +1344,9 @@ void MyRing::Send2LeftThreadCallback()
 	}
 	printf("Terminated  Send2LeftThreadCallback\n");
 }
+
+#endif
+
 int MyRing::Wait4Connection(int bind_port)
 {
 	int listen_fd = socket(AF_INET, SOCK_STREAM, 0);
@@ -1383,6 +1496,52 @@ void MyRing::ProcessRecvData(int connected_fd)
 	}
 	//lock will be released auytomatically
 }
+#if HAVE_RDMA
+void MyRing::Recv4LeftThreadCallback()
+{
+
+	int bind_port = this->listen_for_left_connection_port;
+	struct rdma_cm_id* rc_id = RDMA_Wait4Connection(bind_port);
+	if (rc_id)
+	{
+		printf("Left Connection Comes \n");
+	}
+	else
+	{
+		printf("Left Connection NULL\n");
+	}
+
+	while (!shut_down)
+	{
+		RDMA_ProcessRecvData(rc_id);
+
+		//std::this_thread::sleep_for(std::chrono::seconds(1));
+	}
+	printf("Terminated  Recv4LeftThreadCallback\n");
+
+}
+void MyRing::Recv4RightThreadCallback()
+{
+
+	int bind_port = this->listen_for_right_connection_port;
+	struct rdma_cm_id* rc_id = RDMA_Wait4Connection(bind_port);
+	if (rc_id)
+	{
+		printf("Right Connection Comes \n");
+	}
+	else
+	{
+		printf("Right Connection NULL\n");
+	}
+	while (!shut_down)
+	{
+		RDMA_ProcessRecvData(rc_id);
+		//std::this_thread::sleep_for(std::chrono::seconds(1));
+	}
+	printf("Terminated  Recv4RightThreadCallback\n");
+
+}
+#else
 void MyRing::Recv4LeftThreadCallback()
 {
 	//std::cerr << "Recv4LeftThreadCallback" << std::endl;
@@ -1391,6 +1550,7 @@ void MyRing::Recv4LeftThreadCallback()
 	//OutPutTrs();
 #endif
 	int bind_port = this->listen_for_left_connection_port;
+
 	int connected_fd = this->Wait4Connection(bind_port);
 #ifdef GJK_DEBUG
 	int left_recved = 0;
@@ -1437,6 +1597,7 @@ void MyRing::Recv4RightThreadCallback()
 	printf("Terminated  Recv4RightThreadCallback\n");
 
 }
+#endif
 int MyRing::sizeoftype(RING_TYPE dt)
 {
 	/*
@@ -1948,7 +2109,7 @@ MyRing::~MyRing()
 
 struct rdma_cm_id* RDMA_InitConnection(char* local_ip, char* remote_ip, int remote_port) //as client
 {
-	struct rdma_cm_id* rc_id = rdma_client_init(local_ip, remote_ip, remote_port);
+	struct rdma_cm_id* rc_id = rdma_client_init_connection(local_ip, remote_ip, remote_port);
 	return rc_id;
 }
 
@@ -1967,4 +2128,13 @@ struct rdma_cm_id* RDMA_Wait4Connection(int listen_port) //as server
 		exit(1);
 	}
 	return NULL;
+}
+
+void RDMA_ProcessRecvData(struct rdma_cm_id* rc_id)
+{
+
+}
+void RDMA_RecvFixedData(struct rdma_cm_id* rc_id, size_t len)
+{
+
 }
