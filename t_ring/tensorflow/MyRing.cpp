@@ -1946,13 +1946,25 @@ MyRing::~MyRing()
 
 //____________________________________________________________RDMA______________________________________________________
 
-int RDMA_InitConnection(char* local_ip, char* remote_ip, int remote_port) //as client
+struct rdma_cm_id* RDMA_InitConnection(char* local_ip, char* remote_ip, int remote_port) //as client
 {
-	test_rdma_header();
-	return 0;
+	struct rdma_cm_id* rc_id = rdma_client_init(local_ip, remote_ip, remote_port);
+	return rc_id;
 }
 
-int RDMA_Wait4Connection(int bind_port) //as server
+struct rdma_cm_id* RDMA_Wait4Connection(int listen_port) //as server
 {
-	return 0;
+	struct rdma_event_channel* rec =  rdma_server_init(listen_port);
+	if (rec != NULL)
+	{
+		struct rdma_cm_id* rc_id = server_wait4conn(rec);
+		return rc_id;
+
+	}
+	else
+	{
+		printf("Server Init Fail\n");
+		exit(1);
+	}
+	return NULL;
 }

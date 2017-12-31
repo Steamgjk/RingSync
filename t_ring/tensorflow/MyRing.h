@@ -154,13 +154,13 @@ public:
 	void InsertTrs(TensorRingStruct& trs);
 	void InitBGThread();
 	int InitConnection(char* local_ip, char* remote_ip, int remote_port); //as client
-	int RDMA_InitConnection(char* local_ip, char* remote_ip, int remote_port); //as client
+	struct rdma_cm_id* RDMA_InitConnection(char* local_ip, char* remote_ip, int remote_port); //as client
 	void Send2RightThreadCallback();
 	void Send2LeftThreadCallback();
 	void Recv4LeftThreadCallback();
 	void Recv4RightThreadCallback();
 	int Wait4Connection(int bind_port); // as server
-	int RDMA_Wait4Connection(int bind_port); //as server
+	struct rdma_cm_id* RDMA_Wait4Connection(int bind_port); //as server
 
 	char* RecvFixedData(int connected_fd, size_t len);
 	void ProcessRecvData(int connected_fd);

@@ -58,6 +58,7 @@ struct context
 
 void test_rdma_header();
 
+//Client
 struct rdma_cm_id* rdma_client_init(char* local_ip, char* remote_ip, int remote_port);
 void* client_polling_send(struct rdma_cm_id *id);
 
