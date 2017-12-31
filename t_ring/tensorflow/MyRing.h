@@ -34,6 +34,7 @@
 #include "tensorflow/core/framework/op_kernel.h"
 #include "tensorflow/core/framework/shape_inference.h"
 
+#include "rdma_t.h"
 
 #define EIGEN_USE_THREADS
 
