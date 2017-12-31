@@ -668,7 +668,8 @@ struct rdma_event_channel* rdma_server_init(int local_port)
 
 struct rdma_cm_id* rdma_client_init_connection(char* local_ip, char* remote_ip, int remote_port)
 {
-	std::cout << "client inited (RDMA) start" << std::endl;
+	//std::cout << "client inited (RDMA) start" << std::endl;
+	printf("client inited (RDMA) start\n");
 
 	struct rdma_cm_id *conn = NULL;
 	struct rdma_event_channel *ec = NULL;
