@@ -622,7 +622,7 @@ static void* rdma_client_init(char* local_ip, char* remote_ip, int remote_port)
 	return NULL;
 }
 
-static void test_rdma_header()
+void test_rdma_header()
 {
 	printf("Hello\n");
 }
