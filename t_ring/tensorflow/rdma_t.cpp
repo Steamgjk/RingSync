@@ -6,8 +6,7 @@
 //void rc_die(const char *reason);
 const size_t BUFFER_SIZE = 512 * 1024 * 1024 + 1;
 #define TIMEOUT_IN_MS 500
-#define TEST_NZ(x) do { if ( (x)) rc_die("error: " #x " failed (returned non-zero)." ); } while (0)
-#define TEST_Z(x)  do { if (!(x)) rc_die("error: " #x " failed (returned zero/null)."); } while (0)
+
 #define MIN_CQE 10
 
 #endif // RDMA_SUPPORT
@@ -39,7 +38,7 @@ const size_t BUFFER_SIZE = 512 * 1024 * 1024 + 1;
 static std::atomic_bool rdma_server_establisted(false);
 static std::atomic_bool rdma_client_establisted(false);
 
-static void rc_die(const char *reason)
+void rc_die(const char *reason)
 {
 	extern int errno;
 	fprintf(stderr, "%s\nstrerror= %s\n", reason, strerror(errno));
