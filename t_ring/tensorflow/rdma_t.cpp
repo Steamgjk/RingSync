@@ -2,7 +2,7 @@
 
 #if HAVE_RDMA
 #include <rdma/rdma_cma.h>
-
+#include "rdma_t.h"
 //void rc_die(const char *reason);
 const size_t BUFFER_SIZE = 512 * 1024 * 1024 + 1;
 #define TIMEOUT_IN_MS 500
@@ -622,7 +622,10 @@ static void* rdma_client_init(char* local_ip, char* remote_ip, int remote_port)
 	return NULL;
 }
 
-
+static void test_rdma_header()
+{
+	printf("Hello\n");
+}
 
 
 #endif

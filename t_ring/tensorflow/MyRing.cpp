@@ -1945,6 +1945,7 @@ MyRing::~MyRing()
 
 int RDMA_InitConnection(char* local_ip, char* remote_ip, int remote_port) //as client
 {
+	test_rdma_header();
 	return 0;
 }
 
