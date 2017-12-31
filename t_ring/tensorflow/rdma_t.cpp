@@ -75,35 +75,6 @@ static _rdma_thread_pack_* get_new_thread_pack(struct rdma_cm_id* id, node_item*
 	return rtp;
 }
 
-/*确定当前bcube所处的节点和信息*/
-static void setup_node(bcube_struct& bcube_s)
-{
-	char* __rank__ = getenv("BCUBE_RANK");
-	if (__rank__ != NULL)bcube_s.rank = atoi(__rank__);
-	else
-	{
-		std::cerr << "error in get env rank, you must set up it before run." << std::endl;
-		exit(-1);
-	}
-	bcube_s.local_info.node_index = bcube_s.rank;
-	for (size_t lev = 0; lev < bcube_s.topo.size(); lev++)/*add myself ip into mynodes*/
-		bcube_s.local_info.myip.push_back(bcube_s.topo[lev][bcube_s.rank].ip);
-
-	/*发现邻居节点，加入到neighbor_info中*/
-	for (int lev = 0; lev < bcube_s.bcube_level; lev++)/*each level*/
-	{
-		int * tmp_neigh = new int[bcube_s.bcube0_size - 1];
-		std::vector<node> grp;
-		Utils::getOneHopNeighbour(bcube_s.rank, lev, bcube_s.bcube0_size, 1, tmp_neigh);
-		for (int neigh_index = 0; neigh_index < bcube_s.bcube0_size - 1; neigh_index++)
-			grp.push_back(bcube_s.topo[lev][tmp_neigh[neigh_index]]);
-		bcube_s.neighbor_info.push_back(grp);
-		grp.clear();
-		delete[] tmp_neigh;
-	}
-	return;
-
-}
 
 /*加载所有的网络节点*/
 /*
