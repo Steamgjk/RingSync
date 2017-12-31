@@ -56,7 +56,6 @@ struct context
 	bool remote_idle;
 };
 
-void rdma_bcube_init(bcube_struct&, bcube_global_struct&);
-void rdma_bcube_send(tensor_table_entry& , bcube_struct& , int );
+
 #endif
 #endif
