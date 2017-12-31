@@ -354,7 +354,10 @@ static void build_context(struct rdma_cm_id *id, bool is_server, node_item* nit)
 	if (is_server)
 	{
 		_rdma_thread_pack_* rtp = get_new_thread_pack(id, nit);
-		TEST_NZ(pthread_create(&s_ctx->cq_poller_thread, NULL, recv_poll_cq, (void*)rtp));
+
+		//gjk: do not create thread here
+		//TEST_NZ(pthread_create(&s_ctx->cq_poller_thread, NULL, recv_poll_cq, (void*)rtp));
+
 		id->context = (void*)s_ctx;
 	}
 }
@@ -441,9 +444,9 @@ static void connectRDMA( rdma_event_channel *event_channel)
 		if (event_copy.event == RDMA_CM_EVENT_CONNECT_REQUEST)
 		{
 			//node_item* nit = get_new_node();
-			//recv_chain.push_back(nit);
-			printf("recv connection Comes\n");
-			build_connection(event_copy.id, IS_SERVER, nit);
+			//recv_chain.push_back(nitn			printf("recv connection Comes\n");
+			//build_connection(event_copy.id, IS_SERVER, nit);
+			build_connection(event_copy.id, IS_SERVER, nullptr);
 			on_pre_conn(event_copy.id, IS_SERVER);
 			TEST_NZ(rdma_accept(event_copy.id, &cm_params));
 		}
