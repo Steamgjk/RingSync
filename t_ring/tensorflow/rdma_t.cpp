@@ -292,7 +292,77 @@ static void *recv_poll_cq(void *rtp)
 	return NULL;
 }
 
+void *polling_recv_cq(struct rdma_cm_id *id)
+{
+	struct ibv_cq *cq = NULL;
+	struct ibv_wc wc;
 
+
+	struct context *ctx = (struct context *)id->context;
+	void *ev_ctx = NULL;
+
+
+	while (true)
+	{
+		TEST_NZ(ibv_get_cq_event(ctx->comp_channel, &cq, &ev_ctx));
+		ibv_ack_cq_events(cq, 1);
+		TEST_NZ(ibv_req_notify_cq(cq, 0));
+
+		while (ibv_poll_cq(cq, 1, &wc))
+		{
+			if (wc.status == IBV_WC_SUCCESS)
+			{
+				void* recv_data = nullptr;
+				int sz = recv4data(&wc, recv_data);
+				if (recv_data != nullptr)//received data, will append to recv_chain...
+				{
+					printf("Polling Recved Data  sz = %d\n", sz);
+				}
+			}
+			else
+			{
+				printf("\nwc = %s\n", ibv_wc_status_str(wc.status));
+				rc_die("poll_cq: status is not IBV_WC_SUCCESS");
+			}
+		}
+	}
+	return NULL;
+}
+
+int recv4data(struct ibv_wc *wc, void* data_ptr)
+{
+	struct rdma_cm_id *id = (struct rdma_cm_id *)(uintptr_t)wc->wr_id;
+	struct context *ctx = (struct context *)id->context;
+	//void* _data = nullptr;
+	data_ptr = nullptr;
+	uint32_t size = -1;
+	if (wc->opcode == IBV_WC_RECV_RDMA_WITH_IMM)
+	{
+		size = ntohl(wc->imm_data);
+		struct sockaddr_in* client_addr = (struct sockaddr_in *)rdma_get_peer_addr(id);
+		static int64_t lpop = 0;
+		printf("Recv  \n");
+
+		data_ptr = (void*)std::malloc(sizeof(char) * size);
+		if (data_ptr == nullptr)
+		{
+			printf("fatal error in recv data malloc!!!!\n");
+			exit(-1);
+		}
+		std::memcpy(data_ptr, ctx->buffer, size);
+		printf("Data can be gained\n");
+
+		post_receive_server(id);
+		ctx->msg->id = MSG_READY;
+		send_message(id);
+	}
+	else if (wc->opcode & IBV_WC_RECV)
+	{
+		printf("recv thread %ld will never be here!!!!!\n", pthread_self());
+		exit(0);
+	}
+	return size;
+}
 
 void *client_polling_send(struct rdma_cm_id *id)
 {
@@ -380,15 +450,19 @@ static void build_context(struct rdma_cm_id *id, bool is_server, node_item* nit)
 	TEST_Z(s_ctx->cq = ibv_create_cq(s_ctx->ibv_ctx, MIN_CQE, NULL, s_ctx->comp_channel, 0));
 	TEST_NZ(ibv_req_notify_cq(s_ctx->cq, 0));
 	id->context = (void*)s_ctx;
+	/*
 	if (is_server)
 	{
-		_rdma_thread_pack_* rtp = get_new_thread_pack(id, nit);
+		//_rdma_thread_pack_* rtp = get_new_thread_pack(id, nit);
 
 		//gjk: do not create thread here
 		//TEST_NZ(pthread_create(&s_ctx->cq_poller_thread, NULL, recv_poll_cq, (void*)rtp));
 
 		id->context = (void*)s_ctx;
+
 	}
+	**/
+
 }
 
 static void build_qp_attr(struct ibv_qp_init_attr *qp_attr, struct rdma_cm_id *id)
@@ -452,7 +526,7 @@ static void on_disconnect(struct rdma_cm_id *id)
 	free(ctx->msg);
 	free(ctx);
 }
-void server_wait4conn(struct rdma_event_channel *event_channel)
+struct rdma_cm_id* server_wait4conn(struct rdma_event_channel *event_channel)
 {
 	//bcube_struct& bs = bgs.bcube_s;
 	struct rdma_cm_event *event = NULL;
@@ -463,9 +537,10 @@ void server_wait4conn(struct rdma_event_channel *event_channel)
 	build_params(&cm_params);
 	std::vector<node_item*> recv_chain;
 	struct rdma_cm_id*recv_rdma_cm_id = NULL;
+	struct rdma_cm_event event_copy;
+
 	while (rdma_get_cm_event(event_channel, &event) == 0)
 	{
-		struct rdma_cm_event event_copy;
 
 		memcpy(&event_copy, event, sizeof(*event));
 		rdma_ack_cm_event(event);
@@ -505,8 +580,7 @@ void server_wait4conn(struct rdma_event_channel *event_channel)
 		}
 	}
 	printf("%d clients have connected to my node (RDMA), ready to receiving loops\n", client_counts);
-
-	return;
+	return event_copy.id;
 }
 
 struct rdma_event_channel* rdma_server_init(int local_port)

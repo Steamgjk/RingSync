@@ -57,12 +57,19 @@ struct context
 };
 
 void test_rdma_header();
+
 struct rdma_cm_id* rdma_client_init(char* local_ip, char* remote_ip, int remote_port);
 void* client_polling_send(struct rdma_cm_id *id);
 
 
+
+//Server
 struct rdma_event_channel* rdma_server_init(int local_port);
-void server_wait4conn(struct rdma_event_channel *event_channel);
+struct rdma_cm_id* server_wait4conn(struct rdma_event_channel *event_channel);
+
+void *polling_recv_cq(struct rdma_cm_id *id); // thread  to change
+
+int recv4data(struct ibv_wc *wc, void* data_ptr);
 
 #endif
 #endif
