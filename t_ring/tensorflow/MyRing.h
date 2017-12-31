@@ -25,7 +25,7 @@
 #include <stdlib.h>
 #include <math.h>
 #define TENSORFLOW 1
-#define HAVE_CUDA 0
+
 #define HAVE_NCCL 0
 #define QueueLen 1000
 
