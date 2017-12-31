@@ -509,7 +509,7 @@ static struct rdma_event_channel* rdma_server_init(int local_port)
 	}
 
 	int client_counts = 1;
-	if (rdma_listen(bs.listener, client_counts))
+	if (rdma_listen(listener, client_counts))
 	{
 		std::cerr << "server init failed (RDMA): error in server listening" << std::endl;
 		rdma_destroy_id(listener);
@@ -574,7 +574,7 @@ static void* rdma_client_init(char* local_ip, char* remote_ip, int remote_port)
 		{
 			struct context *ctx = (struct context *)event_copy.id->context;
 			//TEST_NZ(pthread_create(&ctx->cq_poller_thread, NULL, send_poll_cq, event_copy.id));
-			std::cout << local_eth << " has connected to server[ " << remote_ip << " , " << remote_port << " ]" << std::endl;
+			std::cout << local_ip << " has connected to server[ " << remote_ip << " , " << remote_port << " ]" << std::endl;
 			return event_copy.id;
 			//break;
 		}
