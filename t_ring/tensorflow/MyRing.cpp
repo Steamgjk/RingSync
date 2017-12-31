@@ -1,6 +1,6 @@
 #include "MyRing.h"
 
-#include "rdma_t.h"
+
 
 //map<string, void*> MyRing::recv_buf_map;
 //std::mutex MyRing:: mtx;
