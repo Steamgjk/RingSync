@@ -10,6 +10,12 @@ constexpr char* MyRing::to_left_ip_arrs[MAX_NUM];
 const int MyRing::listen_for_left_connection_port;
 const int MyRing::listen_for_right_connection_port;
 
+
+constexpr char* MyRing::rdma_to_right_ip_arrs[MAX_NUM];
+constexpr char* MyRing::rdma_to_left_ip_arrs[MAX_NUM];
+const int MyRing::rdma_listen_for_left_connection_port;
+const int MyRing::rdma_listen_for_right_connection_port;
+
 //#define GJK_DEBUG 1
 int MyRing::ring_rank;
 int MyRing::ring_num;
@@ -1931,3 +1937,18 @@ MyRing::~MyRing()
 
 }
 
+
+
+
+
+//____________________________________________________________RDMA______________________________________________________
+
+int RDMA_InitConnection(char* local_ip, char* remote_ip, int remote_port); //as client
+{
+	return 0;
+}
+
+int RDMA_Wait4Connection(int bind_port); //as server
+{
+	return 0;
+}
