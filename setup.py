@@ -27,6 +27,16 @@ from t_ring import __version__
 
 tensorflow_ring_lib = Extension('t_ring.tensorflow.ring_lib', [])
 
+os.environ['T_RING_GPU_ALLREDUCE']='TCP'
+os.environ['T_RING_GPU_ALLGATHER']='TCP'
+os.environ['T_RING_GPU_BROADCAST']='TCP'
+
+os.environ['COM_TYPE'] = 'RDMA';
+print(os.environ.get('T_RING_GPU_ALLREDUCE'))
+print(os.environ.get('T_RING_GPU_ALLGATHER'))
+print(os.environ.get('T_RING_GPU_BROADCAST'))
+
+print(os.environ.get('COM_TYPE'))
 
 def check_tf_version():
     try:
@@ -193,19 +203,77 @@ def get_cuda_dirs(build_ext):
         raise DistutilsPlatformError(
             'CUDA library was not found (see error above).\n'
             'Please specify correct CUDA location with the RING_CUDA_HOME '
-            'environment variable or combination of BCUBE_CUDA_INCLUDE and '
-            'RING_CUDA_LIB environment variables.\n\n'
-            'RING_CUDA_HOME - path where CUDA include and lib directories can be found\n'
-            'RING_CUDA_INCLUDE - path to CUDA include directory\n'
-            'RING_CUDA_LIB - path to CUDA lib directory')
+            'environment variable or combination of T_RING_CUDA_INCLUDE and '
+            'T_RING_CUDA_LIB environment variables.\n\n'
+            'T_RING_CUDA_HOME - path where CUDA include and lib directories can be found\n'
+            'T_RING_CUDA_INCLUDE - path to CUDA include directory\n'
+            'T_RING_CUDA_LIB - path to CUDA lib directory')
 
     return cuda_include_dirs, cuda_lib_dirs
 
 
-def get_rdma_dirs(build_ext, cuda_include_dirs, cuda_lib_dirs):
+def get_rdma_dirs(build_ext):
     rdma_include_dirs = []
     rdma_lib_dirs = []
-    return rdma_include_dirs, rdma_lib_dirs
+    rdma_link_flags= []
+    rdma_lib= []
+
+    rdma_home = os.environ.get('T_RING_RDMA_HOME')
+    if rdma_home:
+        rdma_include_dirs += ['%s/include' % rdma_home]
+        rdma_lib_dirs += ['%s/lib' % rdma_home, '%s/lib64' % rdma_home]
+
+    rdma_include = os.environ.get('T_RING_RDMA_INCLUDE')
+    if rdma_include:
+        rdma_include_dirs += [rdma_include]
+
+    rdma_lib = os.environ.get('T_RING_CUDA_LIB')
+    if rdma_lib:
+        rdma_lib_dirs += [rdma_lib]
+    else:
+        rdma_lib =[]
+
+    if not rdma_include_dirs and not rdma_lib_dirs:
+        # default to /usr/local/cuda
+        rdma_include_dirs += ['/usr/src/mlnx-ofed-kernel-4.1/include']
+        rdma_lib_dirs += ['/usr/src/mlnx-ofed-kernel-4.1/lib', '/usr/src/mlnx-ofed-kernel-4.1/lib64']
+        rdma_lib += ['rdmacm','ibverbs']
+
+    try:
+        test_compile(build_ext, 'test_rdma', include_dirs=rdma_include_dirs,
+                     library_dirs=rdma_lib_dirs, libraries=rdma_lib,code=textwrap.dedent('''\
+            #include <rdma/rdma_cma.h>
+            void test() 
+            {
+                char *buffer =NULL;
+                struct ibv_mr *mr;
+                uint32_t my_key;
+                uint64_t my_addr;
+                struct ibv_pd * pd = NULL;
+                rdma_create_event_channel();
+                mr = ibv_reg_mr(
+                  pd, 
+                  buffer, 
+                  1024, 
+                  IBV_ACCESS_REMOTE_WRITE);
+                my_key = mr->rkey;
+                my_addr = (uint64_t)mr->addr;
+            }
+            '''))
+    except (CompileError, LinkError):
+        raise DistutilsPlatformError(
+            'RDMA library was not found (see error above).\n'
+            'Please specify correct RDMA location with the T_RING_RDMA_HOME '
+            'environment variable or combination of T_RING_RDMA_INCLUDE and '
+            'T_RING_RDMA_LIB environment variables.\n\n'
+            'T_RING_RDMA_HOME - path where RDMA include and lib directories can be found\n'
+            'T_RING_RDMA_INCLUDE - path to RDMA include directory\n'
+            'T_RING_RDMA_LIB - path to RDMA lib directory')
+
+    for lib in rdma_lib:
+        rdma_link_flags.append('-l%s' % lib)
+    return rdma_include_dirs, rdma_lib_dirs, rdma_link_flags
+
 
 
 def fully_define_extension(build_ext):
@@ -235,18 +303,21 @@ def fully_define_extension(build_ext):
         have_cuda = False
         cuda_include_dirs = cuda_lib_dirs = []
 
-    if gpu_allreduce == 'RDMA':
+    comm_type = os.environ.get('COM_TYPE')
+    #if gpu_allcomm_typereduce == 'RDMA':
+    if comm_type == 'RDMA':
         have_rdma = True
-        rdma_include_dirs, rdma_lib_dirs = get_rdma_dirs(
-            build_ext, cuda_include_dirs, cuda_lib_dirs)
+        rdma_include_dirs, rdma_lib_dirs, rdma_link_flags = get_rdma_dirs(build_ext)
     else:
         have_rdma = False
-        rdma_include_dirs = rdma_lib_dirs = []
+        rdma_include_dirs = rdma_lib_dirs = rdma_link_flags = []
 
     MACROS = []
     INCLUDES = []
     SOURCES = ['t_ring/tensorflow/MyRing.cpp',
             't_ring/tensorflow/ring_ops.cpp']
+    if have_rdma:
+        SOURCES+=['t_ring/tensorflow/rdma_t.cpp']
     COMPILE_FLAGS = ['-std=c++11', '-fPIC', '-Os'] + tf_compile_flags
     LINK_FLAGS = tf_link_flags
     LIBRARY_DIRS = []
@@ -259,10 +330,11 @@ def fully_define_extension(build_ext):
         LIBRARIES += ['cudart']
 
     if have_rdma:
-        MACROS += [('HAVE_rdma', '1')]
-        INCLUDES += nccl_include_dirs
-        LIBRARY_DIRS += nccl_lib_dirs
-        LIBRARIES += ['rdma']
+        MACROS += [('HAVE_RDMA', '1')]
+        INCLUDES += rdma_include_dirs
+        LIBRARY_DIRS += rdma_lib_dirs
+        LINK_FLAGS += rdma_link_flags
+        #LIBRARIES += ['rdma']
 
     if gpu_allreduce:
         MACROS += [('T_RING_GPU_ALLREDUCE', "'%s'" % gpu_allreduce[0])]
