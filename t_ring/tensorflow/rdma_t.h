@@ -56,6 +56,6 @@ struct context
 	bool remote_idle;
 };
 
-
+static void test_rdma_header();
 #endif
 #endif
