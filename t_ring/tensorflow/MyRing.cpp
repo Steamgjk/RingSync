@@ -2192,7 +2192,7 @@ void MyRing::RDMA_ProcessRecvData(struct rdma_cm_id* rc_id)
 				void* recv_data = nullptr;
 				//int sz = recv4data(&wc, recv_data);
 				uint32_t sz = -1;
-				recv_data = recv_by_RDMA(wc, sz);
+				recv_data = recv_by_RDMA(&wc, sz);
 
 				printf("get recv4data sz = %ld\n", sz);
 				if (recv_data != nullptr)//received data, will append to recv_chain...
