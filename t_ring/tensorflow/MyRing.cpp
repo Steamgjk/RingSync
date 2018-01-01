@@ -1141,6 +1141,7 @@ void MyRing::Send2RightThreadCallback()
 					std::lock_guard<std::mutex>lock(right_queue_mtx);
 					if (!to_right_queue.empty())
 					{
+						printf("get from to_right_queue\n");
 						msg = to_right_queue.front();
 						to_right_queue.pop();
 					}
@@ -1169,6 +1170,7 @@ void MyRing::Send2RightThreadCallback()
 		}
 		if (shut_down)
 		{
+			printf("Right Shut!!\n");
 			break;
 		}
 	}
@@ -1209,6 +1211,7 @@ void MyRing::Send2LeftThreadCallback()
 
 					if (!to_left_queue.empty())
 					{
+						printf("get from to_left_queue\n");
 						msg = to_left_queue.front();
 						to_left_queue.pop();
 					}
@@ -1241,6 +1244,7 @@ void MyRing::Send2LeftThreadCallback()
 		}
 		if (shut_down)
 		{
+			printf("Left Shut!!\n");
 			break;
 		}
 	}
@@ -1875,6 +1879,7 @@ void MyRing::EnqueSendQ(DataTuple* dtuple)
 #endif
 		{
 			std::lock_guard<std::mutex>lock(right_queue_mtx);
+			printf("toright\n");
 			to_right_queue.push((void*)tosend_buf);
 		}
 #ifdef GJK_DEBUG
@@ -1891,6 +1896,7 @@ void MyRing::EnqueSendQ(DataTuple* dtuple)
 #endif
 		{
 			std::lock_guard<std::mutex>lock(left_queue_mtx);
+			printf("toleft\n");
 			to_left_queue.push((void*)tosend_buf);
 		}
 	}
@@ -2184,6 +2190,7 @@ void MyRing::RDMA_ProcessRecvData(struct rdma_cm_id* rc_id)
 			{
 				void* recv_data = nullptr;
 				int sz = recv4data(&wc, recv_data);
+				printf("get recv4data sz = %d\n", sz);
 				if (recv_data != nullptr)//received data, will append to recv_chain...
 				{
 					printf("Polling Recved Data  sz = %d\n", sz);
@@ -2218,6 +2225,10 @@ void MyRing::RDMA_ProcessRecvData(struct rdma_cm_id* rc_id)
 					}
 
 
+				}
+				else
+				{
+					printf("should not come here null recv_data\n");
 				}
 			}
 			else

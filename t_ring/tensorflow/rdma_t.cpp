@@ -349,11 +349,12 @@ int recv4data(struct ibv_wc *wc, void* data_ptr)
 			exit(-1);
 		}
 		std::memcpy(data_ptr, ctx->buffer, size);
-		printf("Data can be gained\n");
+		printf("recv4data:Data can be gained\n");
 
 		post_receive_server(id);
 		ctx->msg->id = MSG_READY;
 		send_message(id);
+		printf("send_message back\n");
 	}
 	else if (wc->opcode & IBV_WC_RECV)
 	{
