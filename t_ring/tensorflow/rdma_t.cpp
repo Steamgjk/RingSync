@@ -106,7 +106,7 @@ static void send_message(struct rdma_cm_id *id)
 
 static void send_tensor(struct rdma_cm_id *id, char* buff, uint32_t len)
 {
-	printf("Sending tensor...\n");
+	//printf("Sending tensor...\n");
 	struct context *ctx = (struct context *)id->context;
 	struct ibv_send_wr wr, *bad_wr = NULL;
 	struct ibv_sge sge;
@@ -416,7 +416,7 @@ static void *send_poll_cq(void *tmp_id)
 
 void rdma_send_data(struct ibv_wc *wc, void* data2send, size_t data_len)
 {
-	printf("Here:rdma_send_data....\n");
+	//printf("Here:rdma_send_data....\n");
 	struct rdma_cm_id *id = (struct rdma_cm_id *)(uintptr_t)wc->wr_id;
 	struct context *ctx = (struct context *)id->context;
 
@@ -431,25 +431,25 @@ void rdma_send_data(struct ibv_wc *wc, void* data2send, size_t data_len)
 		{
 			ctx->peer_addr = ctx->msg->data.mr.addr;
 			ctx->peer_rkey = ctx->msg->data.mr.rkey;
-			printf("received remote memory address and key\n");
+			//printf("received remote memory address and key\n");
 			ctx->remote_idle = true;
 
 			//__send_str = data_gene(1024 * 1024 * 100);
 			send_tensor(id, (char*)data2send, data_len);
-			printf("INIt SEnd\n");
+			//printf("INIt SEnd\n");
 		}
 		else if (ctx->msg->id == MSG_DONE)
 		{
-			printf("received DONE, disconnecting\n");
+			//printf("received DONE, disconnecting\n");
 			rdma_disconnect(id);
 			return;
 		}
 		else if (ctx->msg->id == MSG_READY)
 		{
 			ctx->remote_idle = true;
-			printf("COns Send\n");
+			//printf("COns Send\n");
 			send_tensor(id, (char*)data2send, data_len);
-			printf("Adter Send\n");
+			//printf("Adter Send\n");
 		}
 		post_receive_client(id);
 	}

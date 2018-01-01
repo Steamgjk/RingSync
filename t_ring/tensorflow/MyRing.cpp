@@ -1129,10 +1129,10 @@ void MyRing::Send2RightThreadCallback()
 
 		while (ibv_poll_cq(cq, 1, &wc))
 		{
-			printf("Send2RightThreadCallback Enter ibv_poll_cq\n");
+			//printf("Send2RightThreadCallback Enter ibv_poll_cq\n");
 			if (wc.status == IBV_WC_SUCCESS)
 			{
-				printf("Send2RightThreadCallback Comer IBV_WC_SUCCESS\n");
+				//printf("Send2RightThreadCallback Comer IBV_WC_SUCCESS\n");
 
 				while (!shut_down)
 				{
@@ -1143,7 +1143,7 @@ void MyRing::Send2RightThreadCallback()
 						std::lock_guard<std::mutex>lock(right_queue_mtx);
 						if (!to_right_queue.empty())
 						{
-							printf("get from to_right_queue\n");
+							//printf("get from to_right_queue\n");
 							msg = to_right_queue.front();
 							to_right_queue.pop();
 						}
@@ -1154,21 +1154,21 @@ void MyRing::Send2RightThreadCallback()
 						DataTuple* dtuple = static_cast<DataTuple*>(msg);
 						size_t len = sizeof(DataTuple) + (dtuple->data_num) * (sizeoftype(dtuple->data_type));
 						//int nwt = write(send_fd, msg, len );
-						printf("RDMA Sending Data\n");
+						//printf("RDMA Sending Data\n");
 						rdma_send_data(&wc, msg, len);
 						free(msg);
 						break;
 					}
 					else
 					{
-						printf("to_right_queue empty Sleep \n");
+						//printf("to_right_queue empty Sleep \n");
 						std::this_thread::sleep_for(std::chrono::seconds(1));
 					}
 				}
 			}
 			else
 			{
-				printf("\nwc = %s\n", ibv_wc_status_str(wc.status));
+				//printf("\nwc = %s\n", ibv_wc_status_str(wc.status));
 				rc_die("poll_cq: status is not IBV_WC_SUCCESS");
 			}
 			if (shut_down)
@@ -1204,11 +1204,11 @@ void MyRing::Send2LeftThreadCallback()
 		while (ibv_poll_cq(cq, 1, &wc))
 		{
 
-			printf("Send2LeftThreadCallback Enter ibv_poll_cq\n");
+			//printf("Send2LeftThreadCallback Enter ibv_poll_cq\n");
 			if (wc.status == IBV_WC_SUCCESS)
 			{
 
-				printf("Send2LeftThreadCallback Comer IBV_WC_SUCCESS\n");
+				//printf("Send2LeftThreadCallback Comer IBV_WC_SUCCESS\n");
 				while (!shut_down)
 				{
 					void* msg = NULL;
@@ -1217,7 +1217,7 @@ void MyRing::Send2LeftThreadCallback()
 
 						if (!to_left_queue.empty())
 						{
-							printf("get from to_left_queue\n");
+							//printf("get from to_left_queue\n");
 							msg = to_left_queue.front();
 							to_left_queue.pop();
 						}
@@ -1229,14 +1229,14 @@ void MyRing::Send2LeftThreadCallback()
 					{
 						DataTuple* dtuple = static_cast<DataTuple*>(msg);
 						size_t len = sizeof(DataTuple) + (dtuple->data_num) * (sizeoftype(dtuple->data_type));
-						printf("RDMA Sending Data\n");
+						//printf("RDMA Sending Data\n");
 						rdma_send_data(&wc, msg, len);
 						free(msg);
 						break;
 					}
 					else
 					{
-						printf("to_left_queue empty Sleep \n");
+						//printf("to_left_queue empty Sleep \n");
 						std::this_thread::sleep_for(std::chrono::seconds(1));
 					}
 				}
@@ -1245,7 +1245,7 @@ void MyRing::Send2LeftThreadCallback()
 			}
 			else
 			{
-				printf("\nwc = %s\n", ibv_wc_status_str(wc.status));
+				//printf("\nwc = %s\n", ibv_wc_status_str(wc.status));
 				rc_die("poll_cq: status is not IBV_WC_SUCCESS");
 			}
 			if (shut_down)
@@ -2192,23 +2192,23 @@ void MyRing::RDMA_ProcessRecvData(struct rdma_cm_id* rc_id)
 
 		while (ibv_poll_cq(cq, 1, &wc))
 		{
-			printf("Each poll_cq\n");
-			printWCode(&wc);
+			//printf("Each poll_cq\n");
+			//printWCode(&wc);
 			if (wc.status == IBV_WC_SUCCESS)
 			{
 				void* recv_data = nullptr;
-				printf("Before recv4Data \n");
-				printWCode(&wc);
+				//printf("Before recv4Data \n");
+				//printWCode(&wc);
 				int sz = recv4data(&wc, recv_data);
-				printf("After recv4Data \n");
-				printWCode(&wc);
+				//printf("After recv4Data \n");
+				//printWCode(&wc);
 				//uint32_t sz = -1;
 				//recv_data = recv_by_RDMA(&wc, sz);
 
-				printf("get recv4data sz = %ld\n", sz);
+				//printf("get recv4data sz = %ld\n", sz);
 				if (recv_data != nullptr)//received data, will append to recv_chain...
 				{
-					printf("Polling Recved Data  sz = %d\n", sz);
+					//printf("Polling Recved Data  sz = %d\n", sz);
 					int header_len = sizeof(DataTuple);
 					char* header_msg = static_cast<char*>(recv_data);
 					DataTuple* dtuple = static_cast<DataTuple*>( static_cast<void*>(header_msg) );
@@ -2243,12 +2243,12 @@ void MyRing::RDMA_ProcessRecvData(struct rdma_cm_id* rc_id)
 				}
 				else
 				{
-					printf("should not come here null recv_data\n");
+					//printf("should not come here null recv_data\n");
 				}
 			}
 			else
 			{
-				printf("\nwc = %s\n", ibv_wc_status_str(wc.status));
+				//printf("\nwc = %s\n", ibv_wc_status_str(wc.status));
 				rc_die("poll_cq: status is not IBV_WC_SUCCESS");
 			}
 		}
