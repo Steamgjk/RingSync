@@ -657,7 +657,7 @@ struct rdma_event_channel* rdma_server_init(int local_port)
 		rdma_destroy_event_channel(event_channel);
 		exit(-1);
 	}
-
+	printf("Listening port =%d\n", local_port );
 	//bcube_gs.bg_thread.push_back(std::thread(recv_RDMA, std::ref(bcube_gs)));
 
 	std::this_thread::sleep_for(std::chrono::seconds(1));
