@@ -1268,8 +1268,8 @@ void MyRing::Send2RightThreadCallback()
 						DataTuple* dtuple = static_cast<DataTuple*>(data2send);
 						size_t data_len = sizeof(DataTuple) + (dtuple->data_num) * (sizeoftype(dtuple->data_type));
 						send_tensor(id, (char*)data2send, data_len);
-						if (this->ring_rank == 0 && dtuple->op == RING_BROADCAST)
-							printf("%s sent1\n", dtuple->data_name);
+						//if (this->ring_rank == 0 && dtuple->op == RING_BROADCAST)
+						//	printf("%s sent1\n", dtuple->data_name);
 						//printf("INIt SEnd\n");
 						free(data2send);
 					}
@@ -1299,8 +1299,8 @@ void MyRing::Send2RightThreadCallback()
 						size_t data_len = sizeof(DataTuple) + (dtuple->data_num) * (sizeoftype(dtuple->data_type));
 						//printf("COns Send\n");
 						send_tensor(id, (char*)data2send, data_len);
-						if (this->ring_rank == 0 && dtuple->op == RING_BROADCAST)
-							printf("%s sent\n", dtuple->data_name);
+						//if (this->ring_rank == 0 && dtuple->op == RING_BROADCAST)
+						//	printf("%s sent\n", dtuple->data_name);
 						//printf("Adter Send\n");
 						free(data2send);
 					}
@@ -1384,8 +1384,8 @@ void MyRing::Send2LeftThreadCallback()
 						DataTuple* dtuple = static_cast<DataTuple*>(data2send);
 						size_t data_len = sizeof(DataTuple) + (dtuple->data_num) * (sizeoftype(dtuple->data_type));
 						send_tensor(id, (char*)data2send, data_len);
-						if (this->ring_rank == 0 && dtuple->op == RING_BROADCAST)
-							printf("%s sent1-le\n", dtuple->data_name);
+						//if (this->ring_rank == 0 && dtuple->op == RING_BROADCAST)
+						//	printf("%s sent1-le\n", dtuple->data_name);
 						//printf("INIt SEnd\n");
 						free(data2send);
 					}
@@ -1415,8 +1415,8 @@ void MyRing::Send2LeftThreadCallback()
 						size_t data_len = sizeof(DataTuple) + (dtuple->data_num) * (sizeoftype(dtuple->data_type));
 						//printf("COns Send\n");
 						send_tensor(id, (char*)data2send, data_len);
-						if (this->ring_rank == 0 && dtuple->op == RING_BROADCAST)
-							printf("%s sent-le\n", dtuple->data_name);
+						//if (this->ring_rank == 0 && dtuple->op == RING_BROADCAST)
+						//	printf("%s sent-le\n", dtuple->data_name);
 						//printf("Adter Send\n");
 						free(data2send);
 					}
@@ -2422,9 +2422,9 @@ void MyRing::RDMA_ProcessRecvData(struct rdma_cm_id* rc_id)
 							//printf("Inserting to right\n");
 
 							{
-								if (dtuple->op == RING_BROADCAST && this->ring_rank != 0)
+								//if (dtuple->op == RING_BROADCAST && this->ring_rank != 0)
 								{
-									printf("%s Recved and Insert\n", dtuple->data_name);
+									//	printf("%s Recved and Insert\n", dtuple->data_name);
 								}
 								std::lock_guard<std::mutex>lock(map_mtx_to_right);
 								recv_buf_map_to_right.insert(make_pair(keyname, static_cast<void*>(dtuple)));
@@ -2433,9 +2433,9 @@ void MyRing::RDMA_ProcessRecvData(struct rdma_cm_id* rc_id)
 						}
 						else
 						{
-							if (dtuple->op == RING_BROADCAST && this->ring_rank != 0)
+							//if (dtuple->op == RING_BROADCAST && this->ring_rank != 0)
 							{
-								printf("%s Left Recved and Insert\n", dtuple->data_name);
+								//printf("%s Left Recved and Insert\n", dtuple->data_name);
 							}
 							//printf("Inserting to left\n");
 							{
