@@ -1142,6 +1142,10 @@ void MyRing::Send2RightThreadCallback()
 						msg = to_right_queue.front();
 						to_right_queue.pop();
 					}
+					else
+					{
+						printf("to_right_queue Current is Empty\n");
+					}
 				}
 				if (msg)
 				{
@@ -1190,10 +1194,15 @@ void MyRing::Send2LeftThreadCallback()
 				void* msg = NULL;
 				{
 					std::lock_guard<std::mutex>lock(left_queue_mtx);
+
 					if (!to_left_queue.empty())
 					{
 						msg = to_left_queue.front();
 						to_left_queue.pop();
+					}
+					else
+					{
+						printf("to_left_queue Current is Empty\n");
 					}
 
 				}
