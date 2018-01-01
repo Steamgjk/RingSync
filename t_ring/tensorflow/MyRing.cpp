@@ -2186,7 +2186,7 @@ void MyRing::RDMA_ProcessRecvData(struct rdma_cm_id* rc_id)
 
 		while (ibv_poll_cq(cq, 1, &wc))
 		{
-			printWCode(wc);
+			printWCode(&wc);
 			if (wc.status == IBV_WC_SUCCESS)
 			{
 				void* recv_data = nullptr;
