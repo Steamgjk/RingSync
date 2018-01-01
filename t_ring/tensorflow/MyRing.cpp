@@ -1121,19 +1121,20 @@ void MyRing::Send2RightThreadCallback()
 	struct context *ctx = (struct context *)send_rc_id->context;
 	void *ev_ctx = NULL;
 
-	while (!shut_down)
-	{
-		TEST_NZ(ibv_get_cq_event(ctx->comp_channel, &cq, &ev_ctx));
-		ibv_ack_cq_events(cq, 1);
-		TEST_NZ(ibv_req_notify_cq(cq, 0));
 
-		while (ibv_poll_cq(cq, 1, &wc))
+	TEST_NZ(ibv_get_cq_event(ctx->comp_channel, &cq, &ev_ctx));
+	ibv_ack_cq_events(cq, 1);
+	TEST_NZ(ibv_req_notify_cq(cq, 0));
+
+	while (ibv_poll_cq(cq, 1, &wc))
+	{
+		printf("Send2RightThreadCallback Enter ibv_poll_cq\n");
+		if (wc.status == IBV_WC_SUCCESS)
 		{
-			printf("Send2RightThreadCallback Enter ibv_poll_cq\n");
-			if (wc.status == IBV_WC_SUCCESS)
+			printf("Send2RightThreadCallback Comer IBV_WC_SUCCESS\n");
+			//send_by_RDMA(&wc);
+			while (!shut_down)
 			{
-				printf("Send2RightThreadCallback Comer IBV_WC_SUCCESS\n");
-				//send_by_RDMA(&wc);
 				void* msg = NULL;
 				//Data Name, scatter_gather_counter,  dataType, data-length, data
 				{
@@ -1146,6 +1147,7 @@ void MyRing::Send2RightThreadCallback()
 					else
 					{
 						printf("to_right_queue Current is Empty\n");
+						std::this_thread::sleep_for(std::chrono::seconds(1));
 					}
 				}
 				if (msg)
@@ -1156,16 +1158,21 @@ void MyRing::Send2RightThreadCallback()
 					printf("RDMA Sending Data\n");
 					rdma_send_data(&wc, msg, len);
 					free(msg);
+					break;
 				}
-
-			}
-			else
-			{
-				printf("\nwc = %s\n", ibv_wc_status_str(wc.status));
-				rc_die("poll_cq: status is not IBV_WC_SUCCESS");
 			}
 		}
+		else
+		{
+			printf("\nwc = %s\n", ibv_wc_status_str(wc.status));
+			rc_die("poll_cq: status is not IBV_WC_SUCCESS");
+		}
+		if (shut_down)
+		{
+			break;
+		}
 	}
+
 	printf("Terminated  Send2RightThreadCallback\n");
 }
 void MyRing::Send2LeftThreadCallback()
@@ -1181,18 +1188,21 @@ void MyRing::Send2LeftThreadCallback()
 	struct context *ctx = (struct context *)send_rc_id->context;
 	void *ev_ctx = NULL;
 
-	while (!shut_down)
-	{
-		TEST_NZ(ibv_get_cq_event(ctx->comp_channel, &cq, &ev_ctx));
-		ibv_ack_cq_events(cq, 1);
-		TEST_NZ(ibv_req_notify_cq(cq, 0));
 
-		while (ibv_poll_cq(cq, 1, &wc))
+	TEST_NZ(ibv_get_cq_event(ctx->comp_channel, &cq, &ev_ctx));
+	ibv_ack_cq_events(cq, 1);
+	TEST_NZ(ibv_req_notify_cq(cq, 0));
+
+	while (ibv_poll_cq(cq, 1, &wc))
+	{
+
+		printf("Send2LeftThreadCallback Enter ibv_poll_cq\n");
+		if (wc.status == IBV_WC_SUCCESS)
 		{
-			printf("Send2LeftThreadCallback Enter ibv_poll_cq\n");
-			if (wc.status == IBV_WC_SUCCESS)
+
+			printf("Send2LeftThreadCallback Comer IBV_WC_SUCCESS\n");
+			while (!shut_down)
 			{
-				printf("Send2LeftThreadCallback Comer IBV_WC_SUCCESS\n");
 				void* msg = NULL;
 				{
 					std::lock_guard<std::mutex>lock(left_queue_mtx);
@@ -1205,6 +1215,8 @@ void MyRing::Send2LeftThreadCallback()
 					else
 					{
 						printf("to_left_queue Current is Empty\n");
+						//sleep(1);
+						std::this_thread::sleep_for(std::chrono::seconds(1));
 					}
 
 				}
@@ -1216,16 +1228,23 @@ void MyRing::Send2LeftThreadCallback()
 					printf("RDMA Sending Data\n");
 					rdma_send_data(&wc, msg, len);
 					free(msg);
+					break;
 				}
+			}
 
-			}
-			else
-			{
-				printf("\nwc = %s\n", ibv_wc_status_str(wc.status));
-				rc_die("poll_cq: status is not IBV_WC_SUCCESS");
-			}
+
+		}
+		else
+		{
+			printf("\nwc = %s\n", ibv_wc_status_str(wc.status));
+			rc_die("poll_cq: status is not IBV_WC_SUCCESS");
+		}
+		if (shut_down)
+		{
+			break;
 		}
 	}
+
 
 	printf("Terminated  Send2LeftThreadCallback\n");
 }
