@@ -1146,7 +1146,7 @@ void MyRing::Send2RightThreadCallback()
 					}
 					else
 					{
-						printf("to_right_queue Current is Empty\n");
+						//printf("to_right_queue Current is Empty\n");
 						std::this_thread::sleep_for(std::chrono::seconds(1));
 					}
 				}
@@ -1214,7 +1214,7 @@ void MyRing::Send2LeftThreadCallback()
 					}
 					else
 					{
-						printf("to_left_queue Current is Empty\n");
+						//printf("to_left_queue Current is Empty\n");
 						//sleep(1);
 						std::this_thread::sleep_for(std::chrono::seconds(1));
 					}
@@ -1846,9 +1846,9 @@ void MyRing::EnqueSendQ(DataTuple* dtuple)
 	printf("EnqueuSendQ-1\n");
 #endif
 	void* tosend_buf = NULL;
-#ifdef GJK_DEBUG
+
 	printf("EnqueuSendQ-3  op  %d  dtuple  %p vrank  %d  broadcastrank = %d  data  %p\n",  dtuple->op, dtuple, dtuple->rank, dtuple->broadcast_rank, dtuple->data);
-#endif
+
 	switch (dtuple->op)
 	{
 	case RING_ALLREDUCE:
