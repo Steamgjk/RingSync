@@ -670,6 +670,7 @@ struct rdma_cm_id* rdma_client_init_connection(char* local_ip, char* remote_ip, 
 {
 	//std::cout << "client inited (RDMA) start" << std::endl;
 	printf("client inited (RDMA) start\n");
+	printf("local_ip=%s remote_ip=%s remote_port=%d\n", local_ip, remote_ip, remote_port);
 
 	struct rdma_cm_id *conn = NULL;
 	struct rdma_event_channel *ec = NULL;
@@ -695,7 +696,7 @@ struct rdma_cm_id* rdma_client_init_connection(char* local_ip, char* remote_ip, 
 
 	struct rdma_cm_event *event = NULL;
 	struct rdma_conn_param cm_params;
-
+	printf("before build_params\n");
 	build_params(&cm_params);
 	while (rdma_get_cm_event(ec, &event) == 0)
 	{
@@ -704,16 +705,19 @@ struct rdma_cm_id* rdma_client_init_connection(char* local_ip, char* remote_ip, 
 		rdma_ack_cm_event(event);
 		if (event_copy.event == RDMA_CM_EVENT_ADDR_RESOLVED)
 		{
+			printf("RDMA_CM_EVENT_ADDR_RESOLVED\n");
 			build_connection(event_copy.id, IS_CLIENT, nullptr);
 			on_pre_conn(event_copy.id, IS_CLIENT);
 			TEST_NZ(rdma_resolve_route(event_copy.id, TIMEOUT_IN_MS));
 		}
 		else if (event_copy.event == RDMA_CM_EVENT_ROUTE_RESOLVED)
 		{
+			printf("RDMA_CM_EVENT_ROUTE_RESOLVED\n");
 			TEST_NZ(rdma_connect(event_copy.id, &cm_params));
 		}
 		else if (event_copy.event == RDMA_CM_EVENT_ESTABLISHED)
 		{
+			printf("RDMA_CM_EVENT_ESTABLISHED\n");
 			struct context *ctx = (struct context *)event_copy.id->context;
 			//TEST_NZ(pthread_create(&ctx->cq_poller_thread, NULL, send_poll_cq, event_copy.id));
 			std::cout << local_ip << " has connected to server[ " << remote_ip << " , " << remote_port << " ]" << std::endl;
@@ -722,6 +726,7 @@ struct rdma_cm_id* rdma_client_init_connection(char* local_ip, char* remote_ip, 
 		}
 		else if (event_copy.event == RDMA_CM_EVENT_REJECTED)
 		{
+			printf("RDMA_CM_EVENT_REJECTED\n");
 			std::this_thread::sleep_for(std::chrono::milliseconds(100));
 			connect_count++;
 			struct context *ctx = (struct context *)event_copy.id->context;
