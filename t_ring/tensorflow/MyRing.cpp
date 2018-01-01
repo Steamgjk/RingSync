@@ -1132,11 +1132,7 @@ void MyRing::Send2RightThreadCallback()
 		if (wc.status == IBV_WC_SUCCESS)
 		{
 			printf("Send2RightThreadCallback Comer IBV_WC_SUCCESS\n");
-			while (to_right_queue.empty())
-			{
 
-			}
-			printf("to_right_queue No Empty\n");
 			while (!shut_down)
 			{
 
@@ -1150,11 +1146,7 @@ void MyRing::Send2RightThreadCallback()
 						msg = to_right_queue.front();
 						to_right_queue.pop();
 					}
-					else
-					{
-						//printf("to_right_queue Current is Empty\n");
-						std::this_thread::sleep_for(std::chrono::seconds(1));
-					}
+
 				}
 				if (msg)
 				{
@@ -1165,6 +1157,11 @@ void MyRing::Send2RightThreadCallback()
 					rdma_send_data(&wc, msg, len);
 					free(msg);
 					break;
+				}
+				else
+				{
+					printf("to_right_queue empty Sleep \n");
+					std::this_thread::sleep_for(std::chrono::seconds(1));
 				}
 			}
 		}
@@ -1210,11 +1207,6 @@ void MyRing::Send2LeftThreadCallback()
 			printf("Send2LeftThreadCallback Comer IBV_WC_SUCCESS\n");
 			while (!shut_down)
 			{
-				while (to_left_queue.empty())
-				{
-
-				}
-				printf("to_left_queue No Empty\n");
 				void* msg = NULL;
 				{
 					std::lock_guard<std::mutex>lock(left_queue_mtx);
@@ -1225,12 +1217,7 @@ void MyRing::Send2LeftThreadCallback()
 						msg = to_left_queue.front();
 						to_left_queue.pop();
 					}
-					else
-					{
-						//printf("to_left_queue Current is Empty\n");
-						//sleep(1);
-						std::this_thread::sleep_for(std::chrono::seconds(1));
-					}
+
 
 				}
 
@@ -1242,6 +1229,11 @@ void MyRing::Send2LeftThreadCallback()
 					rdma_send_data(&wc, msg, len);
 					free(msg);
 					break;
+				}
+				else
+				{
+					printf("to_left_queue empty Sleep \n");
+					std::this_thread::sleep_for(std::chrono::seconds(1));
 				}
 			}
 
@@ -1861,7 +1853,7 @@ void MyRing::EnqueSendQ(DataTuple* dtuple)
 #endif
 	void* tosend_buf = NULL;
 
-	printf("EnqueuSendQ-3  op  %d  dtuple  %p vrank  %d  broadcastrank = %d  data  %p\n",  dtuple->op, dtuple, dtuple->rank, dtuple->broadcast_rank, dtuple->data);
+	//printf("EnqueuSendQ-3  op  %d  dtuple  %p vrank  %d  broadcastrank = %d  data  %p\n",  dtuple->op, dtuple, dtuple->rank, dtuple->broadcast_rank, dtuple->data);
 
 	switch (dtuple->op)
 	{
@@ -1889,7 +1881,7 @@ void MyRing::EnqueSendQ(DataTuple* dtuple)
 #endif
 		{
 			std::lock_guard<std::mutex>lock(right_queue_mtx);
-			printf("toright\n");
+			//printf("toright\n");
 			to_right_queue.push((void*)tosend_buf);
 		}
 #ifdef GJK_DEBUG
@@ -1906,7 +1898,7 @@ void MyRing::EnqueSendQ(DataTuple* dtuple)
 #endif
 		{
 			std::lock_guard<std::mutex>lock(left_queue_mtx);
-			printf("toleft\n");
+			//printf("toleft\n");
 			to_left_queue.push((void*)tosend_buf);
 		}
 	}
