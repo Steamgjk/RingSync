@@ -2270,7 +2270,15 @@ void MyRing::RDMA_ProcessRecvData(struct rdma_cm_id* rc_id)
 					DataTuple* dtuple = static_cast<DataTuple*>( static_cast<void*>(header_msg) );
 					int data_len = (dtuple->data_num) * this->sizeoftype(dtuple->data_type);
 					char* data_msg = header_msg + header_len;
-					dtuple->data = data_msg;
+					if (data_len > 0)
+					{
+						dtuple->data = data_msg;
+					}
+					else
+					{
+						dtuple->data = NULL;
+					}
+
 
 					printf("Process Data name = %s sz = %ld  header_len=%d data_len=%d\n", dtuple->data_name, sz, header_len, data_len);
 					char full_name[header_name_len];
