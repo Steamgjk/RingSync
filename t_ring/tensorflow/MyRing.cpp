@@ -1175,6 +1175,39 @@ void MyRing::BackGround2RightThreadCallback()
 
 }
 #if HAVE_RDMA
+void* MyRing::FetchFrom2RightQ()
+{
+	void* msg = NULL;
+	//Data Name, scatter_gather_counter,  dataType, data-length, data
+	{
+		std::lock_guard<std::mutex>lock(right_queue_mtx);
+		if (!to_right_queue.empty())
+		{
+			//printf("get from to_right_queue\n");
+			msg = to_right_queue.front();
+			to_right_queue.pop();
+		}
+
+	}
+	return msg;
+
+}
+void* MyRing::FetchFrom2LeftQ()
+{
+	void* msg = NULL;
+	//Data Name, scatter_gather_counter,  dataType, data-length, data
+	{
+		std::lock_guard<std::mutex>lock(left_queue_mtx);
+		if (!to_left_queue.empty())
+		{
+			//printf("get from to_right_queue\n");
+			msg = to_left_queue.front();
+			to_left_queue.pop();
+		}
+
+	}
+	return msg;
+}
 void MyRing::Send2RightThreadCallback()
 {
 	int right_idx = this->getRightNeighbour(this->ring_rank);
@@ -1196,48 +1229,83 @@ void MyRing::Send2RightThreadCallback()
 
 		while (ibv_poll_cq(cq, 1, &wc))
 		{
-			//printf("Send2RightThreadCallback Enter ibv_poll_cq\n");
+
 			if (wc.status == IBV_WC_SUCCESS)
 			{
-				//printf("Send2RightThreadCallback Comer IBV_WC_SUCCESS\n");
 
-				while (!shut_down)
+
+				printf("Here:rdma_send_data....\n");
+				printWCode(wc);
+				struct rdma_cm_id *id = (struct rdma_cm_id *)(uintptr_t)wc->wr_id;
+				struct context *ctx = (struct context *)id->context;
+
+				if (wc->opcode == IBV_WC_RECV_RDMA_WITH_IMM)
 				{
-
-					void* msg = NULL;
-					//Data Name, scatter_gather_counter,  dataType, data-length, data
+					printf("send thread %ld will never be here!!!!!\n", pthread_self());
+					exit(0);
+				}
+				else if (wc->opcode & IBV_WC_RECV)
+				{
+					if (ctx->msg->id == MSG_MR)
 					{
-						std::lock_guard<std::mutex>lock(right_queue_mtx);
-						if (!to_right_queue.empty())
+						ctx->peer_addr = ctx->msg->data.mr.addr;
+						ctx->peer_rkey = ctx->msg->data.mr.rkey;
+						//printf("received remote memory address and key\n");
+						ctx->remote_idle = true;
+						void* msg = NULL;
+						while (true)
 						{
-							//printf("get from to_right_queue\n");
-							msg = to_right_queue.front();
-							to_right_queue.pop();
+							msg = FetchFrom2RightQ();
+							if (msg)
+							{
+								break;
+							}
+							else
+							{
+								std::this_thread::sleep_for(std::chrono::nanoseconds(100));
+							}
 						}
-
-					}
-					if (msg)
-					{
 						DataTuple* dtuple = static_cast<DataTuple*>(msg);
 						size_t len = sizeof(DataTuple) + (dtuple->data_num) * (sizeoftype(dtuple->data_type));
-						//int nwt = write(send_fd, msg, len );
-						//if (dtuple->op == RING_BROADCAST)
-						//	printf("Send2RightThreadCallback:RDMA Sending Data  name=%s\n", dtuple->data_name);
-						rdma_send_data(&wc, msg, len);
-						if (dtuple->op == RING_BROADCAST && this->ring_rank == 0)
-						{
-							printf("%s --Send2RightThreadCallback:Finished  \n", dtuple->data_name);
-							getchar();
-						}
+						send_tensor(id, (char*)data2send, data_len);
+						printf("%s sent\n", dtuple->data_name);
+						printf("INIt SEnd\n");
 						free(msg);
-						break;
 					}
-					else
+					else if (ctx->msg->id == MSG_DONE)
 					{
-						//printf("to_right_queue empty Sleep \n");
-						std::this_thread::sleep_for(std::chrono::seconds(1));
+						//printf("received DONE, disconnecting\n");
+						rdma_disconnect(id);
+						return;
 					}
+					else if (ctx->msg->id == MSG_READY)
+					{
+						ctx->remote_idle = true;
+						void* msg = NULL;
+						while (true)
+						{
+							msg = FetchFrom2RightQ();
+							if (msg)
+							{
+								break;
+							}
+							else
+							{
+								std::this_thread::sleep_for(std::chrono::nanoseconds(100));
+							}
+						}
+						DataTuple* dtuple = static_cast<DataTuple*>(msg);
+						size_t len = sizeof(DataTuple) + (dtuple->data_num) * (sizeoftype(dtuple->data_type));
+						printf("COns Send\n");
+						send_tensor(id, (char*)data2send, data_len);
+						printf("%s sent\n", dtuple->data_name);
+						printf("Adter Send\n");
+					}
+					post_receive_client(id);
 				}
+
+
+
 			}
 			else
 			{

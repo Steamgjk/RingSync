@@ -104,7 +104,7 @@ static void send_message(struct rdma_cm_id *id)
 	TEST_NZ(ibv_post_send(id->qp, &wr, &bad_wr));
 }
 
-static void send_tensor(struct rdma_cm_id *id, char* buff, uint32_t len)
+void send_tensor(struct rdma_cm_id *id, char* buff, uint32_t len)
 {
 	//printf("Sending tensor...\n");
 	struct context *ctx = (struct context *)id->context;
@@ -131,7 +131,7 @@ static void send_tensor(struct rdma_cm_id *id, char* buff, uint32_t len)
 	TEST_NZ(ibv_post_send(id->qp, &wr, &bad_wr));
 }
 
-static void post_receive_client(struct rdma_cm_id *id)
+void post_receive_client(struct rdma_cm_id *id)
 {
 	struct context *ctx = (struct context *)id->context;
 	struct ibv_recv_wr wr, *bad_wr = NULL;

@@ -193,6 +193,8 @@ public:
 	struct rdma_cm_id* RDMA_Wait4Connection(int bind_port); //as server
 	void RDMA_ProcessRecvData(struct rdma_cm_id* rc_id);
 	void RDMA_RecvFixedData(struct rdma_cm_id* rc_id, size_t len);
+	void* FetchFrom2RightQ();
+	void* FetchFrom2LeftQ();
 #endif
 
 	~MyRing();
