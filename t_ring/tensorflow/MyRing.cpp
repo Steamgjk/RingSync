@@ -868,9 +868,9 @@ void MyRing::ProcessStageData(void* local_data, void* recv_data, int cur_stage)
 		case RING_ALLREDUCE:
 		{
 			dt->scatter_gather_counter = cur_stage + 1;
-			//printf("Enqueue2\n");
+			printf("Enqueue RING_ALLREDUCE\n");
 			EnqueSendQ(dt);
-			//printf("FIN-Enqueue2\n");
+			printf("FIN-RING_ALLREUDCE\n");
 		}
 
 		break;
@@ -1029,8 +1029,8 @@ void MyRing::BackGround2LeftThreadCallback()
 				}
 				else
 				{
-					//printf("OK ELE  %p  %p\n", pit.second, static_cast<DataTuple*>(pit.second)->data );
-					//printf("Before Process stage_id = %d\n", stage_id );
+					printf("OK ELE  %p  %s\n", pit.second, static_cast<DataTuple*>(pit.second)->data_name );
+					printf("Before Process stage_id = %d\n", stage_id );
 					ProcessStageData(pit.first, pit.second, stage_id);
 					//printf(" q1.size = %ld  q2.size=%ld\n", process_queues_to_left[0].size(), process_queues_to_left[1].size());
 				}
@@ -1149,8 +1149,8 @@ void MyRing::BackGround2RightThreadCallback()
 				else
 				{
 
-					//printf("OK ELE  %p  %p\n", pit.second, static_cast<DataTuple*>(pit.second)->data );
-					//printf("Before Process stage_id = %d\n", stage_id );
+					printf("OK ELE  %p  %s\n", pit.second, static_cast<DataTuple*>(pit.second)->data_name );
+					printf("Before Process stage_id = %d\n", stage_id );
 					ProcessStageData(pit.first, pit.second, stage_id);
 					//printf(" q1.size = %ld  q2.size=%ld\n", process_queues_to_right[0].size(), process_queues_to_right[1].size());
 				}
