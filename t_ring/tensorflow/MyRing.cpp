@@ -1515,12 +1515,11 @@ void MyRing::Recv4LeftThreadCallback()
 		printf("Left Connection NULL\n");
 	}
 
-	while (!shut_down)
-	{
-		RDMA_ProcessRecvData(rc_id);
 
-		//std::this_thread::sleep_for(std::chrono::seconds(1));
-	}
+	RDMA_ProcessRecvData(rc_id);
+
+	//std::this_thread::sleep_for(std::chrono::seconds(1));
+
 	printf("Terminated  Recv4LeftThreadCallback\n");
 
 }
@@ -1537,11 +1536,11 @@ void MyRing::Recv4RightThreadCallback()
 	{
 		printf("Right Connection NULL\n");
 	}
-	while (!shut_down)
-	{
-		RDMA_ProcessRecvData(rc_id);
-		//std::this_thread::sleep_for(std::chrono::seconds(1));
-	}
+
+
+	RDMA_ProcessRecvData(rc_id);
+	//std::this_thread::sleep_for(std::chrono::seconds(1));
+
 	printf("Terminated  Recv4RightThreadCallback\n");
 
 }
@@ -2137,7 +2136,65 @@ struct rdma_cm_id* MyRing::RDMA_Wait4Connection(int listen_port) //as server
 
 void MyRing::RDMA_ProcessRecvData(struct rdma_cm_id* rc_id)
 {
+	struct ibv_cq *cq = NULL;
+	struct ibv_wc wc;
+	struct context *ctx = (struct context *)id->context;
+	void *ev_ctx = NULL;
+	while (!shut_down)
+	{
+		TEST_NZ(ibv_get_cq_event(ctx->comp_channel, &cq, &ev_ctx));
+		ibv_ack_cq_events(cq, 1);
+		TEST_NZ(ibv_req_notify_cq(cq, 0));
 
+		while (ibv_poll_cq(cq, 1, &wc))
+		{
+			if (wc.status == IBV_WC_SUCCESS)
+			{
+				void* recv_data = nullptr;
+				int sz = recv4data(&wc, recv_data);
+				if (recv_data != nullptr)//received data, will append to recv_chain...
+				{
+					printf("Polling Recved Data  sz = %d\n", sz);
+					int header_len = sizeof(DataTuple);
+					char* header_msg = static_cast<char*>(recv_data);
+					DataTuple* dtuple = static_cast<DataTuple*>( static_cast<void*>(header_msg) );
+					int data_len = (dtuple->data_num) * this->sizeoftype(dtuple->data_type);
+					char* data_msg = header_msg + header_len;
+					dtuple->data = data_msg;
+
+					char full_name[header_name_len];
+					sprintf(full_name, "%s_%d", dtuple->data_name, dtuple->scatter_gather_counter);
+					//string keyname = dtuple->data_name;
+					string keyname = full_name;
+					//should locked
+					{
+						if (dtuple->toRight)
+						{
+							std::lock_guard<std::mutex>lock(map_mtx_to_right);
+							{
+								std::map<string, void*>::iterator vit = recv_buf_map_to_right.find(keyname);
+								recv_buf_map_to_right.insert(make_pair(keyname, static_cast<void*>(dtuple)));
+							}
+						}
+						else
+						{
+							std::lock_guard<std::mutex>lock(map_mtx_to_left);
+							recv_buf_map_to_left.insert(make_pair(keyname, static_cast<void*>(dtuple)));
+
+						}
+
+					}
+
+
+				}
+			}
+			else
+			{
+				printf("\nwc = %s\n", ibv_wc_status_str(wc.status));
+				rc_die("poll_cq: status is not IBV_WC_SUCCESS");
+			}
+		}
+	}
 }
 void MyRing::RDMA_RecvFixedData(struct rdma_cm_id* rc_id, size_t len)
 {
