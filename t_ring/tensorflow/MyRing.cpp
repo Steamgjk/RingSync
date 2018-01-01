@@ -1131,6 +1131,7 @@ void MyRing::Send2RightThreadCallback()
 		{
 			if (wc.status == IBV_WC_SUCCESS)
 			{
+				printf("Send2RightThreadCallback Comer IBV_WC_SUCCESS\n");
 				//send_by_RDMA(&wc);
 				void* msg = NULL;
 				//Data Name, scatter_gather_counter,  dataType, data-length, data
@@ -1185,6 +1186,7 @@ void MyRing::Send2LeftThreadCallback()
 		{
 			if (wc.status == IBV_WC_SUCCESS)
 			{
+				printf("Send2LeftThreadCallback Comer IBV_WC_SUCCESS\n");
 				void* msg = NULL;
 				{
 					std::lock_guard<std::mutex>lock(left_queue_mtx);
