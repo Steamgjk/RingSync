@@ -1913,7 +1913,7 @@ void MyRing::EnqueSendQ(DataTuple* dtuple)
 #endif
 	void* tosend_buf = NULL;
 
-	//printf("EnqueuSendQ-3  op  %d  dtuple  %p vrank  %d  broadcastrank = %d  data  %p\n",  dtuple->op, dtuple, dtuple->rank, dtuple->broadcast_rank, dtuple->data);
+	printf("EnqueuSendQ-3  op  %d  dtuple  %p vrank  %d  broadcastrank = %d  data  %p\n",  dtuple->op, dtuple, dtuple->rank, dtuple->broadcast_rank, dtuple->data);
 
 	switch (dtuple->op)
 	{
@@ -2179,12 +2179,12 @@ void MyRing::FreeDataTuple(DataTuple*& dtuple)
 		{
 			printf("freeing  dtuple-data  %p  name=%s\n", dtuple->data, dtuple->data_name );
 			free(dtuple->data);
-			printf("freed dtuple->data %p  name=%s\n", dtuple->data, dtuple->data_name);
+			printf("freed dtuple->data %p \n", dtuple->data);
 			dtuple->data = NULL;
 		}
 		printf("freeing dtuple %p   name  =%s\n", dtuple, dtuple->data_name );
 		free(dtuple);
-		printf("freed dtuple   %p  name=%s\n", dtuple, dtuple->data_name );
+		printf("freed dtuple   %p \n", dtuple);
 		dtuple = NULL;
 	}
 }
@@ -2256,8 +2256,8 @@ void MyRing::RDMA_ProcessRecvData(struct rdma_cm_id* rc_id)
 				//printf("Before recv4Data \n");
 				//printWCode(&wc);
 				int sz = recv4data(&wc, recv_data);
-				//printf("After recv4Data \n");
-				//printWCode(&wc);
+				printf("After recv4Data \n");
+				printWCode(&wc);
 				//uint32_t sz = -1;
 				//recv_data = recv_by_RDMA(&wc, sz);
 
