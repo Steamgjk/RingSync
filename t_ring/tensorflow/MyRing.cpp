@@ -1129,6 +1129,7 @@ void MyRing::Send2RightThreadCallback()
 
 		while (ibv_poll_cq(cq, 1, &wc))
 		{
+			printf("Send2RightThreadCallback Enter ibv_poll_cq\n");
 			if (wc.status == IBV_WC_SUCCESS)
 			{
 				printf("Send2RightThreadCallback Comer IBV_WC_SUCCESS\n");
@@ -1188,6 +1189,7 @@ void MyRing::Send2LeftThreadCallback()
 
 		while (ibv_poll_cq(cq, 1, &wc))
 		{
+			printf("Send2LeftThreadCallback Enter ibv_poll_cq\n");
 			if (wc.status == IBV_WC_SUCCESS)
 			{
 				printf("Send2LeftThreadCallback Comer IBV_WC_SUCCESS\n");
