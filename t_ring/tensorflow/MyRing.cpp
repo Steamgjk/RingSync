@@ -2253,10 +2253,10 @@ void MyRing::RDMA_ProcessRecvData(struct rdma_cm_id* rc_id)
 			if (wc.status == IBV_WC_SUCCESS)
 			{
 				void* recv_data = nullptr;
-				printf("Before recv4Data \n");
+				//printf("Before recv4Data \n");
 				//printWCode(&wc);
 				int sz = recv4data(&wc, recv_data);
-				printf("After recv4Data \n");
+				//printf("After recv4Data \n");
 				//printWCode(&wc);
 				//uint32_t sz = -1;
 				//recv_data = recv_by_RDMA(&wc, sz);
@@ -2280,7 +2280,7 @@ void MyRing::RDMA_ProcessRecvData(struct rdma_cm_id* rc_id)
 					}
 
 
-					printf("Process Data name = %s sz = %ld  header_len=%d data_len=%d\n", dtuple->data_name, sz, header_len, data_len);
+					printf("Process Data name = %s sz = %ld  header_len=%d data_len=%d  data_num=%d  data_msg=%p\n", dtuple->data_name, sz, header_len, data_len, dtuple->data_num, dtuple->data);
 					char full_name[header_name_len];
 					sprintf(full_name, "%s_%d", dtuple->data_name, dtuple->scatter_gather_counter);
 					//string keyname = dtuple->data_name;
@@ -2290,22 +2290,22 @@ void MyRing::RDMA_ProcessRecvData(struct rdma_cm_id* rc_id)
 					{
 						if (dtuple->toRight)
 						{
-							printf("Inserting to right\n");
+							//printf("Inserting to right\n");
 
 							{
 								std::lock_guard<std::mutex>lock(map_mtx_to_right);
 								recv_buf_map_to_right.insert(make_pair(keyname, static_cast<void*>(dtuple)));
 							}
-							printf("Inserted to right\n");
+							//printf("Inserted to right\n");
 						}
 						else
 						{
-							printf("Inserting to left\n");
+							//printf("Inserting to left\n");
 							{
 								std::lock_guard<std::mutex>lock(map_mtx_to_left);
 								recv_buf_map_to_left.insert(make_pair(keyname, static_cast<void*>(dtuple)));
 							}
-							printf("Inserted to left\n");
+							//printf("Inserted to left\n");
 
 						}
 
