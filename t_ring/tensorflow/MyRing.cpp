@@ -1504,7 +1504,7 @@ void MyRing::ProcessRecvData(int connected_fd)
 void MyRing::Recv4LeftThreadCallback()
 {
 
-	int bind_port = this->listen_for_left_connection_port;
+	int bind_port = this->rdma_listen_for_left_connection_port;
 	struct rdma_cm_id* rc_id = RDMA_Wait4Connection(bind_port);
 	if (rc_id)
 	{
@@ -1527,7 +1527,7 @@ void MyRing::Recv4LeftThreadCallback()
 void MyRing::Recv4RightThreadCallback()
 {
 
-	int bind_port = this->listen_for_right_connection_port;
+	int bind_port = this->rdma_listen_for_right_connection_port;
 	struct rdma_cm_id* rc_id = RDMA_Wait4Connection(bind_port);
 	if (rc_id)
 	{
