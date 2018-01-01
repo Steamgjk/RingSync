@@ -578,7 +578,7 @@ void fun_dump( int no)
 }
 void MyRing::InitBGThread()
 {
-	signal(SIGSEGV, fun_dump);
+	//signal(SIGSEGV, fun_dump);
 
 	/*
 		std::thread td3(&MyRing::Recv4LeftThreadCallback, this);
@@ -1262,7 +1262,7 @@ void MyRing::Send2RightThreadCallback()
 							}
 							else
 							{
-								std::this_thread::sleep_for(std::chrono::nanoseconds(100));
+								std::this_thread::sleep_for(std::chrono::nanoseconds(1));
 							}
 						}
 						DataTuple* dtuple = static_cast<DataTuple*>(data2send);
@@ -1292,7 +1292,7 @@ void MyRing::Send2RightThreadCallback()
 							}
 							else
 							{
-								std::this_thread::sleep_for(std::chrono::nanoseconds(100));
+								std::this_thread::sleep_for(std::chrono::nanoseconds(1));
 							}
 						}
 						DataTuple* dtuple = static_cast<DataTuple*>(data2send);
