@@ -1072,6 +1072,11 @@ void MyRing::BackGround2RightThreadCallback()
 #endif
 
 					EnqueSendQ(dt);
+					if (dt->op == RING_BROADCAST  &&  dt->rank == dt->broadcast_rank)
+					{
+						printf("dt name = %s has Enqueued\n", dt->data_name );
+						getchar();
+					}
 					//printf("FIN-Enque1\n");
 				}
 #ifdef GJK_DEBUG
@@ -1210,11 +1215,11 @@ void MyRing::Send2RightThreadCallback()
 						DataTuple* dtuple = static_cast<DataTuple*>(msg);
 						size_t len = sizeof(DataTuple) + (dtuple->data_num) * (sizeoftype(dtuple->data_type));
 						//int nwt = write(send_fd, msg, len );
-						if (dtuple->op == RING_ALLREDUCE)
-							printf("Send2RightThreadCallback:RDMA Sending Data  name=%s\n", dtuple->data_name);
+						//if (dtuple->op == RING_ALLREDUCE)
+						printf("Send2RightThreadCallback:RDMA Sending Data  name=%s\n", dtuple->data_name);
 						rdma_send_data(&wc, msg, len);
-						if (dtuple->op == RING_ALLREDUCE)
-							printf("--Send2RightThreadCallback:Finished  name=%s\n", dtuple->data_name);
+						//if (dtuple->op == RING_ALLREDUCE)
+						printf("--Send2RightThreadCallback:Finished  name=%s\n", dtuple->data_name);
 						free(msg);
 						break;
 					}
