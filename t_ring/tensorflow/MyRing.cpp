@@ -1132,9 +1132,14 @@ void MyRing::Send2RightThreadCallback()
 		if (wc.status == IBV_WC_SUCCESS)
 		{
 			printf("Send2RightThreadCallback Comer IBV_WC_SUCCESS\n");
-			//send_by_RDMA(&wc);
+			while (to_right_queue.empty())
+			{
+
+			}
+			printf("to_right_queue No Empty\n");
 			while (!shut_down)
 			{
+
 				void* msg = NULL;
 				//Data Name, scatter_gather_counter,  dataType, data-length, data
 				{
@@ -1175,7 +1180,7 @@ void MyRing::Send2RightThreadCallback()
 		}
 	}
 
-	printf("Terminated  Send2RightThreadCallback\n");
+	printf("gjk-Terminated  Send2RightThreadCallback\n");
 }
 void MyRing::Send2LeftThreadCallback()
 {
@@ -1205,6 +1210,11 @@ void MyRing::Send2LeftThreadCallback()
 			printf("Send2LeftThreadCallback Comer IBV_WC_SUCCESS\n");
 			while (!shut_down)
 			{
+				while (to_left_queue.empty())
+				{
+
+				}
+				printf("to_left_queue No Empty\n");
 				void* msg = NULL;
 				{
 					std::lock_guard<std::mutex>lock(left_queue_mtx);
@@ -1250,7 +1260,7 @@ void MyRing::Send2LeftThreadCallback()
 	}
 
 
-	printf("Terminated  Send2LeftThreadCallback\n");
+	printf("gjk-Terminated  Send2LeftThreadCallback\n");
 }
 
 #else
