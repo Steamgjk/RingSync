@@ -945,9 +945,9 @@ void MyRing::BackGround2LeftThreadCallback()
 					assert(dt->rank >= 0 && dt->rank <= 3);
 #endif
 					EnqueSendQ(dt);
-					if (dt->op == RING_BROADCAST  &&  dt->rank == dt->broadcast_rank)
+					//if (dt->op == RING_BROADCAST  &&  dt->rank == dt->broadcast_rank)
 					{
-						printf("2Left dt name = %s has Enqueued\n", dt->data_name );
+						//printf("2Left dt name = %s has Enqueued\n", dt->data_name );
 						//getchar();
 					}
 				}
@@ -1077,9 +1077,9 @@ void MyRing::BackGround2RightThreadCallback()
 #endif
 
 					EnqueSendQ(dt);
-					if (dt->op == RING_BROADCAST  &&  dt->rank == dt->broadcast_rank)
+					//if (dt->op == RING_BROADCAST  &&  dt->rank == dt->broadcast_rank)
 					{
-						printf("2Right dt name = %s has Enqueued\n", dt->data_name );
+						//printf("2Right dt name = %s has Enqueued\n", dt->data_name );
 						//getchar();
 					}
 					//printf("FIN-Enque1\n");
@@ -1224,7 +1224,7 @@ void MyRing::Send2RightThreadCallback()
 						//if (dtuple->op == RING_BROADCAST)
 						//	printf("Send2RightThreadCallback:RDMA Sending Data  name=%s\n", dtuple->data_name);
 						rdma_send_data(&wc, msg, len);
-						if (dtuple->op == RING_BROADCAST)
+						if (dtuple->op == RING_BROADCAST && this->ring_rank == 0)
 							printf("%s --Send2RightThreadCallback:Finished  \n", dtuple->data_name);
 						free(msg);
 						break;
@@ -2318,6 +2318,10 @@ void MyRing::RDMA_ProcessRecvData(struct rdma_cm_id* rc_id)
 							//printf("Inserting to right\n");
 
 							{
+								if (dtuple->op == RING_BROADCAST && this->ring_rank != 0)
+								{
+									printf("%s Recved and Insert\n", dtuple->data_name);
+								}
 								std::lock_guard<std::mutex>lock(map_mtx_to_right);
 								recv_buf_map_to_right.insert(make_pair(keyname, static_cast<void*>(dtuple)));
 							}
