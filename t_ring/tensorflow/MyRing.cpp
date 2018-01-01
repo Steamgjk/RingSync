@@ -1007,7 +1007,7 @@ void MyRing::BackGround2LeftThreadCallback()
 						}
 						else
 						{
-							printf("Left NOT Found %s\n", dt->data_name );
+							//printf("Left NOT Found %s\n", dt->data_name );
 							void* nptr = NULL;
 							pair<void*, void*> pitem = make_pair(msg, nptr);
 							result_qu.push(pitem);
@@ -1134,7 +1134,7 @@ void MyRing::BackGround2RightThreadCallback()
 					}
 					else
 					{
-						printf("Right Not FOUND %s\n", dt->data_name );
+						//printf("Right Not FOUND %s\n", dt->data_name );
 						void* nptr = NULL;
 						pair<void*, void*> pitem = make_pair(msg, nptr);
 						result_qu.push(pitem);
@@ -1143,6 +1143,7 @@ void MyRing::BackGround2RightThreadCallback()
 				}
 				//printf("OK: empty  %d\n", process_queues[stage_id].empty() );
 			}
+
 			while (!result_qu.empty())
 			{
 				pair<void*, void*> pit = result_qu.front();
