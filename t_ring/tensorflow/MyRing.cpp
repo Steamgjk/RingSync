@@ -2216,9 +2216,11 @@ void MyRing::RDMA_ProcessRecvData(struct rdma_cm_id* rc_id)
 					char* data_msg = header_msg + header_len;
 					dtuple->data = data_msg;
 
+					printf("Process Data name = %s sz = %ld  header_len=%d data_len=%d\n", dtuple->data_name, sz, header_len, data_len);
 					char full_name[header_name_len];
 					sprintf(full_name, "%s_%d", dtuple->data_name, dtuple->scatter_gather_counter);
 					//string keyname = dtuple->data_name;
+
 					string keyname = full_name;
 					//should locked
 					{
