@@ -222,26 +222,16 @@ void* recv_by_RDMA(struct ibv_wc *wc, uint32_t& recv_len)
 		uint32_t size = ntohl(wc->imm_data);
 		struct sockaddr_in* client_addr = (struct sockaddr_in *)rdma_get_peer_addr(id);
 		static int64_t lpop = 0;
-		//if (lpop % 100 == 0)
-		//printf("thread: %ld received %i bytes from client %s!!!!!!!!!!!!!%p!!!!!!!!!!!!!!!!!!!!!!!\n", pthread_self(), size, inet_ntoa(client_addr->sin_addr), nit);
+
 		lpop++;
 		//printf("%s\n",ctx->buffer);
-		msg_struct* msg = (msg_struct*)(ctx->buffer);
+		//msg_struct* msg = (msg_struct*)(ctx->buffer);
 		//printf("recv from node %d count: %d\n", msg->rank, ++recvcount[msg->rank]);
 		_data = (void*)std::malloc(sizeof(char) * size);
 		recv_len = size;
-		if (size != ((msg_struct*)(ctx->buffer))->msg_length)
-		{
-			printf("fatal error: recv send_message length is not equal...\n");
-			exit(0);
-		}
-		if (_data == nullptr)
-		{
-			printf("fatal error in recv data malloc!!!!\n");
-			exit(-1);
-		}
-		std::memcpy(_data, ctx->buffer, size);
 
+		std::memcpy(_data, ctx->buffer, size);
+		printf("OOOOOK\n");
 		post_receive_server(id);
 		ctx->msg->id = MSG_READY;
 		send_message(id);
