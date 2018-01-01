@@ -2270,14 +2270,14 @@ void MyRing::RDMA_ProcessRecvData(struct rdma_cm_id* rc_id)
 
 					//DataTuple* dtuple = static_cast<DataTuple*>( static_cast<void*>(header_msg) );
 					DataTuple* dtuple = (DataTuple*)malloc(header_len);
-					memcpy(dtuple, recv_data,  sizeof(DataTuple));
+					memcpy(dtuple, recv_data,  header_len);
 					int data_len = (dtuple->data_num) * this->sizeoftype(dtuple->data_type);
 					//char* data_msg = header_msg + header_len ;
 
 					if (data_len > 0)
 					{
 						char* data_msg = (char*)malloc(data_len);
-						memcpy(data_msg, header_msg + header_len, data_len )
+						memcpy(data_msg, header_msg + header_len, data_len );
 						dtuple->data = data_msg;
 					}
 					else
