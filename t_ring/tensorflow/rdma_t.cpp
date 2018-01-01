@@ -358,8 +358,37 @@ int recv4data(struct ibv_wc *wc, void* data_ptr)
 	}
 	else if (wc->opcode & IBV_WC_RECV)
 	{
-		printf("recv thread %ld will never be here!!!!!\n", pthread_self());
+		printf("recv thread will never be here!!!!!\n");
 		exit(0);
+	}
+	else
+	{
+		switch (wc->opcode)
+		{
+		case IBV_WC_SEND:
+			printf("IBV_WC_SEND\n");
+			break;
+		case IBV_WC_RDMA_WRITE:
+			printf("IBV_WC_RDMA_WRITE\n");
+			break;
+		case IBV_WC_RDMA_READ:
+			printf("IBV_WC_RDMA_READ\n");
+			break;
+		case IBV_WC_COMP_SWAP:
+			printf("IBV_WC_COMP_SWAP\n");
+			break;
+		case IBV_WC_FETCH_ADD:
+			printf("IBV_WC_FETCH_ADD\n");
+			break;
+		case IBV_WC_BIND_MW:
+			printf("IBV_WC_BIND_MW\n");
+			break;
+		case IBV_WC_RECV:
+			printf("IBV_WC_RECV\n");
+			break;
+		default:
+			printf("Unknown\n");
+		}
 	}
 	return size;
 }
