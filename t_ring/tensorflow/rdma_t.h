@@ -55,6 +55,12 @@ struct context
 	uint32_t peer_rkey;
 	bool remote_idle;
 };
+typedef struct _data_list_
+{
+	char* data_ptr;
+	struct _data_list_* next;
+	uint32_t data_len;
+} node_item;
 
 void test_rdma_header();
 
