@@ -1302,8 +1302,8 @@ void MyRing::Send2LeftThreadCallback()
 						//if (dtuple->op == RING_BROADCAST)
 						//	printf("Send2LeftThreadCallback:RDMA Sending Data  name=%s\n", dtuple->data_name);
 						rdma_send_data(&wc, msg, len);
-						if (dtuple->op == RING_BROADCAST)
-							printf("%s  --Send2LeftThreadCallback:Finished name\n", dtuple->data_name);
+						//if (dtuple->op == RING_BROADCAST)
+						//	printf("%s  --Send2LeftThreadCallback:Finished\n", dtuple->data_name);
 						free(msg);
 						break;
 					}
@@ -2303,7 +2303,7 @@ void MyRing::RDMA_ProcessRecvData(struct rdma_cm_id* rc_id)
 					}
 
 
-					printf("Process Data name = %s sz = %ld  header_len=%d data_len=%d  data_num=%d  data_msg=%p\n", dtuple->data_name, sz, header_len, data_len, dtuple->data_num, dtuple->data);
+					//printf("Process Data name = %s sz = %ld  header_len=%d data_len=%d  data_num=%d  data_msg=%p\n", dtuple->data_name, sz, header_len, data_len, dtuple->data_num, dtuple->data);
 					char full_name[header_name_len];
 					sprintf(full_name, "%s_%d", dtuple->data_name, dtuple->scatter_gather_counter);
 					//string keyname = dtuple->data_name;
