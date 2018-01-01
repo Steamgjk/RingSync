@@ -945,6 +945,11 @@ void MyRing::BackGround2LeftThreadCallback()
 					assert(dt->rank >= 0 && dt->rank <= 3);
 #endif
 					EnqueSendQ(dt);
+					if (dt->op == RING_BROADCAST  &&  dt->rank == dt->broadcast_rank)
+					{
+						printf("2Left dt name = %s has Enqueued\n", dt->data_name );
+						//getchar();
+					}
 				}
 #ifdef GJK_DEBUG
 				else
@@ -997,9 +1002,9 @@ void MyRing::BackGround2LeftThreadCallback()
 
 						if (vit != recv_buf_map_to_left.end())
 						{
-//#ifdef GJK_DEBUG
+#ifdef GJK_DEBUG
 							printf("Left Found %s\n", dt->data_name );
-//#endif
+#endif
 							pair<void*, void*> pitem = make_pair(msg, vit->second);
 							result_qu.push(pitem);
 							recv_buf_map_to_left.erase(vit);
@@ -1029,8 +1034,8 @@ void MyRing::BackGround2LeftThreadCallback()
 				}
 				else
 				{
-					printf("OK ELE  %p  %s\n", pit.second, static_cast<DataTuple*>(pit.second)->data_name );
-					printf("Before Process stage_id = %d\n", stage_id );
+					//printf("OK ELE  %p  %s\n", pit.second, static_cast<DataTuple*>(pit.second)->data_name );
+					//printf("Before Process stage_id = %d\n", stage_id );
 					ProcessStageData(pit.first, pit.second, stage_id);
 					//printf(" q1.size = %ld  q2.size=%ld\n", process_queues_to_left[0].size(), process_queues_to_left[1].size());
 				}
@@ -1074,8 +1079,8 @@ void MyRing::BackGround2RightThreadCallback()
 					EnqueSendQ(dt);
 					if (dt->op == RING_BROADCAST  &&  dt->rank == dt->broadcast_rank)
 					{
-						printf("dt name = %s has Enqueued\n", dt->data_name );
-						getchar();
+						printf("2Right dt name = %s has Enqueued\n", dt->data_name );
+						//getchar();
 					}
 					//printf("FIN-Enque1\n");
 				}
@@ -1124,7 +1129,7 @@ void MyRing::BackGround2RightThreadCallback()
 					if (vit != recv_buf_map_to_right.end())
 					{
 
-						printf("Right FOUND %s \n", kstr.c_str() );
+						//printf("Right FOUND %s \n", kstr.c_str() );
 						pair<void*, void*> pitem = make_pair(msg, vit->second);
 						//printf("OK FOUND  %p  %p\n", vit->second, static_cast<DataTuple*>(vit->second)->data );
 						result_qu.push(pitem);
@@ -1155,8 +1160,8 @@ void MyRing::BackGround2RightThreadCallback()
 				else
 				{
 
-					printf("OK ELE  %p  %s\n", pit.second, static_cast<DataTuple*>(pit.second)->data_name );
-					printf("Before Process stage_id = %d\n", stage_id );
+					//printf("OK ELE  %p  %s\n", pit.second, static_cast<DataTuple*>(pit.second)->data_name );
+					//printf("Before Process stage_id = %d\n", stage_id );
 					ProcessStageData(pit.first, pit.second, stage_id);
 					//printf(" q1.size = %ld  q2.size=%ld\n", process_queues_to_right[0].size(), process_queues_to_right[1].size());
 				}
@@ -1216,11 +1221,11 @@ void MyRing::Send2RightThreadCallback()
 						DataTuple* dtuple = static_cast<DataTuple*>(msg);
 						size_t len = sizeof(DataTuple) + (dtuple->data_num) * (sizeoftype(dtuple->data_type));
 						//int nwt = write(send_fd, msg, len );
-						//if (dtuple->op == RING_ALLREDUCE)
-						printf("Send2RightThreadCallback:RDMA Sending Data  name=%s\n", dtuple->data_name);
+						if (dtuple->op == RING_BROADCAST)
+							printf("Send2RightThreadCallback:RDMA Sending Data  name=%s\n", dtuple->data_name);
 						rdma_send_data(&wc, msg, len);
-						//if (dtuple->op == RING_ALLREDUCE)
-						printf("--Send2RightThreadCallback:Finished  name=%s\n", dtuple->data_name);
+						if (dtuple->op == RING_BROADCAST)
+							printf("--Send2RightThreadCallback:Finished  name=%s\n", dtuple->data_name);
 						free(msg);
 						break;
 					}
@@ -1294,10 +1299,10 @@ void MyRing::Send2LeftThreadCallback()
 					{
 						DataTuple* dtuple = static_cast<DataTuple*>(msg);
 						size_t len = sizeof(DataTuple) + (dtuple->data_num) * (sizeoftype(dtuple->data_type));
-						if (dtuple->op == RING_ALLREDUCE)
+						if (dtuple->op == RING_BROADCAST)
 							printf("Send2LeftThreadCallback:RDMA Sending Data  name=%s\n", dtuple->data_name);
 						rdma_send_data(&wc, msg, len);
-						if (dtuple->op == RING_ALLREDUCE)
+						if (dtuple->op == RING_BROADCAST)
 							printf("--Send2LeftThreadCallback:Finished name=%s\n", dtuple->data_name);
 						free(msg);
 						break;
