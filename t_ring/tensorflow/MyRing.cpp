@@ -2169,7 +2169,7 @@ void MyRing::MergeData(void* local_buf, void* recvbuf, bool isScatter)
 
 }
 
-void MyRing::FreeDataTuple(DataTuple* dtuple)
+void MyRing::FreeDataTuple(DataTuple*& dtuple)
 {
 	// non-recursive
 	if (dtuple != NULL)

@@ -178,7 +178,7 @@ public:
 	void RingAllGatherMerge(DataTuple* recvTuple, DataTuple* localTuple);
 	void RingBroadCastMerge(DataTuple* recvTuple, DataTuple* localTuple);
 	void Release_src(TensorRingStruct* trs, bool freeMem);
-	void FreeDataTuple(DataTuple* dtuple);
+	void FreeDataTuple(DataTuple*& dtuple);
 	void* GenAllReduceBuf(DataTuple* dtuple);
 	void* GenAllGatherBuf(DataTuple* dtuple);
 	void* GenBroadCastBuf(DataTuple* dtuple);
