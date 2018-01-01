@@ -1235,16 +1235,16 @@ void MyRing::Send2RightThreadCallback()
 
 
 				printf("Here:rdma_send_data....\n");
-				printWCode(wc);
-				struct rdma_cm_id *id = (struct rdma_cm_id *)(uintptr_t)wc->wr_id;
+				printWCode(&wc);
+				struct rdma_cm_id *id = (struct rdma_cm_id *)(uintptr_t)wc.wr_id;
 				struct context *ctx = (struct context *)id->context;
 
-				if (wc->opcode == IBV_WC_RECV_RDMA_WITH_IMM)
+				if (wc.opcode == IBV_WC_RECV_RDMA_WITH_IMM)
 				{
 					printf("send thread %ld will never be here!!!!!\n", pthread_self());
 					exit(0);
 				}
-				else if (wc->opcode & IBV_WC_RECV)
+				else if (wc.opcode & IBV_WC_RECV)
 				{
 					if (ctx->msg->id == MSG_MR)
 					{
@@ -1252,11 +1252,11 @@ void MyRing::Send2RightThreadCallback()
 						ctx->peer_rkey = ctx->msg->data.mr.rkey;
 						//printf("received remote memory address and key\n");
 						ctx->remote_idle = true;
-						void* msg = NULL;
+						void* data2send = NULL;
 						while (true)
 						{
-							msg = FetchFrom2RightQ();
-							if (msg)
+							data2send = FetchFrom2RightQ();
+							if (data2send)
 							{
 								break;
 							}
@@ -1266,7 +1266,7 @@ void MyRing::Send2RightThreadCallback()
 							}
 						}
 						DataTuple* dtuple = static_cast<DataTuple*>(msg);
-						size_t len = sizeof(DataTuple) + (dtuple->data_num) * (sizeoftype(dtuple->data_type));
+						size_t data_len = sizeof(DataTuple) + (dtuple->data_num) * (sizeoftype(dtuple->data_type));
 						send_tensor(id, (char*)data2send, data_len);
 						printf("%s sent\n", dtuple->data_name);
 						printf("INIt SEnd\n");
@@ -1281,11 +1281,11 @@ void MyRing::Send2RightThreadCallback()
 					else if (ctx->msg->id == MSG_READY)
 					{
 						ctx->remote_idle = true;
-						void* msg = NULL;
+						void* data2send = NULL;
 						while (true)
 						{
-							msg = FetchFrom2RightQ();
-							if (msg)
+							data2send = FetchFrom2RightQ();
+							if (data2send)
 							{
 								break;
 							}
@@ -1295,7 +1295,7 @@ void MyRing::Send2RightThreadCallback()
 							}
 						}
 						DataTuple* dtuple = static_cast<DataTuple*>(msg);
-						size_t len = sizeof(DataTuple) + (dtuple->data_num) * (sizeoftype(dtuple->data_type));
+						size_t data_len = sizeof(DataTuple) + (dtuple->data_num) * (sizeoftype(dtuple->data_type));
 						printf("COns Send\n");
 						send_tensor(id, (char*)data2send, data_len);
 						printf("%s sent\n", dtuple->data_name);
