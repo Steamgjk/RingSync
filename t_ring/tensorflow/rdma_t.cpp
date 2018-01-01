@@ -245,46 +245,6 @@ void* recv_by_RDMA(struct ibv_wc *wc, uint32_t& recv_len)
 }
 
 
-static void *recv_poll_cq(void *rtp)
-{
-	struct ibv_cq *cq = NULL;
-	struct ibv_wc wc;
-	struct rdma_cm_id *id = ((_rdma_thread_pack_ *)rtp)->rdma_id;
-	node_item* nit = ((_rdma_thread_pack_ *)rtp)->nit;
-
-	struct context *ctx = (struct context *)id->context;
-	void *ev_ctx = NULL;
-
-	std::free((_rdma_thread_pack_ *)rtp);
-
-	while (true)
-	{
-		TEST_NZ(ibv_get_cq_event(ctx->comp_channel, &cq, &ev_ctx));
-		ibv_ack_cq_events(cq, 1);
-		TEST_NZ(ibv_req_notify_cq(cq, 0));
-
-		while (ibv_poll_cq(cq, 1, &wc))
-		{
-			if (wc.status == IBV_WC_SUCCESS)
-			{
-				void* recv_data = recv_by_RDMA(&wc, nit);
-				if (recv_data != nullptr)//received data, will append to recv_chain...
-				{
-					auto new_node = get_new_node();
-					new_node->data_ptr = (char*)recv_data;
-					nit->next = new_node;
-					nit = new_node;
-				}
-			}
-			else
-			{
-				printf("\nwc = %s\n", ibv_wc_status_str(wc.status));
-				rc_die("poll_cq: status is not IBV_WC_SUCCESS");
-			}
-		}
-	}
-	return NULL;
-}
 
 void *polling_recv_cq(struct rdma_cm_id *id)
 {
