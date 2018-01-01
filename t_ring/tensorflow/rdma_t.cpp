@@ -415,8 +415,8 @@ static void *send_poll_cq(void *tmp_id)
 
 void rdma_send_data(struct ibv_wc *wc, void* data2send, size_t data_len)
 {
-	printf("Here:rdma_send_data....\n");
-	printWCode(wc);
+	//printf("Here:rdma_send_data....\n");
+	//printWCode(wc);
 	struct rdma_cm_id *id = (struct rdma_cm_id *)(uintptr_t)wc->wr_id;
 	struct context *ctx = (struct context *)id->context;
 
@@ -436,7 +436,7 @@ void rdma_send_data(struct ibv_wc *wc, void* data2send, size_t data_len)
 
 			//__send_str = data_gene(1024 * 1024 * 100);
 			send_tensor(id, (char*)data2send, data_len);
-			printf("INIt SEnd\n");
+			//printf("INIt SEnd\n");
 		}
 		else if (ctx->msg->id == MSG_DONE)
 		{
@@ -447,9 +447,9 @@ void rdma_send_data(struct ibv_wc *wc, void* data2send, size_t data_len)
 		else if (ctx->msg->id == MSG_READY)
 		{
 			ctx->remote_idle = true;
-			printf("COns Send\n");
+			//printf("COns Send\n");
 			send_tensor(id, (char*)data2send, data_len);
-			printf("Adter Send\n");
+			//printf("Adter Send\n");
 		}
 		post_receive_client(id);
 	}
