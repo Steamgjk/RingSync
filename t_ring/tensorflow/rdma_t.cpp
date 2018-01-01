@@ -296,7 +296,6 @@ int recv4data(struct ibv_wc *wc, void*& data_ptr)
 		size = ntohl(wc->imm_data);
 		struct sockaddr_in* client_addr = (struct sockaddr_in *)rdma_get_peer_addr(id);
 		static int64_t lpop = 0;
-		printf("Recv  \n");
 
 		data_ptr = (void*)std::malloc(sizeof(char) * size);
 		if (data_ptr == nullptr)
@@ -305,12 +304,12 @@ int recv4data(struct ibv_wc *wc, void*& data_ptr)
 			exit(-1);
 		}
 		std::memcpy(data_ptr, ctx->buffer, size);
-		printf("recv4data:Data can be gained\n");
+		//printf("recv4data:Data can be gained\n");
 
 		post_receive_server(id);
 		ctx->msg->id = MSG_READY;
 		send_message(id);
-		printf("send_message back\n");
+		//printf("send_message back\n");
 	}
 	else if (wc->opcode & IBV_WC_RECV)
 	{
