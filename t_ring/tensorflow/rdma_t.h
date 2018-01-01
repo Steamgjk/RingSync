@@ -70,9 +70,10 @@ struct rdma_event_channel* rdma_server_init(int local_port);
 struct rdma_cm_id* server_wait4conn(struct rdma_event_channel *event_channel);
 void *polling_recv_cq(struct rdma_cm_id *id); // thread  to change
 int recv4data(struct ibv_wc *wc, void* data_ptr);
-
+void* recv_by_RDMA(struct ibv_wc *wc, uint32_t& recv_len);
 
 void rc_die(const char *reason);
+void printWCode(struct ibv_wc *wc);
 
 #define TEST_NZ(x) do { if ( (x)) rc_die("error: " #x " failed (returned non-zero)." ); } while (0)
 #define TEST_Z(x)  do { if (!(x)) rc_die("error: " #x " failed (returned zero/null)."); } while (0)

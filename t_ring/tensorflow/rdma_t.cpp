@@ -211,8 +211,7 @@ static void send_by_RDMA(struct ibv_wc *wc)
 	}
 	return;
 }
-
-static void* recv_by_RDMA(struct ibv_wc *wc, node_item* nit)
+void* recv_by_RDMA(struct ibv_wc *wc, uint32_t& recv_len)
 {
 	struct rdma_cm_id *id = (struct rdma_cm_id *)(uintptr_t)wc->wr_id;
 	struct context *ctx = (struct context *)id->context;
@@ -223,19 +222,25 @@ static void* recv_by_RDMA(struct ibv_wc *wc, node_item* nit)
 		uint32_t size = ntohl(wc->imm_data);
 		struct sockaddr_in* client_addr = (struct sockaddr_in *)rdma_get_peer_addr(id);
 		static int64_t lpop = 0;
-		printf("Recv  \n");
-		//if (lpop % 500 == 0)
-		//printf("thread: %ld received %i bytes from client %s!!!!!!!!!!!!!%p!!!!!!!!!!!\n", pthread_self(), size, inet_ntoa(client_addr->sin_addr), nit);
+		//if (lpop % 100 == 0)
+		//printf("thread: %ld received %i bytes from client %s!!!!!!!!!!!!!%p!!!!!!!!!!!!!!!!!!!!!!!\n", pthread_self(), size, inet_ntoa(client_addr->sin_addr), nit);
 		lpop++;
 		//printf("%s\n",ctx->buffer);
+		msg_struct* msg = (msg_struct*)(ctx->buffer);
+		//printf("recv from node %d count: %d\n", msg->rank, ++recvcount[msg->rank]);
 		_data = (void*)std::malloc(sizeof(char) * size);
+		recv_len = size;
+		if (size != ((msg_struct*)(ctx->buffer))->msg_length)
+		{
+			printf("fatal error: recv send_message length is not equal...\n");
+			exit(0);
+		}
 		if (_data == nullptr)
 		{
 			printf("fatal error in recv data malloc!!!!\n");
 			exit(-1);
 		}
 		std::memcpy(_data, ctx->buffer, size);
-		printf("Data can be gained\n");
 
 		post_receive_server(id);
 		ctx->msg->id = MSG_READY;
@@ -363,36 +368,42 @@ int recv4data(struct ibv_wc *wc, void* data_ptr)
 	}
 	else
 	{
-		switch (wc->opcode)
-		{
-		case IBV_WC_SEND:
-			printf("IBV_WC_SEND\n");
-			break;
-		case IBV_WC_RDMA_WRITE:
-			printf("IBV_WC_RDMA_WRITE\n");
-			break;
-		case IBV_WC_RDMA_READ:
-			printf("IBV_WC_RDMA_READ\n");
-			break;
-		case IBV_WC_COMP_SWAP:
-			printf("IBV_WC_COMP_SWAP\n");
-			break;
-		case IBV_WC_FETCH_ADD:
-			printf("IBV_WC_FETCH_ADD\n");
-			break;
-		case IBV_WC_BIND_MW:
-			printf("IBV_WC_BIND_MW\n");
-			break;
-		case IBV_WC_RECV:
-			printf("IBV_WC_RECV\n");
-			break;
-		default:
-			printf("Unknown\n");
-		}
+		printWCode(wc);
 	}
 	return size;
 }
-
+void printWCode(struct ibv_wc *wc)
+{
+	switch (wc->opcode)
+	{
+	case IBV_WC_RECV_RDMA_WITH_IMM:
+		printf("IBV_WC_RECV_RDMA_WITH_IMM\n");
+		break;
+	case IBV_WC_SEND:
+		printf("IBV_WC_SEND\n");
+		break;
+	case IBV_WC_RDMA_WRITE:
+		printf("IBV_WC_RDMA_WRITE\n");
+		break;
+	case IBV_WC_RDMA_READ:
+		printf("IBV_WC_RDMA_READ\n");
+		break;
+	case IBV_WC_COMP_SWAP:
+		printf("IBV_WC_COMP_SWAP\n");
+		break;
+	case IBV_WC_FETCH_ADD:
+		printf("IBV_WC_FETCH_ADD\n");
+		break;
+	case IBV_WC_BIND_MW:
+		printf("IBV_WC_BIND_MW\n");
+		break;
+	case IBV_WC_RECV:
+		printf("IBV_WC_RECV\n");
+		break;
+	default:
+		printf("Unknown\n");
+	}
+}
 void *client_polling_send(struct rdma_cm_id *id)
 {
 	struct ibv_cq *cq = NULL;
