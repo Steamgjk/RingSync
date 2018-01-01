@@ -401,10 +401,10 @@ void MyRing::FinishedTuple(void* dtp,  bool freeMem = true)
 
 void MyRing::EnqueNewQueue2Left(DataTuple* dtuple)
 {
-//#ifdef GJK_DEBUG
+#ifdef GJK_DEBUG
 	printf("Enter Left  %d  op=%d\n", new_queue_to_left.size(), dtuple->op );
 	//OutPutTrs();
-//#endif
+#endif
 	std::lock_guard<std::mutex> lock(new_queue_to_left_mutex);
 	new_queue_to_left.push(dtuple);
 #ifdef GJK_DEBUG
@@ -413,10 +413,10 @@ void MyRing::EnqueNewQueue2Left(DataTuple* dtuple)
 }
 void MyRing::EnqueNewQueue2Right(DataTuple* dtuple)
 {
-//#ifdef GJK_DEBUG
+#ifdef GJK_DEBUG
 	printf("Enter right  %d  op=%d\n", new_queue_to_right.size(), dtuple->op );
 	//OutPutTrs();
-//#endif
+#endif
 	std::lock_guard<std::mutex> lock(new_queue_to_right_mutex);
 	new_queue_to_right.push(dtuple);
 #ifdef GJK_DEBUG
@@ -704,9 +704,9 @@ void MyRing::Release_src(TensorRingStruct* trs, bool freeMem = false)
 	}
 	else
 	{
-//#ifdef GJK_DEBUG
+#ifdef GJK_DEBUG
 		printf("Release_src lcheck name=%s\n", left_dtuple->data_name);
-//#endif
+#endif
 		FreeDataTuple(left_dtuple);
 	}
 	if (right_dtuple->op == RING_ALLGATHER)
@@ -725,9 +725,9 @@ void MyRing::Release_src(TensorRingStruct* trs, bool freeMem = false)
 	}
 	else
 	{
-//#ifdef GJK_DEBUG
+#ifdef GJK_DEBUG
 		printf("Release_src rcheck name=%s \n", right_dtuple->data_name);
-//#endif
+#endif
 		FreeDataTuple(right_dtuple);
 	}
 #ifdef GJK_DEBUG
@@ -1221,11 +1221,11 @@ void MyRing::Send2RightThreadCallback()
 						DataTuple* dtuple = static_cast<DataTuple*>(msg);
 						size_t len = sizeof(DataTuple) + (dtuple->data_num) * (sizeoftype(dtuple->data_type));
 						//int nwt = write(send_fd, msg, len );
-						if (dtuple->op == RING_BROADCAST)
-							printf("Send2RightThreadCallback:RDMA Sending Data  name=%s\n", dtuple->data_name);
+						//if (dtuple->op == RING_BROADCAST)
+						//	printf("Send2RightThreadCallback:RDMA Sending Data  name=%s\n", dtuple->data_name);
 						rdma_send_data(&wc, msg, len);
 						if (dtuple->op == RING_BROADCAST)
-							printf("--Send2RightThreadCallback:Finished  name=%s\n", dtuple->data_name);
+							printf("%s --Send2RightThreadCallback:Finished  \n", dtuple->data_name);
 						free(msg);
 						break;
 					}
@@ -1299,11 +1299,11 @@ void MyRing::Send2LeftThreadCallback()
 					{
 						DataTuple* dtuple = static_cast<DataTuple*>(msg);
 						size_t len = sizeof(DataTuple) + (dtuple->data_num) * (sizeoftype(dtuple->data_type));
-						if (dtuple->op == RING_BROADCAST)
-							printf("Send2LeftThreadCallback:RDMA Sending Data  name=%s\n", dtuple->data_name);
+						//if (dtuple->op == RING_BROADCAST)
+						//	printf("Send2LeftThreadCallback:RDMA Sending Data  name=%s\n", dtuple->data_name);
 						rdma_send_data(&wc, msg, len);
 						if (dtuple->op == RING_BROADCAST)
-							printf("--Send2LeftThreadCallback:Finished name=%s\n", dtuple->data_name);
+							printf("%s  --Send2LeftThreadCallback:Finished name\n", dtuple->data_name);
 						free(msg);
 						break;
 					}
@@ -1930,7 +1930,7 @@ void MyRing::EnqueSendQ(DataTuple* dtuple)
 #endif
 	void* tosend_buf = NULL;
 
-	printf("EnqueuSendQ-3  name=%s op  %d  dtuple  %p vrank  %d  broadcastrank = %d  data  %p\n",  dtuple->data_name, dtuple->op, dtuple, dtuple->rank, dtuple->broadcast_rank, dtuple->data);
+	//printf("EnqueuSendQ-3  name=%s op  %d  dtuple  %p vrank  %d  broadcastrank = %d  data  %p\n",  dtuple->data_name, dtuple->op, dtuple, dtuple->rank, dtuple->broadcast_rank, dtuple->data);
 
 	switch (dtuple->op)
 	{
