@@ -415,7 +415,8 @@ static void *send_poll_cq(void *tmp_id)
 
 void rdma_send_data(struct ibv_wc *wc, void* data2send, size_t data_len)
 {
-	//printf("Here:rdma_send_data....\n");
+	printf("Here:rdma_send_data....\n");
+	printWCode(wc);
 	struct rdma_cm_id *id = (struct rdma_cm_id *)(uintptr_t)wc->wr_id;
 	struct context *ctx = (struct context *)id->context;
 
