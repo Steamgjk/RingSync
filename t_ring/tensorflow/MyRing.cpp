@@ -1225,7 +1225,10 @@ void MyRing::Send2RightThreadCallback()
 						//	printf("Send2RightThreadCallback:RDMA Sending Data  name=%s\n", dtuple->data_name);
 						rdma_send_data(&wc, msg, len);
 						if (dtuple->op == RING_BROADCAST && this->ring_rank == 0)
+						{
 							printf("%s --Send2RightThreadCallback:Finished  \n", dtuple->data_name);
+							getchar();
+						}
 						free(msg);
 						break;
 					}
@@ -2275,12 +2278,7 @@ void MyRing::RDMA_ProcessRecvData(struct rdma_cm_id* rc_id)
 				//printf("Before recv4Data \n");
 				//printWCode(&wc);
 				int sz = recv4data(&wc, recv_data);
-				//printf("After recv4Data \n");
-				//printWCode(&wc);
-				//uint32_t sz = -1;
-				//recv_data = recv_by_RDMA(&wc, sz);
 
-				//printf("get recv4data sz = %ld\n", sz);
 				if (recv_data != nullptr)//received data, will append to recv_chain...
 				{
 					//printf("Polling Recved Data  sz = %d\n", sz);
