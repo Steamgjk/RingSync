@@ -704,9 +704,9 @@ void MyRing::Release_src(TensorRingStruct* trs, bool freeMem = false)
 	}
 	else
 	{
-#ifdef GJK_DEBUG
-		printf("Release_src lcheck\n");
-#endif
+//#ifdef GJK_DEBUG
+		printf("Release_src lcheck name=%s\n", left_dtuple->data_name);
+//#endif
 		FreeDataTuple(left_dtuple);
 	}
 	if (right_dtuple->op == RING_ALLGATHER)
@@ -725,9 +725,9 @@ void MyRing::Release_src(TensorRingStruct* trs, bool freeMem = false)
 	}
 	else
 	{
-#ifdef GJK_DEBUG
-		printf("Release_src rcheck\n");
-#endif
+//#ifdef GJK_DEBUG
+		printf("Release_src rcheck name=%s \n", right_dtuple->data_name);
+//#endif
 		FreeDataTuple(right_dtuple);
 	}
 #ifdef GJK_DEBUG
@@ -2177,14 +2177,14 @@ void MyRing::FreeDataTuple(DataTuple*& dtuple)
 
 		if (dtuple->data != NULL)
 		{
-			//printf("freeing  dtuple-data  %p  name=%s\n", dtuple->data, dtuple->data_name );
+			printf("freeing  dtuple-data  %p  name=%s\n", dtuple->data, dtuple->data_name );
 			free(dtuple->data);
-			//printf("freed dtuple->data %p  name=%s\n", dtuple->data, dtuple->data_name);
+			printf("freed dtuple->data %p  name=%s\n", dtuple->data, dtuple->data_name);
 			dtuple->data = NULL;
 		}
-		//printf("freeing dtuple %p   name  =%s\n", dtuple, dtuple->data_name );
+		printf("freeing dtuple %p   name  =%s\n", dtuple, dtuple->data_name );
 		free(dtuple);
-		//printf("freed dtuple   %p  name=%s\n", dtuple, dtuple->data_name );
+		printf("freed dtuple   %p  name=%s\n", dtuple, dtuple->data_name );
 		dtuple = NULL;
 	}
 }
