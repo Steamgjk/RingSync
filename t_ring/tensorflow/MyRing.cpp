@@ -2138,7 +2138,7 @@ void MyRing::RDMA_ProcessRecvData(struct rdma_cm_id* rc_id)
 {
 	struct ibv_cq *cq = NULL;
 	struct ibv_wc wc;
-	struct context *ctx = (struct context *)id->context;
+	struct context *ctx = (struct context *)rc_id->context;
 	void *ev_ctx = NULL;
 	while (!shut_down)
 	{
