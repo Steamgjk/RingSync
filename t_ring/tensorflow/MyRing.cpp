@@ -997,9 +997,9 @@ void MyRing::BackGround2LeftThreadCallback()
 
 						if (vit != recv_buf_map_to_left.end())
 						{
-#ifdef GJK_DEBUG
+//#ifdef GJK_DEBUG
 							printf("Left Found %s\n", dt->data_name );
-#endif
+//#endif
 							pair<void*, void*> pitem = make_pair(msg, vit->second);
 							result_qu.push(pitem);
 							recv_buf_map_to_left.erase(vit);
@@ -1007,7 +1007,7 @@ void MyRing::BackGround2LeftThreadCallback()
 						}
 						else
 						{
-							//printf("Left NOT Found %s\n", dt->data_name );
+							printf("Left NOT Found %s\n", dt->data_name );
 							void* nptr = NULL;
 							pair<void*, void*> pitem = make_pair(msg, nptr);
 							result_qu.push(pitem);
@@ -1119,7 +1119,7 @@ void MyRing::BackGround2RightThreadCallback()
 					if (vit != recv_buf_map_to_right.end())
 					{
 
-						//printf("Right FOUND %s \n", kstr.c_str() );
+						printf("Right FOUND %s \n", kstr.c_str() );
 						pair<void*, void*> pitem = make_pair(msg, vit->second);
 						//printf("OK FOUND  %p  %p\n", vit->second, static_cast<DataTuple*>(vit->second)->data );
 						result_qu.push(pitem);
@@ -1129,7 +1129,7 @@ void MyRing::BackGround2RightThreadCallback()
 					}
 					else
 					{
-						//printf("Right Not FOUND %s\n", dt->data_name );
+						printf("Right Not FOUND %s\n", dt->data_name );
 						void* nptr = NULL;
 						pair<void*, void*> pitem = make_pair(msg, nptr);
 						result_qu.push(pitem);
@@ -1210,9 +1210,11 @@ void MyRing::Send2RightThreadCallback()
 						DataTuple* dtuple = static_cast<DataTuple*>(msg);
 						size_t len = sizeof(DataTuple) + (dtuple->data_num) * (sizeoftype(dtuple->data_type));
 						//int nwt = write(send_fd, msg, len );
-						printf("Send2RightThreadCallback:RDMA Sending Data  name=%s\n", dtuple->data_name);
+						if (dtuple->op == RING_ALLREDUCE)
+							printf("Send2RightThreadCallback:RDMA Sending Data  name=%s\n", dtuple->data_name);
 						rdma_send_data(&wc, msg, len);
-						printf("--Send2RightThreadCallback:Finished  name=%s\n", dtuple->data_name);
+						if (dtuple->op == RING_ALLREDUCE)
+							printf("--Send2RightThreadCallback:Finished  name=%s\n", dtuple->data_name);
 						free(msg);
 						break;
 					}
@@ -1286,10 +1288,11 @@ void MyRing::Send2LeftThreadCallback()
 					{
 						DataTuple* dtuple = static_cast<DataTuple*>(msg);
 						size_t len = sizeof(DataTuple) + (dtuple->data_num) * (sizeoftype(dtuple->data_type));
-						printf("Send2LeftThreadCallback:RDMA Sending Data  name=%s\n", dtuple->data_name);
+						if (dtuple->op == RING_ALLREDUCE)
+							printf("Send2LeftThreadCallback:RDMA Sending Data  name=%s\n", dtuple->data_name);
 						rdma_send_data(&wc, msg, len);
-
-						printf("--Send2LeftThreadCallback:Finished name=%s\n", dtuple->data_name);
+						if (dtuple->op == RING_ALLREDUCE)
+							printf("--Send2LeftThreadCallback:Finished name=%s\n", dtuple->data_name);
 						free(msg);
 						break;
 					}
@@ -2180,14 +2183,14 @@ void MyRing::FreeDataTuple(DataTuple*& dtuple)
 
 		if (dtuple->data != NULL)
 		{
-			printf("freeing  dtuple-data  %p  name=%s\n", dtuple->data, dtuple->data_name );
+			//printf("freeing  dtuple-data  %p  name=%s\n", dtuple->data, dtuple->data_name );
 			free(dtuple->data);
-			printf("freed dtuple->data %p \n", dtuple->data);
+			//printf("freed dtuple->data %p \n", dtuple->data);
 			dtuple->data = NULL;
 		}
-		printf("freeing dtuple %p   name  =%s\n", dtuple, dtuple->data_name );
+		//printf("freeing dtuple %p   name  =%s\n", dtuple, dtuple->data_name );
 		free(dtuple);
-		printf("freed dtuple   %p \n", dtuple);
+		//printf("freed dtuple   %p \n", dtuple);
 		dtuple = NULL;
 	}
 }
@@ -2259,8 +2262,8 @@ void MyRing::RDMA_ProcessRecvData(struct rdma_cm_id* rc_id)
 				//printf("Before recv4Data \n");
 				//printWCode(&wc);
 				int sz = recv4data(&wc, recv_data);
-				printf("After recv4Data \n");
-				printWCode(&wc);
+				//printf("After recv4Data \n");
+				//printWCode(&wc);
 				//uint32_t sz = -1;
 				//recv_data = recv_by_RDMA(&wc, sz);
 
