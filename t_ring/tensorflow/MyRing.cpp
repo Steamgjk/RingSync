@@ -1212,6 +1212,7 @@ void MyRing::Send2RightThreadCallback()
 						//int nwt = write(send_fd, msg, len );
 						printf("Send2RightThreadCallback:RDMA Sending Data  name=%s\n", dtuple->data_name);
 						rdma_send_data(&wc, msg, len);
+						printf("Send2RightThreadCallback:Finished  name=%s\n", dtuple->data_name);
 						free(msg);
 						break;
 					}
@@ -1287,6 +1288,7 @@ void MyRing::Send2LeftThreadCallback()
 						size_t len = sizeof(DataTuple) + (dtuple->data_num) * (sizeoftype(dtuple->data_type));
 						printf("Send2LeftThreadCallback:RDMA Sending Data  name=%s\n", dtuple->data_name);
 						rdma_send_data(&wc, msg, len);
+						printf("Send2LeftThreadCallback:Finished name=%s\n", dtuple->data_name);
 						free(msg);
 						break;
 					}
