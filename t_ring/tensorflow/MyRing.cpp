@@ -1294,12 +1294,13 @@ void MyRing::Send2RightThreadCallback()
 								std::this_thread::sleep_for(std::chrono::nanoseconds(100));
 							}
 						}
-						DataTuple* dtuple = static_cast<DataTuple*>(msg);
+						DataTuple* dtuple = static_cast<DataTuple*>(data2send);
 						size_t data_len = sizeof(DataTuple) + (dtuple->data_num) * (sizeoftype(dtuple->data_type));
 						printf("COns Send\n");
 						send_tensor(id, (char*)data2send, data_len);
 						printf("%s sent\n", dtuple->data_name);
 						printf("Adter Send\n");
+						free(data2send);
 					}
 					post_receive_client(id);
 				}
