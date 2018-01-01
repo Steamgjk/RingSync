@@ -1386,6 +1386,8 @@ void MyRing::Send2RightThreadCallback()
 			}
 			else
 			{
+				if (dtuple->op == RING_BROADCAST)
+					printf("%s --Send2RightThreadCallback:Finished  \n", dtuple->data_name);
 				//printf("Sended2Right Finished  nwt=%d  name = %s\n", nwt, dtuple->data_name);
 			}
 			free(msg);
