@@ -284,7 +284,7 @@ void *polling_recv_cq(struct rdma_cm_id *id)
 	return NULL;
 }
 
-int recv4data(struct ibv_wc *wc, void* data_ptr)
+int recv4data(struct ibv_wc *wc, void*& data_ptr)
 {
 	struct rdma_cm_id *id = (struct rdma_cm_id *)(uintptr_t)wc->wr_id;
 	struct context *ctx = (struct context *)id->context;
