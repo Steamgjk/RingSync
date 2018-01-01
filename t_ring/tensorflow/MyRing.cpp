@@ -401,10 +401,10 @@ void MyRing::FinishedTuple(void* dtp,  bool freeMem = true)
 
 void MyRing::EnqueNewQueue2Left(DataTuple* dtuple)
 {
-#ifdef GJK_DEBUG
-	printf("Enter Left  %d\n", new_queue_to_left.size() );
+//#ifdef GJK_DEBUG
+	printf("Enter Left  %d  op=%d\n", new_queue_to_left.size(), dtuple->op );
 	//OutPutTrs();
-#endif
+//#endif
 	std::lock_guard<std::mutex> lock(new_queue_to_left_mutex);
 	new_queue_to_left.push(dtuple);
 #ifdef GJK_DEBUG
@@ -413,10 +413,10 @@ void MyRing::EnqueNewQueue2Left(DataTuple* dtuple)
 }
 void MyRing::EnqueNewQueue2Right(DataTuple* dtuple)
 {
-#ifdef GJK_DEBUG
-	printf("Enter right  %d\n", new_queue_to_right.size() );
+//#ifdef GJK_DEBUG
+	printf("Enter right  %d  op=%d\n", new_queue_to_right.size(), dtuple->op );
 	//OutPutTrs();
-#endif
+//#endif
 	std::lock_guard<std::mutex> lock(new_queue_to_right_mutex);
 	new_queue_to_right.push(dtuple);
 #ifdef GJK_DEBUG
