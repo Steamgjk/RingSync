@@ -1210,7 +1210,7 @@ void MyRing::Send2RightThreadCallback()
 						DataTuple* dtuple = static_cast<DataTuple*>(msg);
 						size_t len = sizeof(DataTuple) + (dtuple->data_num) * (sizeoftype(dtuple->data_type));
 						//int nwt = write(send_fd, msg, len );
-						//printf("RDMA Sending Data\n");
+						printf("Send2RightThreadCallback:RDMA Sending Data  name=%s\n", dtuple->data_name);
 						rdma_send_data(&wc, msg, len);
 						free(msg);
 						break;
@@ -1285,7 +1285,7 @@ void MyRing::Send2LeftThreadCallback()
 					{
 						DataTuple* dtuple = static_cast<DataTuple*>(msg);
 						size_t len = sizeof(DataTuple) + (dtuple->data_num) * (sizeoftype(dtuple->data_type));
-						//printf("RDMA Sending Data\n");
+						printf("Send2LeftThreadCallback:RDMA Sending Data  name=%s\n", dtuple->data_name);
 						rdma_send_data(&wc, msg, len);
 						free(msg);
 						break;
@@ -1913,7 +1913,7 @@ void MyRing::EnqueSendQ(DataTuple* dtuple)
 #endif
 	void* tosend_buf = NULL;
 
-	printf("EnqueuSendQ-3  op  %d  dtuple  %p vrank  %d  broadcastrank = %d  data  %p\n",  dtuple->op, dtuple, dtuple->rank, dtuple->broadcast_rank, dtuple->data);
+	printf("EnqueuSendQ-3  name=%s op  %d  dtuple  %p vrank  %d  broadcastrank = %d  data  %p\n",  dtuple->data_name, dtuple->op, dtuple, dtuple->rank, dtuple->broadcast_rank, dtuple->data);
 
 	switch (dtuple->op)
 	{
