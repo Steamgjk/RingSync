@@ -868,9 +868,9 @@ void MyRing::ProcessStageData(void* local_data, void* recv_data, int cur_stage)
 		case RING_ALLREDUCE:
 		{
 			dt->scatter_gather_counter = cur_stage + 1;
-			printf("Enqueue RING_ALLREDUCE\n");
+			//printf("Enqueue RING_ALLREDUCE\n");
 			EnqueSendQ(dt);
-			printf("FIN-RING_ALLREUDCE\n");
+			//printf("FIN-RING_ALLREUDCE\n");
 		}
 
 		break;
