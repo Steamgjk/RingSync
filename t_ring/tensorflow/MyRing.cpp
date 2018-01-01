@@ -1234,8 +1234,8 @@ void MyRing::Send2RightThreadCallback()
 			{
 
 
-				printf("Here:rdma_send_data....\n");
-				printWCode(&wc);
+				//printf("Here:rdma_send_data....\n");
+				//printWCode(&wc);
 				struct rdma_cm_id *id = (struct rdma_cm_id *)(uintptr_t)wc.wr_id;
 				struct context *ctx = (struct context *)id->context;
 
@@ -1268,8 +1268,9 @@ void MyRing::Send2RightThreadCallback()
 						DataTuple* dtuple = static_cast<DataTuple*>(data2send);
 						size_t data_len = sizeof(DataTuple) + (dtuple->data_num) * (sizeoftype(dtuple->data_type));
 						send_tensor(id, (char*)data2send, data_len);
-						printf("%s sent\n", dtuple->data_name);
-						printf("INIt SEnd\n");
+						if (this->ring_rank == 0 && dtuple->op == RING_BROADCAST)
+							printf("%s sent1\n", dtuple->data_name);
+						//printf("INIt SEnd\n");
 						free(data2send);
 					}
 					else if (ctx->msg->id == MSG_DONE)
@@ -1296,10 +1297,11 @@ void MyRing::Send2RightThreadCallback()
 						}
 						DataTuple* dtuple = static_cast<DataTuple*>(data2send);
 						size_t data_len = sizeof(DataTuple) + (dtuple->data_num) * (sizeoftype(dtuple->data_type));
-						printf("COns Send\n");
+						//printf("COns Send\n");
 						send_tensor(id, (char*)data2send, data_len);
-						printf("%s sent\n", dtuple->data_name);
-						printf("Adter Send\n");
+						if (this->ring_rank == 0 && dtuple->op == RING_BROADCAST)
+							printf("%s sent\n", dtuple->data_name);
+						//printf("Adter Send\n");
 						free(data2send);
 					}
 					post_receive_client(id);
