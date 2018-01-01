@@ -106,6 +106,7 @@ static void send_message(struct rdma_cm_id *id)
 
 static void send_tensor(struct rdma_cm_id *id, char* buff, uint32_t len)
 {
+	printf("Sending tensor...\n");
 	struct context *ctx = (struct context *)id->context;
 	struct ibv_send_wr wr, *bad_wr = NULL;
 	struct ibv_sge sge;
@@ -318,7 +319,7 @@ int recv4data(struct ibv_wc *wc, void* data_ptr)
 	}
 	else
 	{
-		printWCode(wc);
+		//printWCode(wc);
 	}
 	return size;
 }
@@ -434,6 +435,7 @@ void rdma_send_data(struct ibv_wc *wc, void* data2send, size_t data_len)
 
 			//__send_str = data_gene(1024 * 1024 * 100);
 			send_tensor(id, (char*)data2send, data_len);
+			printf("INIt SEnd\n");
 		}
 		else if (ctx->msg->id == MSG_DONE)
 		{
@@ -444,8 +446,9 @@ void rdma_send_data(struct ibv_wc *wc, void* data2send, size_t data_len)
 		else if (ctx->msg->id == MSG_READY)
 		{
 			ctx->remote_idle = true;
-
+			printf("COns Send\n");
 			send_tensor(id, (char*)data2send, data_len);
+			printf("Adter Send\n");
 		}
 		post_receive_client(id);
 	}
