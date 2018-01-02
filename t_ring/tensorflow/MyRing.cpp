@@ -54,9 +54,13 @@ vector<queue<void*>> MyRing::process_queues_to_right;
 
 std::vector<std::thread> MyRing::thread_vec;
 
-
 std::mutex MyRing::trs_mutex;
 map<string, TensorRingStruct> MyRing::trs_map;
+
+node_item* MyRing::to_right_head;
+node_item* MyRing::to_right_tail;
+node_item* MyRing::to_left_head;
+node_item* MyRing::to_left_tail;
 
 //void MyRing::EnqueReduceQueue(int ele_num, bool toRight);
 //std::queue<void*> MyRing::new_queue;
@@ -66,6 +70,7 @@ map<string, TensorRingStruct> MyRing::trs_map;
 bool MyRing::to_right_connected;
 bool MyRing::to_left_connected;
 bool MyRing::shut_down;
+
 
 MyRing::MyRing(int rn, int rr)
 {
@@ -89,6 +94,16 @@ MyRing::MyRing(int rn, int rr)
 	printf("to_left_ip=%s to_right_ip=%s  \n", this->to_left_ip_arrs[ring_rank], this->to_right_ip_arrs[ring_rank]);
 	printf("listen_for_right_connection_port=%d listen_for_left_connection_port=%d", this->listen_for_right_connection_port, this->listen_for_left_connection_port);
 #endif
+	printf("Ini QuNode\n");
+	to_left_head = (node_item*)malloc(sizeof(node_item));
+	to_left_head->next = NULL;
+	to_left_tail = to_left_head;
+
+	to_right_head = (node_item*)malloc(sizeof(node_item));
+	to_right_head->next = NULL;
+	to_right_tail = to_right_head;
+	printf("Inited Qu finished");
+
 	this->InitBGThread();
 	printf("Finished InitBG\n");
 }
@@ -1255,6 +1270,7 @@ void MyRing::Send2RightThreadCallback()
 						void* data2send = NULL;
 						while (true)
 						{
+							/*
 							data2send = FetchFrom2RightQ();
 							if (data2send)
 							{
@@ -1263,6 +1279,19 @@ void MyRing::Send2RightThreadCallback()
 							else
 							{
 								std::this_thread::sleep_for(std::chrono::nanoseconds(1));
+							}
+							**/
+							if (to_right_head->next != NULL)
+							{
+								data2send = to_right_head->next;
+								node_item* temp = to_right_head;
+								to_right_head = to_right_head->next;
+								free(temp);
+								break;
+							}
+							else
+							{
+								std::this_thread::sleep_for(std::chrono::nanoseconds(100));
 							}
 						}
 						DataTuple* dtuple = static_cast<DataTuple*>(data2send);
@@ -1285,6 +1314,7 @@ void MyRing::Send2RightThreadCallback()
 						void* data2send = NULL;
 						while (true)
 						{
+							/*
 							data2send = FetchFrom2RightQ();
 							if (data2send)
 							{
@@ -1293,6 +1323,19 @@ void MyRing::Send2RightThreadCallback()
 							else
 							{
 								std::this_thread::sleep_for(std::chrono::nanoseconds(1));
+							}
+							**/
+							if (to_right_head->next != NULL)
+							{
+								data2send = to_right_head->next;
+								node_item* temp = to_right_head;
+								to_right_head = to_right_head->next;
+								free(temp);
+								break;
+							}
+							else
+							{
+								std::this_thread::sleep_for(std::chrono::nanoseconds(100));
 							}
 						}
 						DataTuple* dtuple = static_cast<DataTuple*>(data2send);
@@ -1369,8 +1412,10 @@ void MyRing::Send2LeftThreadCallback()
 						//printf("received remote memory address and key\n");
 						ctx->remote_idle = true;
 						void* data2send = NULL;
+
 						while (true)
 						{
+							/*
 							data2send = FetchFrom2LeftQ();
 							if (data2send)
 							{
@@ -1380,7 +1425,22 @@ void MyRing::Send2LeftThreadCallback()
 							{
 								std::this_thread::sleep_for(std::chrono::nanoseconds(100));
 							}
+							**/
+							if (to_left_head->next != NULL)
+							{
+								data2send = to_left_head->next;
+								node_item* temp = to_left_head;
+								to_left_head = to_left_head->next;
+								free(temp);
+								break;
+							}
+							else
+							{
+								std::this_thread::sleep_for(std::chrono::nanoseconds(1));
+							}
 						}
+
+
 						DataTuple* dtuple = static_cast<DataTuple*>(data2send);
 						size_t data_len = sizeof(DataTuple) + (dtuple->data_num) * (sizeoftype(dtuple->data_type));
 						send_tensor(id, (char*)data2send, data_len);
@@ -1401,6 +1461,7 @@ void MyRing::Send2LeftThreadCallback()
 						void* data2send = NULL;
 						while (true)
 						{
+							/*
 							data2send = FetchFrom2LeftQ();
 							if (data2send)
 							{
@@ -1409,6 +1470,19 @@ void MyRing::Send2LeftThreadCallback()
 							else
 							{
 								std::this_thread::sleep_for(std::chrono::nanoseconds(100));
+							}
+							**/
+							if (to_left_head->next != NULL)
+							{
+								data2send = to_left_head->next;
+								node_item* temp = to_left_head;
+								to_left_head = to_left_head->next;
+								free(temp);
+								break;
+							}
+							else
+							{
+								std::this_thread::sleep_for(std::chrono::nanoseconds(1));
 							}
 						}
 						DataTuple* dtuple = static_cast<DataTuple*>(data2send);
@@ -2062,33 +2136,45 @@ void MyRing::EnqueSendQ(DataTuple* dtuple)
 	break;
 	}
 
+	/*
+		if (dtuple->toRight)
+		{
+	#ifdef GJK_DEBUG
+			printf("toright\n");
+	#endif
+			{
+				std::lock_guard<std::mutex>lock(right_queue_mtx);
+				//printf("toright\n");
+				to_right_queue.push((void*)tosend_buf);
+			}
+	#ifdef GJK_DEBUG
+			printf("pending in right queue\n");
+	#endif
+		}
+		else
+		{
+	#ifdef GJK_DEBUG
+			printf("toleft\n");
+			assert(dtuple->rank >= 0 && dtuple->rank <= 3);
+			DataTuple* test = static_cast<DataTuple*>(static_cast<void*>(tosend_buf));
+			assert(test->rank >= 0 && test->rank <= 3);
+	#endif
+			{
+				std::lock_guard<std::mutex>lock(left_queue_mtx);
+				//printf("toleft\n");
+				to_left_queue.push((void*)tosend_buf);
+			}
+		}
+		**/
 	if (dtuple->toRight)
 	{
-#ifdef GJK_DEBUG
-		printf("toright\n");
-#endif
-		{
-			std::lock_guard<std::mutex>lock(right_queue_mtx);
-			//printf("toright\n");
-			to_right_queue.push((void*)tosend_buf);
-		}
-#ifdef GJK_DEBUG
-		printf("pending in right queue\n");
-#endif
+		to_right_tail->next = static_cast<char*>(tosend_buf);
+		to_right_tail = to_right_tail->next;
 	}
 	else
 	{
-#ifdef GJK_DEBUG
-		printf("toleft\n");
-		assert(dtuple->rank >= 0 && dtuple->rank <= 3);
-		DataTuple* test = static_cast<DataTuple*>(static_cast<void*>(tosend_buf));
-		assert(test->rank >= 0 && test->rank <= 3);
-#endif
-		{
-			std::lock_guard<std::mutex>lock(left_queue_mtx);
-			//printf("toleft\n");
-			to_left_queue.push((void*)tosend_buf);
-		}
+		to_left_tail->next = static_cast<char*>(tosend_buf);
+		to_left_tail = to_left_tail->next;
 	}
 }
 

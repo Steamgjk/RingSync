@@ -272,6 +272,10 @@ private:
 
 	static std::vector<std::thread> thread_vec;
 
+	static node_item* to_right_head;
+	static node_item* to_right_tail;
+	static node_item* to_left_head;
+	static node_item* to_left_tail;
 	//static void* from_left_queue[QueueLen];
 	//static void* to_right_queue[QueueLen];
 	//static void* from_right_queue[QueueLen];
