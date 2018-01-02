@@ -1243,7 +1243,7 @@ void MyRing::send_tensor_batch(struct rdma_cm_id *id, node_item*& head_ptr, int 
 		node_item* temp = head_ptr;
 		DataTuple* dtuple = static_cast<DataTuple*>(static_cast<void*>(data2send));
 		data_len = sizeof(DataTuple) + (dtuple->data_num) * (sizeoftype(dtuple->data_type));
-		printf("data_name = %s\n", dtuple->data_name);
+		//printf("data_name = %s\n", dtuple->data_name);
 		if (cur_len + data_len > b_sz)
 		{
 			break;
@@ -1254,7 +1254,7 @@ void MyRing::send_tensor_batch(struct rdma_cm_id *id, node_item*& head_ptr, int 
 		head_ptr = head_ptr->next;
 		free(temp);
 		cur_len  += data_len;
-		printf("batch cur_len = %d \n", cur_len);
+		//printf("batch cur_len = %d \n", cur_len);
 	}
 	memset(&wr, 0, sizeof(wr));
 	wr.wr_id = (uintptr_t)id;
@@ -2514,10 +2514,10 @@ void MyRing::RDMA_ProcessRecvData(struct rdma_cm_id* rc_id)
 				//printWCode(&wc);
 				int sz = recv4data(&wc, recv_data);
 				int cur_len = 0;
-				printf("sz = %d\n", sz);
+				//printf("sz = %d\n", sz);
 				if (recv_data != nullptr)//received data, will append to recv_chain...
 				{
-					printf("Polling Recved Data  sz = %d\n", sz);
+					//printf("Polling Recved Data  sz = %d\n", sz);
 					int header_len = sizeof(DataTuple);
 					char* header_msg = NULL;
 					char* ini = static_cast<char*>(recv_data);
@@ -2528,7 +2528,7 @@ void MyRing::RDMA_ProcessRecvData(struct rdma_cm_id* rc_id)
 						header_msg = ini + cur_len;
 						DataTuple* dtuple = (DataTuple*)malloc(header_len);
 						memcpy(dtuple, header_msg,  header_len);
-						printf("recv data_name = %s\n", dtuple->data_name);
+						//printf("recv data_name = %s\n", dtuple->data_name);
 						int data_len = (dtuple->data_num) * this->sizeoftype(dtuple->data_type);
 						if (data_len > 0)
 						{
@@ -2566,7 +2566,7 @@ void MyRing::RDMA_ProcessRecvData(struct rdma_cm_id* rc_id)
 
 						}
 						cur_len += (header_len + data_len);
-						printf("recv cur_len = %d  sz = %d\n", cur_len, sz);
+						//printf("recv cur_len = %d  sz = %d\n", cur_len, sz);
 
 					}
 					free(recv_data);
