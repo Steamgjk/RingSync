@@ -18,7 +18,7 @@ constexpr char* MyRing::rdma_to_right_ip_arrs[MAX_NUM];
 constexpr char* MyRing::rdma_to_left_ip_arrs[MAX_NUM];
 const int MyRing::rdma_listen_for_left_connection_port;
 const int MyRing::rdma_listen_for_right_connection_port;
-const int batch_size;
+const int MyRing::batch_size;
 //#define GJK_DEBUG 1
 int MyRing::ring_rank;
 int MyRing::ring_num;
@@ -1266,7 +1266,7 @@ void MyRing::send_tensor_batch(struct rdma_cm_id *id, node_item*& head_ptr, int 
 		wr.num_sge = 1;
 
 		sge.addr = (uintptr_t)ctx->buffer;
-		sge.length = len;
+		sge.length = cur_len;
 		sge.lkey = ctx->buffer_mr->lkey;
 	}
 	TEST_NZ(ibv_post_send(id->qp, &wr, &bad_wr));
