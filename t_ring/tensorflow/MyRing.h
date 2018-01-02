@@ -197,7 +197,7 @@ public:
 	void RDMA_RecvFixedData(struct rdma_cm_id* rc_id, size_t len);
 	void* FetchFrom2RightQ();
 	void* FetchFrom2LeftQ();
-	void send_tensor_batch(struct rdma_cm_id *id, node_item*& head_ptr, int b_sz)
+	void send_tensor_batch(struct rdma_cm_id *id, node_item*& head_ptr, int b_sz);
 #endif
 
 	~MyRing();

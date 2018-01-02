@@ -1241,7 +1241,7 @@ void MyRing::send_tensor_batch(struct rdma_cm_id *id, node_item*& head_ptr, int 
 	{
 		data2send = head_ptr->next->data_ptr;
 		node_item* temp = head_ptr;
-		DataTuple* dtuple = static_cast<DataTuple*>(data2send);
+		DataTuple* dtuple = static_cast<DataTuple*>(static_cast<void*>(data2send));
 		data_len = sizeof(DataTuple) + (dtuple->data_num) * (sizeoftype(dtuple->data_type));
 		if (cur_len + data_len > b_sz)
 		{
@@ -1257,7 +1257,7 @@ void MyRing::send_tensor_batch(struct rdma_cm_id *id, node_item*& head_ptr, int 
 	wr.wr_id = (uintptr_t)id;
 	wr.opcode = IBV_WR_RDMA_WRITE_WITH_IMM;
 	wr.send_flags = IBV_SEND_SIGNALED;
-	wr.imm_data = htonl(len);
+	wr.imm_data = htonl(cur_len);
 	wr.wr.rdma.remote_addr = ctx->peer_addr;
 	wr.wr.rdma.rkey = ctx->peer_rkey;
 	if (cur_len > 0)
