@@ -102,7 +102,7 @@ MyRing::MyRing(int rn, int rr)
 	to_right_head = (node_item*)malloc(sizeof(node_item));
 	to_right_head->next = NULL;
 	to_right_tail = to_right_head;
-	printf("Inited Qu finished");
+	printf("Inited Qu finished left = %p  right = %p", to_left_head, to_right_head);
 
 	this->InitBGThread();
 	printf("Finished InitBG\n");
@@ -1286,7 +1286,9 @@ void MyRing::Send2RightThreadCallback()
 								data2send = to_right_head->next;
 								node_item* temp = to_right_head;
 								to_right_head = to_right_head->next;
+								printf("Before free temp %p\n", temp);
 								free(temp);
+								printf("After free temp %p\n", temp);
 								break;
 							}
 							else
@@ -1330,7 +1332,9 @@ void MyRing::Send2RightThreadCallback()
 								data2send = to_right_head->next;
 								node_item* temp = to_right_head;
 								to_right_head = to_right_head->next;
+								printf("Before free temp %p\n", temp);
 								free(temp);
+								printf("After free temp %p\n", temp);
 								break;
 							}
 							else
@@ -1431,7 +1435,9 @@ void MyRing::Send2LeftThreadCallback()
 								data2send = to_left_head->next;
 								node_item* temp = to_left_head;
 								to_left_head = to_left_head->next;
+								printf("Before free temp %p\n", temp);
 								free(temp);
+								printf("After free temp %p\n", temp);
 								break;
 							}
 							else
@@ -1477,7 +1483,9 @@ void MyRing::Send2LeftThreadCallback()
 								data2send = to_left_head->next;
 								node_item* temp = to_left_head;
 								to_left_head = to_left_head->next;
+								printf("Before free temp %p\n", temp);
 								free(temp);
+								printf("After free temp %p\n", temp);
 								break;
 							}
 							else
@@ -2167,15 +2175,18 @@ void MyRing::EnqueSendQ(DataTuple* dtuple)
 		}
 		**/
 	node_item* new_node = (node_item*)malloc(sizeof(node_item));
+
 	new_node->next = NULL;
 	new_node->data_ptr = static_cast<char*>(tosend_buf);
 	if (dtuple->toRight)
 	{
+		printf("right newnode = %p", new_node);
 		to_right_tail->next = new_node;
 		to_right_tail = to_right_tail->next;
 	}
 	else
 	{
+		printf("left newnode = %p", new_node);
 		to_left_tail->next = new_node;
 		to_left_tail = to_left_tail->next;
 	}
