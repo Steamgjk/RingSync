@@ -2166,14 +2166,17 @@ void MyRing::EnqueSendQ(DataTuple* dtuple)
 			}
 		}
 		**/
+	node_item* new_node = (node_item*)malloc(sizeof(node_item));
+	new_node->next = NULL;
+	new_node->data_ptr = static_cast<char*>(tosend_buf);
 	if (dtuple->toRight)
 	{
-		to_right_tail->next = static_cast<char*>(tosend_buf);
+		to_right_tail->next = new_node;
 		to_right_tail = to_right_tail->next;
 	}
 	else
 	{
-		to_left_tail->next = static_cast<char*>(tosend_buf);
+		to_left_tail->next = new_node;
 		to_left_tail = to_left_tail->next;
 	}
 }
