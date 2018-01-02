@@ -2519,11 +2519,13 @@ void MyRing::RDMA_ProcessRecvData(struct rdma_cm_id* rc_id)
 				{
 					printf("Polling Recved Data  sz = %d\n", sz);
 					int header_len = sizeof(DataTuple);
-					char* header_msg = static_cast<char*>(recv_data);
+					char* header_msg = NULL;
+					char* ini = static_cast<char*>(recv_data);
 					char full_name[header_name_len];
+
 					while (cur_len < sz)
 					{
-						header_msg = header_msg + cur_len;
+						header_msg = ini + cur_len;
 						DataTuple* dtuple = (DataTuple*)malloc(header_len);
 						memcpy(dtuple, header_msg,  header_len);
 						printf("recv data_name = %s\n", dtuple->data_name);
