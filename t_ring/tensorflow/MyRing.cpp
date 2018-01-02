@@ -102,7 +102,7 @@ MyRing::MyRing(int rn, int rr)
 	to_right_head = (node_item*)malloc(sizeof(node_item));
 	to_right_head->next = NULL;
 	to_right_tail = to_right_head;
-	printf("Inited Qu finished left = %p  right = %p", to_left_head, to_right_head);
+	printf("Inited Qu finished left = %p  right = %p\n", to_left_head, to_right_head);
 
 	this->InitBGThread();
 	printf("Finished InitBG\n");
@@ -2180,13 +2180,13 @@ void MyRing::EnqueSendQ(DataTuple* dtuple)
 	new_node->data_ptr = static_cast<char*>(tosend_buf);
 	if (dtuple->toRight)
 	{
-		printf("right newnode = %p", new_node);
+		printf("right newnode = %p\n", new_node);
 		to_right_tail->next = new_node;
 		to_right_tail = to_right_tail->next;
 	}
 	else
 	{
-		printf("left newnode = %p", new_node);
+		printf("left newnode = %p\n", new_node);
 		to_left_tail->next = new_node;
 		to_left_tail = to_left_tail->next;
 	}
