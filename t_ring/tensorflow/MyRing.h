@@ -223,11 +223,11 @@ private:
 	constexpr static  char* ip_arrs[MAX_NUM] = { (char*)"192.168.13.246", (char*)"127.0.0.1", (char*)"127.0.0.1", (char*)"127.0.0.1", (char*)"127.0.0.1", (char*)"127.0.0.1", (char*)"127.0.0.1", (char*)"127.0.0.1", (char*)"127.0.0.1"};
 
 
-	//constexpr static  char* to_right_ip_arrs[MAX_NUM] = { (char*)"192.168.13.246", (char*)"192.168.13.183", (char*)"192.168.13.27", (char*)"192.168.13.25", (char*)"192.168.13.23", (char*)"192.168.13.176", (char*)"192.168.13.179", (char*)"192.168.13.24", (char*)"192.168.13.26"};
-	//constexpr static  char* to_left_ip_arrs[MAX_NUM] = { (char*)"192.168.13.44", (char*)"192.168.13.41", (char*)"192.168.13.43", (char*)"192.168.13.47", (char*)"192.168.13.45", (char*)"192.168.13.40", (char*)"192.168.13.42", (char*)"192.168.13.46", (char*)"192.168.13.39"};
+	constexpr static  char* to_right_ip_arrs[MAX_NUM] = { (char*)"192.168.13.246", (char*)"192.168.13.183", (char*)"192.168.13.27", (char*)"192.168.13.25", (char*)"192.168.13.23", (char*)"192.168.13.176", (char*)"192.168.13.179", (char*)"192.168.13.24", (char*)"192.168.13.26"};
+	constexpr static  char* to_left_ip_arrs[MAX_NUM] = { (char*)"192.168.13.44", (char*)"192.168.13.41", (char*)"192.168.13.43", (char*)"192.168.13.47", (char*)"192.168.13.45", (char*)"192.168.13.40", (char*)"192.168.13.42", (char*)"192.168.13.46", (char*)"192.168.13.39"};
 
-	constexpr static  char* to_right_ip_arrs[MAX_NUM] = { (char*)"12.12.10.11", (char*)"12.12.10.12", (char*)"12.12.10.13", (char*)"12.12.10.14", (char*)"12.12.10.15", (char*)"12.12.10.16", (char*)"12.12.10.17", (char*)"12.12.10.18", (char*)"12.12.10.19"};
-	constexpr static  char* to_left_ip_arrs[MAX_NUM] = { (char*)"12.12.11.11", (char*)"12.12.11.12", (char*)"12.12.11.13", (char*)"12.12.11.14", (char*)"12.12.11.15", (char*)"12.12.11.16", (char*)"12.12.11.17", (char*)"12.12.11.18", (char*)"12.12.11.19"};
+	//constexpr static  char* to_right_ip_arrs[MAX_NUM] = { (char*)"12.12.10.11", (char*)"12.12.10.12", (char*)"12.12.10.13", (char*)"12.12.10.14", (char*)"12.12.10.15", (char*)"12.12.10.16", (char*)"12.12.10.17", (char*)"12.12.10.18", (char*)"12.12.10.19"};
+	//constexpr static  char* to_left_ip_arrs[MAX_NUM] = { (char*)"12.12.11.11", (char*)"12.12.11.12", (char*)"12.12.11.13", (char*)"12.12.11.14", (char*)"12.12.11.15", (char*)"12.12.11.16", (char*)"12.12.11.17", (char*)"12.12.11.18", (char*)"12.12.11.19"};
 
 	constexpr static  char* rdma_to_right_ip_arrs[MAX_NUM] = { (char*)"12.12.10.11", (char*)"12.12.10.12", (char*)"12.12.10.13", (char*)"12.12.10.14", (char*)"12.12.10.15", (char*)"12.12.10.16", (char*)"12.12.10.17", (char*)"12.12.10.18", (char*)"12.12.10.19"};
 	constexpr static  char* rdma_to_left_ip_arrs[MAX_NUM] = { (char*)"12.12.11.11", (char*)"12.12.11.12", (char*)"12.12.11.13", (char*)"12.12.11.14", (char*)"12.12.11.15", (char*)"12.12.11.16", (char*)"12.12.11.17", (char*)"12.12.11.18", (char*)"12.12.11.19"};
