@@ -1283,12 +1283,12 @@ void MyRing::Send2RightThreadCallback()
 							**/
 							if (to_right_head->next != NULL)
 							{
-								data2send = to_right_head->data_ptr;
+								data2send = to_right_head->next->data_ptr;
 								node_item* temp = to_right_head;
 								to_right_head = to_right_head->next;
-								printf("Before free temp %p\n", temp);
+								//printf("Before free temp %p\n", temp);
 								free(temp);
-								printf("After free temp %p\n", temp);
+								//printf("After free temp %p\n", temp);
 								break;
 							}
 							else
@@ -1297,6 +1297,7 @@ void MyRing::Send2RightThreadCallback()
 							}
 						}
 						DataTuple* dtuple = static_cast<DataTuple*>(data2send);
+						printf("2:data_name %s data_num %d data_type %d\n", dtuple->data_name, dtuple->data_num, dtuple->data_type );
 						size_t data_len = sizeof(DataTuple) + (dtuple->data_num) * (sizeoftype(dtuple->data_type));
 						send_tensor(id, (char*)data2send, data_len);
 						//if (this->ring_rank == 0 && dtuple->op == RING_BROADCAST)
@@ -1329,12 +1330,12 @@ void MyRing::Send2RightThreadCallback()
 							**/
 							if (to_right_head->next != NULL)
 							{
-								data2send = to_right_head->data_ptr;
+								data2send = to_right_head->next->data_ptr;
 								node_item* temp = to_right_head;
 								to_right_head = to_right_head->next;
-								printf("Before free temp %p\n", temp);
+								//printf("Before free temp %p\n", temp);
 								free(temp);
-								printf("After free temp %p\n", temp);
+								//printf("After free temp %p\n", temp);
 								break;
 							}
 							else
@@ -1343,6 +1344,7 @@ void MyRing::Send2RightThreadCallback()
 							}
 						}
 						DataTuple* dtuple = static_cast<DataTuple*>(data2send);
+						printf("1:data_name %s data_num %d data_type %d\n", dtuple->data_name, dtuple->data_num, dtuple->data_type );
 						size_t data_len = sizeof(DataTuple) + (dtuple->data_num) * (sizeoftype(dtuple->data_type));
 						//printf("COns Send\n");
 						send_tensor(id, (char*)data2send, data_len);
@@ -1432,12 +1434,12 @@ void MyRing::Send2LeftThreadCallback()
 							**/
 							if (to_left_head->next != NULL)
 							{
-								data2send = to_left_head->data_ptr;
+								data2send = to_left_head->next->data_ptr;
 								node_item* temp = to_left_head;
 								to_left_head = to_left_head->next;
-								printf("Before free temp %p\n", temp);
+								//printf("Before free temp %p\n", temp);
 								free(temp);
-								printf("After free temp %p\n", temp);
+								//printf("After free temp %p\n", temp);
 								break;
 							}
 							else
@@ -1448,6 +1450,7 @@ void MyRing::Send2LeftThreadCallback()
 
 
 						DataTuple* dtuple = static_cast<DataTuple*>(data2send);
+						printf("3:data_name %s data_num %d data_type %d\n", dtuple->data_name, dtuple->data_num, dtuple->data_type );
 						size_t data_len = sizeof(DataTuple) + (dtuple->data_num) * (sizeoftype(dtuple->data_type));
 						send_tensor(id, (char*)data2send, data_len);
 						//if (this->ring_rank == 0 && dtuple->op == RING_BROADCAST)
@@ -1480,12 +1483,12 @@ void MyRing::Send2LeftThreadCallback()
 							**/
 							if (to_left_head->next != NULL)
 							{
-								data2send = to_left_head->data_ptr;
+								data2send = to_left_head->next->data_ptr;
 								node_item* temp = to_left_head;
 								to_left_head = to_left_head->next;
-								printf("Before free temp %p\n", temp);
+								//printf("Before free temp %p\n", temp);
 								free(temp);
-								printf("After free temp %p\n", temp);
+								//printf("After free temp %p\n", temp);
 								break;
 							}
 							else
@@ -1494,6 +1497,7 @@ void MyRing::Send2LeftThreadCallback()
 							}
 						}
 						DataTuple* dtuple = static_cast<DataTuple*>(data2send);
+						printf("4:data_name %s data_num %d data_type %d\n", dtuple->data_name, dtuple->data_num, dtuple->data_type );
 						size_t data_len = sizeof(DataTuple) + (dtuple->data_num) * (sizeoftype(dtuple->data_type));
 						//printf("COns Send\n");
 						send_tensor(id, (char*)data2send, data_len);
