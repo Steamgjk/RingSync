@@ -1243,6 +1243,7 @@ void MyRing::send_tensor_batch(struct rdma_cm_id *id, node_item*& head_ptr, int 
 		node_item* temp = head_ptr;
 		DataTuple* dtuple = static_cast<DataTuple*>(static_cast<void*>(data2send));
 		data_len = sizeof(DataTuple) + (dtuple->data_num) * (sizeoftype(dtuple->data_type));
+		printf("data_name = %s\n", dtuple->data_name);
 		if (cur_len + data_len > b_sz)
 		{
 			break;
@@ -1251,7 +1252,9 @@ void MyRing::send_tensor_batch(struct rdma_cm_id *id, node_item*& head_ptr, int 
 		free(data2send);
 		data2send = NULL;
 		head_ptr = head_ptr->next;
+		free(temp);
 		cur_len  += data_len;
+		printf("cur_len = %d \n", cur_len);
 	}
 	memset(&wr, 0, sizeof(wr));
 	wr.wr_id = (uintptr_t)id;
@@ -2511,6 +2514,7 @@ void MyRing::RDMA_ProcessRecvData(struct rdma_cm_id* rc_id)
 				//printWCode(&wc);
 				int sz = recv4data(&wc, recv_data);
 				int cur_len = 0;
+				printf("sz = %d", sz);
 				if (recv_data != nullptr)//received data, will append to recv_chain...
 				{
 					//printf("Polling Recved Data  sz = %d\n", sz);
@@ -2559,7 +2563,7 @@ void MyRing::RDMA_ProcessRecvData(struct rdma_cm_id* rc_id)
 
 						}
 						cur_len += (header_len + data_len);
-
+						printf("cur_len = %d  sz = %d", cur_len, sz);
 
 					}
 					free(recv_data);
