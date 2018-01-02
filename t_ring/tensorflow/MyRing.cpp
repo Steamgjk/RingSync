@@ -2563,7 +2563,7 @@ void MyRing::RDMA_ProcessRecvData(struct rdma_cm_id* rc_id)
 
 						}
 						cur_len += (header_len + data_len);
-						printf("cur_len = %d  sz = %d\n", cur_len, sz);
+						printf("recv cur_len = %d  sz = %d\n", cur_len, sz);
 
 					}
 					free(recv_data);
