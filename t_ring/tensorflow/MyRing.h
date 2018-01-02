@@ -29,6 +29,8 @@
 #define HAVE_NCCL 0
 #define QueueLen 1000
 
+#define BATCH_SIZE  (512 * 1024 * 1024)
+
 //#if TENSORFLOW
 #include "tensorflow/core/framework/op.h"
 #include "tensorflow/core/framework/op_kernel.h"
@@ -195,6 +197,7 @@ public:
 	void RDMA_RecvFixedData(struct rdma_cm_id* rc_id, size_t len);
 	void* FetchFrom2RightQ();
 	void* FetchFrom2LeftQ();
+	void send_tensor_batch(struct rdma_cm_id *id, node_item*& head_ptr, int b_sz)
 #endif
 
 	~MyRing();
@@ -276,6 +279,8 @@ private:
 	static node_item* to_right_tail;
 	static node_item* to_left_head;
 	static node_item* to_left_tail;
+
+	const static int batch_size = BATCH_SIZE;
 	//static void* from_left_queue[QueueLen];
 	//static void* to_right_queue[QueueLen];
 	//static void* from_right_queue[QueueLen];

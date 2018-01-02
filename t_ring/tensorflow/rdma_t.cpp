@@ -131,6 +131,8 @@ void send_tensor(struct rdma_cm_id *id, char* buff, uint32_t len)
 	TEST_NZ(ibv_post_send(id->qp, &wr, &bad_wr));
 }
 
+
+
 void post_receive_client(struct rdma_cm_id *id)
 {
 	struct context *ctx = (struct context *)id->context;

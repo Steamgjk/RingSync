@@ -18,7 +18,7 @@ constexpr char* MyRing::rdma_to_right_ip_arrs[MAX_NUM];
 constexpr char* MyRing::rdma_to_left_ip_arrs[MAX_NUM];
 const int MyRing::rdma_listen_for_left_connection_port;
 const int MyRing::rdma_listen_for_right_connection_port;
-
+const int batch_size;
 //#define GJK_DEBUG 1
 int MyRing::ring_rank;
 int MyRing::ring_num;
@@ -103,7 +103,7 @@ MyRing::MyRing(int rn, int rr)
 	to_right_head->next = NULL;
 	to_right_tail = to_right_head;
 	printf("Inited Qu finished left = %p  right = %p\n", to_left_head, to_right_head);
-
+	printf("Batch Size = %d\n", batch_size);
 	this->InitBGThread();
 	printf("Finished InitBG\n");
 }
@@ -1223,6 +1223,54 @@ void* MyRing::FetchFrom2LeftQ()
 	}
 	return msg;
 }
+void MyRing::send_tensor_batch(struct rdma_cm_id *id, node_item*& head_ptr, int b_sz)
+{
+	//printf("Sending tensor...\n");
+	struct context *ctx = (struct context *)id->context;
+	struct ibv_send_wr wr, *bad_wr = NULL;
+	struct ibv_sge sge;
+	while (head_ptr->next == NULL)
+	{
+		std::this_thread::sleep_for(std::chrono::nanoseconds(100));
+	}
+	char*sta = ctx->buffer;
+	size_t cur_len = 0;
+	char* data2send = NULL;
+	size_t data_len = 0;
+	while (cur_len < b_sz && head_ptr->next != NULL )
+	{
+		data2send = head_ptr->next->data_ptr;
+		node_item* temp = head_ptr;
+		DataTuple* dtuple = static_cast<DataTuple*>(data2send);
+		data_len = sizeof(DataTuple) + (dtuple->data_num) * (sizeoftype(dtuple->data_type));
+		if (cur_len + data_len > b_sz)
+		{
+			break;
+		}
+		memcpy(sta + cur_len, data2send, data_len);
+		free(data2send);
+		data2send = NULL;
+		head_ptr = head_ptr->next;
+		cur_len  += data_len;
+	}
+	memset(&wr, 0, sizeof(wr));
+	wr.wr_id = (uintptr_t)id;
+	wr.opcode = IBV_WR_RDMA_WRITE_WITH_IMM;
+	wr.send_flags = IBV_SEND_SIGNALED;
+	wr.imm_data = htonl(len);
+	wr.wr.rdma.remote_addr = ctx->peer_addr;
+	wr.wr.rdma.rkey = ctx->peer_rkey;
+	if (cur_len > 0)
+	{
+		wr.sg_list = &sge;
+		wr.num_sge = 1;
+
+		sge.addr = (uintptr_t)ctx->buffer;
+		sge.length = len;
+		sge.lkey = ctx->buffer_mr->lkey;
+	}
+	TEST_NZ(ibv_post_send(id->qp, &wr, &bad_wr));
+}
 void MyRing::Send2RightThreadCallback()
 {
 	int right_idx = this->getRightNeighbour(this->ring_rank);
@@ -1267,20 +1315,12 @@ void MyRing::Send2RightThreadCallback()
 						ctx->peer_rkey = ctx->msg->data.mr.rkey;
 						//printf("received remote memory address and key\n");
 						ctx->remote_idle = true;
+						/*
 						void* data2send = NULL;
+
 						while (true)
 						{
-							/*
-							data2send = FetchFrom2RightQ();
-							if (data2send)
-							{
-								break;
-							}
-							else
-							{
-								std::this_thread::sleep_for(std::chrono::nanoseconds(1));
-							}
-							**/
+
 							if (to_right_head->next != NULL)
 							{
 								data2send = to_right_head->next->data_ptr;
@@ -1300,10 +1340,12 @@ void MyRing::Send2RightThreadCallback()
 						//printf("2:data_name %s data_num %d data_type %d\n", dtuple->data_name, dtuple->data_num, dtuple->data_type );
 						size_t data_len = sizeof(DataTuple) + (dtuple->data_num) * (sizeoftype(dtuple->data_type));
 						send_tensor(id, (char*)data2send, data_len);
+						**/
+						send_tensor_batch(id,  to_right_head, batch_size);
 						//if (this->ring_rank == 0 && dtuple->op == RING_BROADCAST)
 						//	printf("%s sent1\n", dtuple->data_name);
 						//printf("INIt SEnd\n");
-						free(data2send);
+						//free(data2send);
 					}
 					else if (ctx->msg->id == MSG_DONE)
 					{
@@ -1314,20 +1356,11 @@ void MyRing::Send2RightThreadCallback()
 					else if (ctx->msg->id == MSG_READY)
 					{
 						ctx->remote_idle = true;
+						/*
 						void* data2send = NULL;
+
 						while (true)
 						{
-							/*
-							data2send = FetchFrom2RightQ();
-							if (data2send)
-							{
-								break;
-							}
-							else
-							{
-								std::this_thread::sleep_for(std::chrono::nanoseconds(1));
-							}
-							**/
 							if (to_right_head->next != NULL)
 							{
 								data2send = to_right_head->next->data_ptr;
@@ -1352,6 +1385,8 @@ void MyRing::Send2RightThreadCallback()
 						//	printf("%s sent\n", dtuple->data_name);
 						//printf("Adter Send\n");
 						free(data2send);
+						**/
+						send_tensor_batch(id,  to_right_head, batch_size);
 					}
 					post_receive_client(id);
 				}
@@ -1417,21 +1452,12 @@ void MyRing::Send2LeftThreadCallback()
 						ctx->peer_rkey = ctx->msg->data.mr.rkey;
 						//printf("received remote memory address and key\n");
 						ctx->remote_idle = true;
+						/*
 						void* data2send = NULL;
 
 						while (true)
 						{
-							/*
-							data2send = FetchFrom2LeftQ();
-							if (data2send)
-							{
-								break;
-							}
-							else
-							{
-								std::this_thread::sleep_for(std::chrono::nanoseconds(100));
-							}
-							**/
+
 							if (to_left_head->next != NULL)
 							{
 								data2send = to_left_head->next->data_ptr;
@@ -1457,6 +1483,8 @@ void MyRing::Send2LeftThreadCallback()
 						//	printf("%s sent1-le\n", dtuple->data_name);
 						//printf("INIt SEnd\n");
 						free(data2send);
+						**/
+						send_tensor_batch(id,  to_left_head, batch_size);
 					}
 					else if (ctx->msg->id == MSG_DONE)
 					{
@@ -1467,20 +1495,11 @@ void MyRing::Send2LeftThreadCallback()
 					else if (ctx->msg->id == MSG_READY)
 					{
 						ctx->remote_idle = true;
+						/*
 						void* data2send = NULL;
 						while (true)
 						{
-							/*
-							data2send = FetchFrom2LeftQ();
-							if (data2send)
-							{
-								break;
-							}
-							else
-							{
-								std::this_thread::sleep_for(std::chrono::nanoseconds(100));
-							}
-							**/
+
 							if (to_left_head->next != NULL)
 							{
 								data2send = to_left_head->next->data_ptr;
@@ -1505,6 +1524,8 @@ void MyRing::Send2LeftThreadCallback()
 						//	printf("%s sent-le\n", dtuple->data_name);
 						//printf("Adter Send\n");
 						free(data2send);
+						**/
+						send_tensor_batch(id,  to_left_head, batch_size);
 					}
 					post_receive_client(id);
 				}
@@ -2489,67 +2510,56 @@ void MyRing::RDMA_ProcessRecvData(struct rdma_cm_id* rc_id)
 				//printf("Before recv4Data \n");
 				//printWCode(&wc);
 				int sz = recv4data(&wc, recv_data);
-
+				int cur_len = 0;
 				if (recv_data != nullptr)//received data, will append to recv_chain...
 				{
 					//printf("Polling Recved Data  sz = %d\n", sz);
 					int header_len = sizeof(DataTuple);
 					char* header_msg = static_cast<char*>(recv_data);
-
-					//DataTuple* dtuple = static_cast<DataTuple*>( static_cast<void*>(header_msg) );
-					DataTuple* dtuple = (DataTuple*)malloc(header_len);
-					memcpy(dtuple, recv_data,  header_len);
-					int data_len = (dtuple->data_num) * this->sizeoftype(dtuple->data_type);
-					//char* data_msg = header_msg + header_len ;
-
-					if (data_len > 0)
-					{
-						char* data_msg = (char*)malloc(data_len);
-						memcpy(data_msg, header_msg + header_len, data_len );
-						dtuple->data = data_msg;
-					}
-					else
-					{
-						dtuple->data = NULL;
-					}
-
-
-					//printf("Process Data name = %s sz = %ld  header_len=%d data_len=%d  data_num=%d  data_msg=%p\n", dtuple->data_name, sz, header_len, data_len, dtuple->data_num, dtuple->data);
 					char full_name[header_name_len];
-					sprintf(full_name, "%s_%d", dtuple->data_name, dtuple->scatter_gather_counter);
-					//string keyname = dtuple->data_name;
-
-					string keyname = full_name;
-					//should locked
+					while (cur_len < sz)
 					{
-						if (dtuple->toRight)
+						header_msg = header_msg + cur_len;
+						DataTuple* dtuple = (DataTuple*)malloc(header_len);
+						memcpy(dtuple, header_msg,  header_len);
+						int data_len = (dtuple->data_num) * this->sizeoftype(dtuple->data_type);
+						if (data_len > 0)
 						{
-							//printf("Inserting to right\n");
-
-							{
-								//if (dtuple->op == RING_BROADCAST && this->ring_rank != 0)
-								{
-									//	printf("%s Recved and Insert\n", dtuple->data_name);
-								}
-								std::lock_guard<std::mutex>lock(map_mtx_to_right);
-								recv_buf_map_to_right.insert(make_pair(keyname, static_cast<void*>(dtuple)));
-							}
-							//printf("Inserted to right\n");
+							char* data_msg = (char*)malloc(data_len);
+							memcpy(data_msg, header_msg + header_len, data_len );
+							dtuple->data = data_msg;
 						}
 						else
 						{
-							//if (dtuple->op == RING_BROADCAST && this->ring_rank != 0)
+							dtuple->data = NULL;
+						}
+
+						sprintf(full_name, "%s_%d", dtuple->data_name, dtuple->scatter_gather_counter);
+						string keyname = full_name;
+						//should locked
+						{
+							if (dtuple->toRight)
 							{
-								//printf("%s Left Recved and Insert\n", dtuple->data_name);
+
+								{
+
+									std::lock_guard<std::mutex>lock(map_mtx_to_right);
+									recv_buf_map_to_right.insert(make_pair(keyname, static_cast<void*>(dtuple)));
+								}
 							}
-							//printf("Inserting to left\n");
+							else
 							{
-								std::lock_guard<std::mutex>lock(map_mtx_to_left);
-								recv_buf_map_to_left.insert(make_pair(keyname, static_cast<void*>(dtuple)));
+
+								{
+									std::lock_guard<std::mutex>lock(map_mtx_to_left);
+									recv_buf_map_to_left.insert(make_pair(keyname, static_cast<void*>(dtuple)));
+								}
+
 							}
-							//printf("Inserted to left\n");
 
 						}
+						cur_len += (header_len + data_len);
+
 
 					}
 					free(recv_data);
