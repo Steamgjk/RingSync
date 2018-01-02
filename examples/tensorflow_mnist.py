@@ -88,7 +88,7 @@ def main(_):
     # of all workers when training is started with random weights or restored
     # from a checkpoint.
     hooks = [tr.BroadcastGlobalVariablesHook(0),
-             tf.train.StopAtStepHook(last_step=100),
+             tf.train.StopAtStepHook(last_step=1000),
              tf.train.LoggingTensorHook(tensors={'step': global_step, 'loss': loss},
                                         every_n_iter=10),
              ]
