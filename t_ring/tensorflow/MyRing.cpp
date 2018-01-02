@@ -1297,7 +1297,7 @@ void MyRing::Send2RightThreadCallback()
 							}
 						}
 						DataTuple* dtuple = static_cast<DataTuple*>(data2send);
-						printf("2:data_name %s data_num %d data_type %d\n", dtuple->data_name, dtuple->data_num, dtuple->data_type );
+						//printf("2:data_name %s data_num %d data_type %d\n", dtuple->data_name, dtuple->data_num, dtuple->data_type );
 						size_t data_len = sizeof(DataTuple) + (dtuple->data_num) * (sizeoftype(dtuple->data_type));
 						send_tensor(id, (char*)data2send, data_len);
 						//if (this->ring_rank == 0 && dtuple->op == RING_BROADCAST)
@@ -1344,7 +1344,7 @@ void MyRing::Send2RightThreadCallback()
 							}
 						}
 						DataTuple* dtuple = static_cast<DataTuple*>(data2send);
-						printf("1:data_name %s data_num %d data_type %d\n", dtuple->data_name, dtuple->data_num, dtuple->data_type );
+						//printf("1:data_name %s data_num %d data_type %d\n", dtuple->data_name, dtuple->data_num, dtuple->data_type );
 						size_t data_len = sizeof(DataTuple) + (dtuple->data_num) * (sizeoftype(dtuple->data_type));
 						//printf("COns Send\n");
 						send_tensor(id, (char*)data2send, data_len);
@@ -1450,7 +1450,7 @@ void MyRing::Send2LeftThreadCallback()
 
 
 						DataTuple* dtuple = static_cast<DataTuple*>(data2send);
-						printf("3:data_name %s data_num %d data_type %d\n", dtuple->data_name, dtuple->data_num, dtuple->data_type );
+						//printf("3:data_name %s data_num %d data_type %d\n", dtuple->data_name, dtuple->data_num, dtuple->data_type );
 						size_t data_len = sizeof(DataTuple) + (dtuple->data_num) * (sizeoftype(dtuple->data_type));
 						send_tensor(id, (char*)data2send, data_len);
 						//if (this->ring_rank == 0 && dtuple->op == RING_BROADCAST)
@@ -1497,7 +1497,7 @@ void MyRing::Send2LeftThreadCallback()
 							}
 						}
 						DataTuple* dtuple = static_cast<DataTuple*>(data2send);
-						printf("4:data_name %s data_num %d data_type %d\n", dtuple->data_name, dtuple->data_num, dtuple->data_type );
+						//printf("4:data_name %s data_num %d data_type %d\n", dtuple->data_name, dtuple->data_num, dtuple->data_type );
 						size_t data_len = sizeof(DataTuple) + (dtuple->data_num) * (sizeoftype(dtuple->data_type));
 						//printf("COns Send\n");
 						send_tensor(id, (char*)data2send, data_len);
@@ -1581,8 +1581,8 @@ void MyRing::Send2RightThreadCallback()
 			}
 			else
 			{
-				if (dtuple->op == RING_BROADCAST)
-					printf("%s --Send2RightThreadCallback:Finished  \n", dtuple->data_name);
+				//if (dtuple->op == RING_BROADCAST)
+				//	printf("%s --Send2RightThreadCallback:Finished  \n", dtuple->data_name);
 				//printf("Sended2Right Finished  nwt=%d  name = %s\n", nwt, dtuple->data_name);
 			}
 			free(msg);
@@ -2185,13 +2185,13 @@ void MyRing::EnqueSendQ(DataTuple* dtuple)
 
 	if (dtuple->toRight)
 	{
-		printf("right newnode = %p\n", new_node);
+		//printf("right newnode = %p\n", new_node);
 		to_right_tail->next = new_node;
 		to_right_tail = to_right_tail->next;
 	}
 	else
 	{
-		printf("left newnode = %p\n", new_node);
+		//printf("left newnode = %p\n", new_node);
 		to_left_tail->next = new_node;
 		to_left_tail = to_left_tail->next;
 	}
