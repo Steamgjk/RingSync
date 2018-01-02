@@ -2526,6 +2526,7 @@ void MyRing::RDMA_ProcessRecvData(struct rdma_cm_id* rc_id)
 						header_msg = header_msg + cur_len;
 						DataTuple* dtuple = (DataTuple*)malloc(header_len);
 						memcpy(dtuple, header_msg,  header_len);
+						printf("recv data_name = %s\n", dtuple->data_name);
 						int data_len = (dtuple->data_num) * this->sizeoftype(dtuple->data_type);
 						if (data_len > 0)
 						{
