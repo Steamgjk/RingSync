@@ -1232,6 +1232,10 @@ void MyRing::send_tensor_batch(struct rdma_cm_id *id, node_item*& head_ptr, int 
 	while (head_ptr->next == NULL)
 	{
 		std::this_thread::sleep_for(std::chrono::nanoseconds(100));
+		if (shut_down)
+		{
+			return;
+		}
 	}
 	char*sta = ctx->buffer;
 	size_t cur_len = 0;
@@ -1239,6 +1243,10 @@ void MyRing::send_tensor_batch(struct rdma_cm_id *id, node_item*& head_ptr, int 
 	size_t data_len = 0;
 	while (cur_len < b_sz && head_ptr->next != NULL )
 	{
+		if (shut_down)
+		{
+			return;
+		}
 		data2send = head_ptr->next->data_ptr;
 		node_item* temp = head_ptr;
 		DataTuple* dtuple = static_cast<DataTuple*>(static_cast<void*>(data2send));
@@ -1295,10 +1303,16 @@ void MyRing::Send2RightThreadCallback()
 
 		while (ibv_poll_cq(cq, 1, &wc))
 		{
-
+			if (shut_down)
+			{
+				break;
+			}
 			if (wc.status == IBV_WC_SUCCESS)
 			{
-
+				if (shut_down)
+				{
+					break;
+				}
 
 				//printf("Here:rdma_send_data....\n");
 				//printWCode(&wc);
@@ -1427,14 +1441,20 @@ void MyRing::Send2LeftThreadCallback()
 
 	while (!shut_down)
 	{
-
+		if (shut_down)
+		{
+			break;
+		}
 		TEST_NZ(ibv_get_cq_event(ctx->comp_channel, &cq, &ev_ctx));
 		ibv_ack_cq_events(cq, 1);
 		TEST_NZ(ibv_req_notify_cq(cq, 0));
 
 		while (ibv_poll_cq(cq, 1, &wc))
 		{
-
+			if (shut_down)
+			{
+				break;
+			}
 			//printf("Send2LeftThreadCallback Enter ibv_poll_cq\n");
 			if (wc.status == IBV_WC_SUCCESS)
 			{
@@ -2505,6 +2525,10 @@ void MyRing::RDMA_ProcessRecvData(struct rdma_cm_id* rc_id)
 
 		while (ibv_poll_cq(cq, 1, &wc))
 		{
+			if (shut_down)
+			{
+				break;
+			}
 			//printf("Each poll_cq\n");
 			//printWCode(&wc);
 			if (wc.status == IBV_WC_SUCCESS)
