@@ -1283,7 +1283,7 @@ void MyRing::Send2RightThreadCallback()
 							**/
 							if (to_right_head->next != NULL)
 							{
-								data2send = to_right_head->next;
+								data2send = to_right_head->data_ptr;
 								node_item* temp = to_right_head;
 								to_right_head = to_right_head->next;
 								printf("Before free temp %p\n", temp);
@@ -1329,7 +1329,7 @@ void MyRing::Send2RightThreadCallback()
 							**/
 							if (to_right_head->next != NULL)
 							{
-								data2send = to_right_head->next;
+								data2send = to_right_head->data_ptr;
 								node_item* temp = to_right_head;
 								to_right_head = to_right_head->next;
 								printf("Before free temp %p\n", temp);
@@ -1432,7 +1432,7 @@ void MyRing::Send2LeftThreadCallback()
 							**/
 							if (to_left_head->next != NULL)
 							{
-								data2send = to_left_head->next;
+								data2send = to_left_head->data_ptr;
 								node_item* temp = to_left_head;
 								to_left_head = to_left_head->next;
 								printf("Before free temp %p\n", temp);
@@ -1480,7 +1480,7 @@ void MyRing::Send2LeftThreadCallback()
 							**/
 							if (to_left_head->next != NULL)
 							{
-								data2send = to_left_head->next;
+								data2send = to_left_head->data_ptr;
 								node_item* temp = to_left_head;
 								to_left_head = to_left_head->next;
 								printf("Before free temp %p\n", temp);
@@ -2178,15 +2178,7 @@ void MyRing::EnqueSendQ(DataTuple* dtuple)
 	node_item* new_node = (node_item*)malloc(sizeof(node_item));
 	new_node->next = NULL;
 	new_node->data_ptr = static_cast<char*>(tosend_buf);
-	if (new_node != NULL)
-	{
-		printf("new_node = %p to free\n", new_node);
-		free(new_node);
-		printf("has Freed\n");
-	}
-	new_node = (node_item*)malloc(sizeof(node_item));
-	new_node->next = NULL;
-	new_node->data_ptr = static_cast<char*>(tosend_buf);
+
 	if (dtuple->toRight)
 	{
 		printf("right newnode = %p\n", new_node);
