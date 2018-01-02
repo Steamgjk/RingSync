@@ -2174,8 +2174,17 @@ void MyRing::EnqueSendQ(DataTuple* dtuple)
 			}
 		}
 		**/
-	node_item* new_node = (node_item*)malloc(sizeof(node_item));
 
+	node_item* new_node = (node_item*)malloc(sizeof(node_item));
+	new_node->next = NULL;
+	new_node->data_ptr = static_cast<char*>(tosend_buf);
+	if (new_node != NULL)
+	{
+		printf("new_node = %p to free\n", new_node);
+		free(new_node);
+		printf("has Freed\n");
+	}
+	node_item* new_node = (node_item*)malloc(sizeof(node_item));
 	new_node->next = NULL;
 	new_node->data_ptr = static_cast<char*>(tosend_buf);
 	if (dtuple->toRight)
