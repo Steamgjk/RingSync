@@ -23,6 +23,7 @@ typedef struct _rdma_pack_
 	node_item* nit;
 } _rdma_thread_pack_;
 
+
 enum message_id
 {
 	MSG_INVALID = 0,
@@ -34,6 +35,7 @@ enum message_id
 struct message
 {
 	int id;
+
 	union
 	{
 		struct
@@ -43,6 +45,12 @@ struct message
 		} mr;
 	} data;
 };
+
+typedef struct _ack
+{
+	int index;
+
+} _ack_;
 
 struct context
 {
@@ -104,8 +112,7 @@ struct conn_context
 	struct ibv_mr *msg_mr;
 
 	FILE* fd;
-	char file_name[MAX_FILE_NAME];
-
+	//char file_name[MAX_FILE_NAME];
 
 	extend_info s_new_ctx;
 };
