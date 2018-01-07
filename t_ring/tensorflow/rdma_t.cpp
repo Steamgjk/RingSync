@@ -45,7 +45,7 @@ void rc_die(const char *reason)
 	exit(-1);
 }
 
-
+int enable_log = 1;
 void log_info(const char *format, ...)
 {
 	if (!enable_log)return;

@@ -4,6 +4,7 @@
 #include <string>
 #include <pthread.h>
 #include <stdarg.h>
+#include <sys/time.h>
 #if HAVE_RDMA
 #include <rdma/rdma_cma.h>
 
