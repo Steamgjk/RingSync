@@ -45,6 +45,36 @@ void rc_die(const char *reason)
 	exit(-1);
 }
 
+
+void log_info(const char *format, ...)
+{
+	if (!enable_log)return;
+	char now_time[32];
+	char s[1024];
+	char content[1024];
+	//char *ptr = content;
+	struct tm *tmnow;
+	struct timeval tv;
+	bzero(content, 1024);
+	va_list arg;
+	va_start (arg, format);
+	vsprintf (s, format, arg);
+	va_end (arg);
+
+	gettimeofday(&tv, NULL);
+	tmnow = localtime(&tv.tv_sec);
+
+	sprintf(now_time, "%04d/%02d/%02d %02d:%02d:%02d:%06ld ", \
+	        tmnow->tm_year + 1900, tmnow->tm_mon + 1, tmnow->tm_mday, tmnow->tm_hour, \
+	        tmnow->tm_min, tmnow->tm_sec, tv.tv_usec);
+
+	sprintf(content, "%s %s", now_time, s);
+	printf("%s", content);
+
+//save_log2_file(content);
+}
+
+
 #if HAVE_RDMA
 
 
@@ -538,6 +568,7 @@ static void on_pre_conn(struct rdma_cm_id *id, bool is_server)
 	else
 		post_receive_client(id);
 }
+
 
 static void on_connection(struct rdma_cm_id *id)
 {
