@@ -583,17 +583,31 @@ static void on_connection(struct rdma_cm_id *id)
 	send_message(id);
 }
 
-static void on_disconnect(struct rdma_cm_id *id)
+static void _on_disconnect(struct rdma_cm_id *id)
 {
-	struct context *ctx = (struct context *)id->context;
+	struct context *new_ctx = (struct context *)id->context;
 
-	ibv_dereg_mr(ctx->buffer_mr);
-	ibv_dereg_mr(ctx->msg_mr);
+	for (int index = 0; index < MAX_CONCURRENCY; index++)
+	{
+		ibv_dereg_mr(new_ctx->buffer_mr[index]);
+		ibv_dereg_mr(new_ctx->ack_mr[index]);
 
-	free(ctx->buffer);
-	free(ctx->msg);
-	free(ctx);
+		free(new_ctx->buffer[index]);
+		free(new_ctx->ack[index]);
+	}
+
+	{
+		ibv_dereg_mr(new_ctx->k_exch_mr[0]);
+		ibv_dereg_mr(new_ctx->k_exch_mr[1]);
+
+		free(new_ctx->k_exch[0]);
+		free(new_ctx->k_exch[1]);
+	}
+
+	free(new_ctx);
 }
+
+
 struct rdma_cm_id* server_wait4conn(struct rdma_event_channel *event_channel)
 {
 	//bcube_struct& bs = bgs.bcube_s;
