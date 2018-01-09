@@ -171,7 +171,7 @@ void test_rdma_header();
 //Client
 struct rdma_cm_id* rdma_client_init_connection(char* local_ip, char* remote_ip, int remote_port);
 void* client_polling_send(struct rdma_cm_id *id);
-void rdma_send_data(struct ibv_wc *wc, void* data2send, size_t data_len);
+//void rdma_send_data(struct ibv_wc *wc, void* data2send, size_t data_len);
 void send_tensor(struct rdma_cm_id *id, char* buff, uint32_t len);
 void post_receive_client(struct rdma_cm_id *id);
 
