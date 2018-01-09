@@ -1223,6 +1223,7 @@ void* MyRing::FetchFrom2LeftQ()
 	}
 	return msg;
 }
+/*
 void MyRing::send_tensor_batch(struct rdma_cm_id *id, node_item*& head_ptr, int b_sz)
 {
 	//printf("Sending tensor...\n");
@@ -1282,6 +1283,7 @@ void MyRing::send_tensor_batch(struct rdma_cm_id *id, node_item*& head_ptr, int 
 	}
 	TEST_NZ(ibv_post_send(id->qp, &wr, &bad_wr));
 }
+**/
 void MyRing::send_tensor_single(struct rdma_cm_id *id, node_item*& head_ptr)
 {
 

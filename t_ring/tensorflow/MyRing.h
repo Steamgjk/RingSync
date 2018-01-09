@@ -196,7 +196,7 @@ public:
 	void RDMA_ProcessRecvData(struct rdma_cm_id* rc_id);
 	void* FetchFrom2RightQ();
 	void* FetchFrom2LeftQ();
-	void send_tensor_batch(struct rdma_cm_id *id, node_item*& head_ptr, int b_sz);
+	//void send_tensor_batch(struct rdma_cm_id *id, node_item*& head_ptr, int b_sz);
 	void MyRing::send_tensor_single(struct rdma_cm_id *id, node_item*& head_ptr);
 #endif
 
