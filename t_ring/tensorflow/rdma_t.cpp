@@ -772,7 +772,7 @@ struct rdma_cm_id* rdma_client_init_connection(char* local_ip, char* remote_ip, 
 			rdma_destroy_event_channel(ec);
 			if (connect_count > 10 * 600)/*after 600 seconds, it will exit.*/
 			{
-				std::cerr << 600 << "seconds is passed, error in connect to server" << bs.neighbor_info[lev][index].ip << ", check your network condition" << std::endl;
+				std::cerr << 600 << "seconds is passed, error in connect to server"  << ", check your network condition" << std::endl;
 				exit(-1);
 			}
 			else
