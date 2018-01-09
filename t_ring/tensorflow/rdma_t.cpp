@@ -766,18 +766,13 @@ struct rdma_cm_id* rdma_client_init_connection(char* local_ip, char* remote_ip, 
 			printf("RDMA_CM_EVENT_REJECTED\n");
 			std::this_thread::sleep_for(std::chrono::milliseconds(100));
 			connect_count++;
-			struct context *ctx = (struct context *)event_copy.id->context;
-			ibv_dereg_mr(ctx->buffer_mr);
-			ibv_dereg_mr(ctx->msg_mr);
-			free(ctx->buffer);
-			free(ctx->msg);
-			free(ctx);
+			_on_disconnect(event_copy.id);
 			rdma_destroy_qp(event_copy.id);
 			rdma_destroy_id(event_copy.id);
 			rdma_destroy_event_channel(ec);
 			if (connect_count > 10 * 600)/*after 600 seconds, it will exit.*/
 			{
-				std::cerr << 600 << "seconds is passed, error in connect to server" << remote_ip << ":" << remote_port << ", check your network condition" << std::endl;
+				std::cerr << 600 << "seconds is passed, error in connect to server" << bs.neighbor_info[lev][index].ip << ", check your network condition" << std::endl;
 				exit(-1);
 			}
 			else
