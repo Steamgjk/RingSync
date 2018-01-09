@@ -118,7 +118,7 @@ static _rdma_thread_pack_* get_new_thread_pack(struct rdma_cm_id* id, node_item*
 */
 
 
-
+/*
 static void send_message(struct rdma_cm_id *id)
 {
 	struct context *ctx = (struct context *)id->context;
@@ -168,7 +168,6 @@ void send_tensor(struct rdma_cm_id *id, char* buff, uint32_t len)
 }
 
 
-
 void post_receive_client(struct rdma_cm_id *id)
 {
 	struct context *ctx = (struct context *)id->context;
@@ -193,7 +192,7 @@ static void post_receive_server(struct rdma_cm_id *id)
 	wr.num_sge = 0;
 	TEST_NZ(ibv_post_recv(id->qp, &wr, &bad_wr));
 }
-
+**/
 static char* data_gene(int size)
 {
 	char* _data = (char*)malloc(size * sizeof(char) + 1);

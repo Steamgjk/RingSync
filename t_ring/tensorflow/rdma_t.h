@@ -173,7 +173,7 @@ struct rdma_cm_id* rdma_client_init_connection(char* local_ip, char* remote_ip, 
 void* client_polling_send(struct rdma_cm_id *id);
 //void rdma_send_data(struct ibv_wc *wc, void* data2send, size_t data_len);
 void send_tensor(struct rdma_cm_id *id, char* buff, uint32_t len);
-void post_receive_client(struct rdma_cm_id *id);
+//void post_receive_client(struct rdma_cm_id *id);
 
 void _write_remote(struct rdma_cm_id *id, uint32_t len, uint32_t index);
 void _client_post_receive(struct rdma_cm_id *id, uint32_t index);
