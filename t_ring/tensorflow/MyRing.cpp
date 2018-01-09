@@ -1356,7 +1356,7 @@ node_item* MyRing::concurrency_send_by_RDMA(struct ibv_wc *wc, node_item* nit, i
 				printf("my ach addr: %d %p\n", index, ctx->ack_mr[index]->addr);
 			}
 			/**send one tensor...**/
-			nit = send_tensor(id, nit, 0);
+			nit = send_tensor_single(id, nit, 0);
 			mem_used++;
 		}
 		break;
@@ -1367,49 +1367,6 @@ node_item* MyRing::concurrency_send_by_RDMA(struct ibv_wc *wc, node_item* nit, i
 	return nit;
 }
 
-/*
-node_item* concurrency_send_by_RDMA(struct ibv_wc *wc, node_item* nit, int& mem_used)
-{
-	struct rdma_cm_id *id = (struct rdma_cm_id *)(uintptr_t)wc->wr_id;
-	struct context *ctx = (struct context *)id->context;
-
-	if (wc->opcode == IBV_WC_RECV_RDMA_WITH_IMM)
-	{
-		//log_info("recv with IBV_WC_RECV_RDMA_WITH_IMM\n");
-		//log_info("imm_data is %d\n", wc->imm_data);
-		_client_post_receive(id, wc->imm_data);
-		//nit = send_tensor(id, nit, wc->imm_data);
-
-	}
-	else if (wc->opcode == IBV_WC_RECV)
-	{
-		switch (ctx->k_exch[1]->id)
-		{
-		case MSG_MR:
-		{
-			log_info("recv MD5 is %llu\n", ctx->k_exch[1]->md5);
-			for (int index = 0; index < MAX_CONCURRENCY; index++)
-			{
-				//reserved the (buffer)key info from server.
-				ctx->peer_addr[index] = ctx->k_exch[1]->key_info[index].addr;
-				ctx->peer_rkey[index] = ctx->k_exch[1]->key_info[index].rkey;
-				struct sockaddr_in* client_addr = (struct sockaddr_in *)rdma_get_peer_addr(id);
-				printf("server[%s,%d] to ", inet_ntoa(client_addr->sin_addr), client_addr->sin_port);
-				printf("client buffer %d: %p\n", index, ctx->peer_addr[index]);
-				printf("my ach addr: %d %p\n", index, ctx->ack_mr[index]->addr);
-			}
-			//nit = send_tensor(id, nit, 0);
-
-			mem_used++;
-		}
-		break;
-		default:
-			break;
-		}
-	}
-	return nit;
-}
-**/
 void MyRing::Send2RightThreadCallback()
 {
 	int right_idx = this->getRightNeighbour(this->ring_rank);
@@ -1443,7 +1400,7 @@ void MyRing::Send2RightThreadCallback()
 		{
 			if (wc[index].status == IBV_WC_SUCCESS)
 			{
-				//nit = concurrency_send_by_RDMA(&wc[index], nit, mem_used);
+				to_right_head = concurrency_send_by_RDMA(&wc[index], to_right_head, mem_used);
 			}
 			else
 			{
@@ -1458,8 +1415,8 @@ void MyRing::Send2RightThreadCallback()
 			struct context *ctx = (struct context *)send_rc_id->context;
 			for (mem_used; mem_used < MAX_CONCURRENCY; mem_used++)
 			{
-				//if (nit->next == nullptr) break;
-				//nit = send_tensor(id, nit, mem_used);
+				if (to_right_head->next == nullptr) break;
+				to_right_head = send_tensor_single(id, to_right_head, mem_used);
 			}/*send used next buffer*/
 		}
 	}
@@ -1474,10 +1431,53 @@ void MyRing::Send2LeftThreadCallback()
 	to_left_connected = true;
 	printf("RDMA 2Left Connected OK\n");
 	struct ibv_cq *cq = NULL;
-	struct ibv_wc wc;
+	//struct ibv_wc wc;
+	struct ibv_wc wc[MAX_CONCURRENCY * 2];
 	//struct rdma_cm_id *id = (struct rdma_cm_id *)tmp_id;
 	struct context *ctx = (struct context *)send_rc_id->context;
 	void *ev_ctx = NULL;
+	int mem_used = 0;
+
+
+	while (!shut_down)
+	{
+		TEST_NZ(ibv_get_cq_event(ctx->comp_channel, &cq, &ev_ctx));
+		ibv_ack_cq_events(cq, 1);
+		TEST_NZ(ibv_req_notify_cq(cq, 0));
+
+		int wc_num = ibv_poll_cq(cq, MAX_CONCURRENCY * 2, wc);
+
+		if (wc_num < 0)
+		{
+			perror("fatal error in ibv_poll_cq, -1");
+			exit(-1);
+		}
+
+		for (int index = 0; index < wc_num; index++)
+		{
+			if (wc[index].status == IBV_WC_SUCCESS)
+			{
+				to_left_head = concurrency_send_by_RDMA(&wc[index], to_left_head, mem_used);
+			}
+			else
+			{
+				printf("\nwc = %s\n", ibv_wc_status_str(wc[index].status));
+				rc_die("poll_cq: status is not IBV_WC_SUCCESS");
+			}
+		}
+		if (mem_used)
+		{
+			//printf("mem_used : %d\n", mem_used);
+			//struct rdma_cm_id *id = (struct rdma_cm_id *)((wc[index])->wr_id);
+			struct context *ctx = (struct context *)send_rc_id->context;
+			for (mem_used; mem_used < MAX_CONCURRENCY; mem_used++)
+			{
+				if (to_right_head->next == nullptr) break;
+				to_left_head = send_tensor_single(id, to_left_head, mem_used);
+			}/*send used next buffer*/
+		}
+	}
+	printf("gjk-Terminated  Send2LeftThreadCallback\n");
 }
 /*
 void MyRing::Send2RightThreadCallback()

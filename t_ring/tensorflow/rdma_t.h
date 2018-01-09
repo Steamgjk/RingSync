@@ -176,6 +176,7 @@ void send_tensor(struct rdma_cm_id *id, char* buff, uint32_t len);
 //void post_receive_client(struct rdma_cm_id *id);
 
 void _write_remote(struct rdma_cm_id *id, uint32_t len, uint32_t index);
+void _post_receive(struct rdma_cm_id *id, uint32_t index);
 void _client_post_receive(struct rdma_cm_id *id, uint32_t index);
 void _client_on_pre_conn(struct rdma_cm_id *id);
 void _client_on_connection(struct rdma_cm_id *id);
