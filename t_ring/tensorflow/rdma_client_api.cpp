@@ -155,10 +155,11 @@ void _client_on_completion(struct ibv_wc *wc)
 
 			for (int index = 0; index < MAX_CONCURRENCY; index++)
 			{
-				char* tmp_data = _data_gene(10, index);
-				memcpy(new_ctx->buffer[index], tmp_data, 10);
+				char* tmp_data = "thisis a data block";
+				int len = strlen(tmp_data);
+				memcpy(new_ctx->buffer[index], tmp_data, len);
 				free(tmp_data);
-				_client_write_remote(id, 10, index);
+				_client_write_remote(id, len, index);
 			}
 			//sleep(1000);
 		} break;
