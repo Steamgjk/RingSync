@@ -2610,9 +2610,6 @@ void MyRing::RDMA_ProcessRecvData(struct rdma_cm_id* rc_id)
 		}
 	}
 }
-void MyRing::RDMA_RecvFixedData(struct rdma_cm_id* rc_id, size_t len)
-{
 
-}
 
 #endif

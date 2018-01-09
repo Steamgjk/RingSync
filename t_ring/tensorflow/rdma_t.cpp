@@ -503,61 +503,61 @@ static struct ibv_pd * rc_get_pd(struct rdma_cm_id *id)
 	return ctx->pd;
 }
 
-static void build_params(struct rdma_conn_param *params)
+void build_connection(struct rdma_cm_id * id)
+{
+	struct ibv_qp_init_attr qp_attr;
+
+	build_context(id->verbs);
+	build_qp_attr(&qp_attr);
+
+	TEST_NZ(rdma_create_qp(id, s_ctx->pd, &qp_attr));
+}
+
+void build_context(struct ibv_context * verbs)
+{
+	//s_ctx = NULL;
+	if (s_ctx)
+	{
+		if (s_ctx->ctx != verbs)
+			rc_die("cannot handle events in more than one context.");
+		return;
+	}
+	log_info("build context\n");
+
+	s_ctx = (struct context *)malloc(sizeof(struct context));
+
+	s_ctx->ctx = verbs;
+
+	TEST_Z(s_ctx->pd = ibv_alloc_pd(s_ctx->ctx));
+	TEST_Z(s_ctx->comp_channel = ibv_create_comp_channel(s_ctx->ctx));
+	TEST_Z(s_ctx->cq = ibv_create_cq(s_ctx->ctx, MAX_CONCURRENCY * 2 + 10, NULL, s_ctx->comp_channel, 0)); /* cq e=10 is arbitrary,need to be modified  to MAX_CONCURRENCY*/
+	TEST_NZ(ibv_req_notify_cq(s_ctx->cq, 0));
+
+	TEST_NZ(pthread_create(&s_ctx->cq_poller_thread, NULL, poll_cq, NULL));
+}
+
+void build_params(struct rdma_conn_param * params)
 {
 	memset(params, 0, sizeof(*params));
 
-	params->initiator_depth = params->responder_resources = 1;
-	params->rnr_retry_count = 7; /* infinite retry */
-	params->retry_count = 7;
+	params->initiator_depth = params->responder_resources = 2;
+	params->rnr_retry_count = params->retry_count = 7;/* infinite retry */
 }
 
-static void build_context(struct rdma_cm_id *id, bool is_server, node_item* nit)
+void build_qp_attr(struct ibv_qp_init_attr * qp_attr)
 {
-	struct context *s_ctx = (struct context *)malloc(sizeof(struct context));
-	s_ctx->ibv_ctx = id->verbs;
-	TEST_Z(s_ctx->pd = ibv_alloc_pd(s_ctx->ibv_ctx));
-	TEST_Z(s_ctx->comp_channel = ibv_create_comp_channel(s_ctx->ibv_ctx));
-	TEST_Z(s_ctx->cq = ibv_create_cq(s_ctx->ibv_ctx, MIN_CQE, NULL, s_ctx->comp_channel, 0));
-	TEST_NZ(ibv_req_notify_cq(s_ctx->cq, 0));
-	id->context = (void*)s_ctx;
-	/*
-	if (is_server)
-	{
-		//_rdma_thread_pack_* rtp = get_new_thread_pack(id, nit);
-
-		//gjk: do not create thread here
-		//TEST_NZ(pthread_create(&s_ctx->cq_poller_thread, NULL, recv_poll_cq, (void*)rtp));
-
-		id->context = (void*)s_ctx;
-
-	}
-	**/
-
-}
-
-static void build_qp_attr(struct ibv_qp_init_attr *qp_attr, struct rdma_cm_id *id)
-{
-	struct context *ctx = (struct context *)id->context;
 	memset(qp_attr, 0, sizeof(*qp_attr));
-	qp_attr->send_cq = ctx->cq;
-	qp_attr->recv_cq = ctx->cq;
+
+	qp_attr->send_cq = s_ctx->cq;
+	qp_attr->recv_cq = s_ctx->cq;
 	qp_attr->qp_type = IBV_QPT_RC;
 
-	qp_attr->cap.max_send_wr = 10;
-	qp_attr->cap.max_recv_wr = 10;
+	qp_attr->cap.max_send_wr = MAX_CONCURRENCY + 2;
+	qp_attr->cap.max_recv_wr = MAX_CONCURRENCY + 2;
 	qp_attr->cap.max_send_sge = 1;
 	qp_attr->cap.max_recv_sge = 1;
-}
 
-static void build_connection(struct rdma_cm_id *id, bool is_server, node_item* nit)
-{
-	struct ibv_qp_init_attr qp_attr;
-	build_context(id, is_server, nit);
-	build_qp_attr(&qp_attr, id);
-
-	struct context *ctx = (struct context *)id->context;
-	TEST_NZ(rdma_create_qp(id, ctx->pd, &qp_attr));
+	return;
 }
 
 static void on_pre_conn(struct rdma_cm_id *id, bool is_server)

@@ -194,7 +194,6 @@ public:
 	struct rdma_cm_id* RDMA_InitConnection(char* local_ip, char* remote_ip, int remote_port); //as client
 	struct rdma_cm_id* RDMA_Wait4Connection(int bind_port); //as server
 	void RDMA_ProcessRecvData(struct rdma_cm_id* rc_id);
-	void RDMA_RecvFixedData(struct rdma_cm_id* rc_id, size_t len);
 	void* FetchFrom2RightQ();
 	void* FetchFrom2LeftQ();
 	void send_tensor_batch(struct rdma_cm_id *id, node_item*& head_ptr, int b_sz);
