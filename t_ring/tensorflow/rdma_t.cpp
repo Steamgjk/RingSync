@@ -558,6 +558,79 @@ static void _build_connection(struct rdma_cm_id *id)
 
 
 
+static void _write_remote(struct rdma_cm_id *id, uint32_t len, uint32_t index)
+{
+	struct context *new_ctx = (struct context *)id->context;
+
+	struct ibv_send_wr wr, *bad_wr = NULL;
+	struct ibv_sge sge;
+
+	memset(&wr, 0, sizeof(wr));
+
+	wr.wr_id = (uintptr_t)id;
+
+	wr.opcode = IBV_WR_RDMA_WRITE_WITH_IMM;
+	wr.send_flags = IBV_SEND_SIGNALED;
+	wr.imm_data = index;//htonl(index);
+	wr.wr.rdma.remote_addr = new_ctx->peer_addr[index];
+	wr.wr.rdma.rkey = new_ctx->peer_rkey[index];
+
+	if (len)
+	{
+		wr.sg_list = &sge;
+		wr.num_sge = 1;
+
+		sge.addr = (uintptr_t)new_ctx->buffer[index];
+		sge.length = len;
+		sge.lkey = new_ctx->buffer_mr[index]->lkey;
+	}
+
+	TEST_NZ(ibv_post_send(id->qp, &wr, &bad_wr));
+}
+
+static void _post_receive(struct rdma_cm_id *id, uint32_t index)
+{
+	struct ibv_recv_wr wr, *bad_wr = NULL;
+	memset(&wr, 0, sizeof(wr));
+	wr.wr_id = (uint64_t)id;
+	wr.sg_list = NULL;
+	wr.num_sge = 0;
+
+	TEST_NZ(ibv_post_recv(id->qp, &wr, &bad_wr));
+}
+static void _ack_remote(struct rdma_cm_id *id, uint32_t index)
+{
+	struct context *new_ctx = (struct context *)id->context;
+
+	struct ibv_send_wr wr, *bad_wr = NULL;
+	struct ibv_sge sge;
+
+	memset(&wr, 0, sizeof(wr));
+
+	wr.wr_id = (uintptr_t)id;
+
+	wr.opcode = IBV_WR_RDMA_WRITE_WITH_IMM;
+	wr.send_flags = IBV_SEND_SIGNALED;
+	wr.imm_data = index;//htonl(index);
+	wr.wr.rdma.remote_addr = new_ctx->peer_addr[index];
+	wr.wr.rdma.rkey = new_ctx->peer_rkey[index];
+
+	new_ctx->ack[index]->index = index;
+
+	{
+		wr.sg_list = &sge;
+		wr.num_sge = 1;
+
+		sge.addr = (uintptr_t)new_ctx->ack[index];
+		sge.length = sizeof(_ack_);
+		sge.lkey = new_ctx->ack_mr[index]->lkey;
+	}
+
+	TEST_NZ(ibv_post_send(id->qp, &wr, &bad_wr));
+}
+
+
+
 static void _on_pre_conn(struct rdma_cm_id *id)
 {
 	struct context *new_ctx = (struct context *)id->context;
@@ -610,8 +683,6 @@ static void _on_pre_conn(struct rdma_cm_id *id)
 		_post_receive(id, index);
 	}
 }
-
-
 
 
 static void _on_disconnect(struct rdma_cm_id *id)
