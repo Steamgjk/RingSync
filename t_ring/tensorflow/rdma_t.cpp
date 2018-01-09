@@ -622,13 +622,17 @@ struct rdma_cm_id* server_wait4conn(struct rdma_event_channel *event_channel)
 			//node_item* nit = get_new_node();
 			//recv_chain.push_back(nitn			printf("recv connection Comes\n");
 			//build_connection(event_copy.id, IS_SERVER, nit);
-			build_connection(event_copy.id, IS_SERVER, nullptr);
-			on_pre_conn(event_copy.id, IS_SERVER);
+			build_connection(event_copy.id);
+			//on_pre_conn(event_copy.id, IS_SERVER);
+			//change to _server_on_pre_conn
+			_server_on_pre_conn(event_copy.id);
 			TEST_NZ(rdma_accept(event_copy.id, &cm_params));
 		}
 		else if (event_copy.event == RDMA_CM_EVENT_ESTABLISHED)
 		{
-			on_connection(event_copy.id);
+			//on_connection(event_copy.id);
+			//change to server_on_connection
+			_server_on_connection(event_copy.id);
 			//bs.recv_rdma_cm_id.push_back(event_copy.id);
 			recv_rdma_cm_id = event_copy.id;
 			struct sockaddr_in* client_addr = (struct sockaddr_in *)rdma_get_peer_addr(event_copy.id);
@@ -640,7 +644,8 @@ struct rdma_cm_id* server_wait4conn(struct rdma_event_channel *event_channel)
 		else if (event_copy.event == RDMA_CM_EVENT_DISCONNECTED)
 		{
 			rdma_destroy_qp(event_copy.id);
-			on_disconnect(event_copy.id);
+			//on_disconnect(event_copy.id);
+			_server_on_disconnect(event_copy.id);
 			rdma_destroy_id(event_copy.id);
 			connecting_client_cnt--;
 			if (connecting_client_cnt == 0)
@@ -740,8 +745,10 @@ struct rdma_cm_id* rdma_client_init_connection(char* local_ip, char* remote_ip, 
 		if (event_copy.event == RDMA_CM_EVENT_ADDR_RESOLVED)
 		{
 			printf("RDMA_CM_EVENT_ADDR_RESOLVED\n");
-			build_connection(event_copy.id, IS_CLIENT, nullptr);
-			on_pre_conn(event_copy.id, IS_CLIENT);
+			build_connection(event_copy.id);
+			//on_pre_conn(event_copy.id, IS_CLIENT);
+			_client_on_pre_conn(event_copy.id);
+
 			TEST_NZ(rdma_resolve_route(event_copy.id, TIMEOUT_IN_MS));
 		}
 		else if (event_copy.event == RDMA_CM_EVENT_ROUTE_RESOLVED)

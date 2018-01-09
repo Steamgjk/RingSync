@@ -1332,37 +1332,9 @@ void MyRing::Send2RightThreadCallback()
 						ctx->peer_rkey = ctx->msg->data.mr.rkey;
 						//printf("received remote memory address and key\n");
 						ctx->remote_idle = true;
-						/*
-						void* data2send = NULL;
 
-						while (true)
-						{
-
-							if (to_right_head->next != NULL)
-							{
-								data2send = to_right_head->next->data_ptr;
-								node_item* temp = to_right_head;
-								to_right_head = to_right_head->next;
-								//printf("Before free temp %p\n", temp);
-								free(temp);
-								//printf("After free temp %p\n", temp);
-								break;
-							}
-							else
-							{
-								std::this_thread::sleep_for(std::chrono::nanoseconds(100));
-							}
-						}
-						DataTuple* dtuple = static_cast<DataTuple*>(data2send);
-						//printf("2:data_name %s data_num %d data_type %d\n", dtuple->data_name, dtuple->data_num, dtuple->data_type );
-						size_t data_len = sizeof(DataTuple) + (dtuple->data_num) * (sizeoftype(dtuple->data_type));
-						send_tensor(id, (char*)data2send, data_len);
-						**/
 						send_tensor_batch(id,  to_right_head, batch_size);
-						//if (this->ring_rank == 0 && dtuple->op == RING_BROADCAST)
-						//	printf("%s sent1\n", dtuple->data_name);
-						//printf("INIt SEnd\n");
-						//free(data2send);
+
 					}
 					else if (ctx->msg->id == MSG_DONE)
 					{
@@ -1373,36 +1345,7 @@ void MyRing::Send2RightThreadCallback()
 					else if (ctx->msg->id == MSG_READY)
 					{
 						ctx->remote_idle = true;
-						/*
-						void* data2send = NULL;
 
-						while (true)
-						{
-							if (to_right_head->next != NULL)
-							{
-								data2send = to_right_head->next->data_ptr;
-								node_item* temp = to_right_head;
-								to_right_head = to_right_head->next;
-								//printf("Before free temp %p\n", temp);
-								free(temp);
-								//printf("After free temp %p\n", temp);
-								break;
-							}
-							else
-							{
-								std::this_thread::sleep_for(std::chrono::nanoseconds(100));
-							}
-						}
-						DataTuple* dtuple = static_cast<DataTuple*>(data2send);
-						//printf("1:data_name %s data_num %d data_type %d\n", dtuple->data_name, dtuple->data_num, dtuple->data_type );
-						size_t data_len = sizeof(DataTuple) + (dtuple->data_num) * (sizeoftype(dtuple->data_type));
-						//printf("COns Send\n");
-						send_tensor(id, (char*)data2send, data_len);
-						//if (this->ring_rank == 0 && dtuple->op == RING_BROADCAST)
-						//	printf("%s sent\n", dtuple->data_name);
-						//printf("Adter Send\n");
-						free(data2send);
-						**/
 						send_tensor_batch(id,  to_right_head, batch_size);
 					}
 					post_receive_client(id);
@@ -1475,38 +1418,7 @@ void MyRing::Send2LeftThreadCallback()
 						ctx->peer_rkey = ctx->msg->data.mr.rkey;
 						//printf("received remote memory address and key\n");
 						ctx->remote_idle = true;
-						/*
-						void* data2send = NULL;
 
-						while (true)
-						{
-
-							if (to_left_head->next != NULL)
-							{
-								data2send = to_left_head->next->data_ptr;
-								node_item* temp = to_left_head;
-								to_left_head = to_left_head->next;
-								//printf("Before free temp %p\n", temp);
-								free(temp);
-								//printf("After free temp %p\n", temp);
-								break;
-							}
-							else
-							{
-								std::this_thread::sleep_for(std::chrono::nanoseconds(1));
-							}
-						}
-
-
-						DataTuple* dtuple = static_cast<DataTuple*>(data2send);
-						//printf("3:data_name %s data_num %d data_type %d\n", dtuple->data_name, dtuple->data_num, dtuple->data_type );
-						size_t data_len = sizeof(DataTuple) + (dtuple->data_num) * (sizeoftype(dtuple->data_type));
-						send_tensor(id, (char*)data2send, data_len);
-						//if (this->ring_rank == 0 && dtuple->op == RING_BROADCAST)
-						//	printf("%s sent1-le\n", dtuple->data_name);
-						//printf("INIt SEnd\n");
-						free(data2send);
-						**/
 						send_tensor_batch(id,  to_left_head, batch_size);
 					}
 					else if (ctx->msg->id == MSG_DONE)
@@ -1518,36 +1430,7 @@ void MyRing::Send2LeftThreadCallback()
 					else if (ctx->msg->id == MSG_READY)
 					{
 						ctx->remote_idle = true;
-						/*
-						void* data2send = NULL;
-						while (true)
-						{
 
-							if (to_left_head->next != NULL)
-							{
-								data2send = to_left_head->next->data_ptr;
-								node_item* temp = to_left_head;
-								to_left_head = to_left_head->next;
-								//printf("Before free temp %p\n", temp);
-								free(temp);
-								//printf("After free temp %p\n", temp);
-								break;
-							}
-							else
-							{
-								std::this_thread::sleep_for(std::chrono::nanoseconds(1));
-							}
-						}
-						DataTuple* dtuple = static_cast<DataTuple*>(data2send);
-						//printf("4:data_name %s data_num %d data_type %d\n", dtuple->data_name, dtuple->data_num, dtuple->data_type );
-						size_t data_len = sizeof(DataTuple) + (dtuple->data_num) * (sizeoftype(dtuple->data_type));
-						//printf("COns Send\n");
-						send_tensor(id, (char*)data2send, data_len);
-						//if (this->ring_rank == 0 && dtuple->op == RING_BROADCAST)
-						//	printf("%s sent-le\n", dtuple->data_name);
-						//printf("Adter Send\n");
-						free(data2send);
-						**/
 						send_tensor_batch(id,  to_left_head, batch_size);
 					}
 					post_receive_client(id);
