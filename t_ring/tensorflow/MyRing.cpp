@@ -1454,7 +1454,7 @@ void MyRing::Send2RightThreadCallback()
 		for (int index = 0; index < wc_num; index++)
 		{
 			//printf("2Right Index = %d\n", index );
-			printWCode(&(wc[index]));
+			//printWCode(&(wc[index]));
 			if (wc[index].status == IBV_WC_SUCCESS)
 			{
 				to_right_head = concurrency_send_by_RDMA(&wc[index], to_right_head, mem_used);
@@ -1513,7 +1513,7 @@ void MyRing::Send2LeftThreadCallback()
 		for (int index = 0; index < wc_num; index++)
 		{
 			//printf("2Left Index = %d\n", index );
-			printWCode(&(wc[index]));
+			//printWCode(&(wc[index]));
 			if (wc[index].status == IBV_WC_SUCCESS)
 			{
 				to_left_head = concurrency_send_by_RDMA(&wc[index], to_left_head, mem_used);
