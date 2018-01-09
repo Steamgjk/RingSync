@@ -13,6 +13,11 @@
 
 void log_info(const char *format, ...);
 
+typedef void (*pre_conn_cb_fn)(struct rdma_cm_id *id);
+typedef void (*connect_cb_fn)(struct rdma_cm_id *id);
+typedef void (*completion_cb_fn)(struct ibv_wc *wc);
+typedef void (*disconnect_cb_fn)(struct rdma_cm_id *id);
+
 typedef struct _data_list_
 {
 	char* data_ptr;
