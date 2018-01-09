@@ -698,6 +698,60 @@ static void _on_pre_conn(struct rdma_cm_id *id)
 	}
 }
 
+static void _on_connection(struct rdma_cm_id *id, bool is_server)
+{
+	struct context *new_ctx = (struct context *)id->context;
+
+	int index = 0;
+
+	new_ctx->k_exch[0]->id = MSG_MR;
+	if (is_server)
+		new_ctx->k_exch[0]->md5 = 6666;
+	else
+		new_ctx->k_exch[0]->md5 = 5555;
+
+	log_info("k_exch md5 is %llu\n", new_ctx->k_exch[0]->md5);
+	if (is_server)
+	{
+		for (index = 0; index < MAX_CONCURRENCY; index++)
+		{
+			new_ctx->k_exch[0]->key_info[index].addr = (uintptr_t)(new_ctx->buffer_mr[index]->addr);
+			new_ctx->k_exch[0]->key_info[index].rkey = (new_ctx->buffer_mr[index]->rkey);
+		}
+
+	}
+	else
+	{
+		for (index = 0; index < MAX_CONCURRENCY; index++)
+		{
+			new_ctx->k_exch[0]->key_info[index].addr = (uintptr_t)(new_ctx->ack_mr[index]->addr);
+			new_ctx->k_exch[0]->key_info[index].rkey = (new_ctx->ack_mr[index]->rkey);
+		}
+
+	}
+
+
+	//send to myself info to peer
+	{
+		struct ibv_send_wr wr, *bad_wr = NULL;
+		struct ibv_sge sge;
+
+		memset(&wr, 0, sizeof(wr));
+
+		wr.wr_id = (uintptr_t)id;
+		wr.opcode = IBV_WR_SEND;
+		wr.sg_list = &sge;
+		wr.num_sge = 1;
+		wr.send_flags = IBV_SEND_SIGNALED;
+
+		sge.addr = (uintptr_t)(new_ctx->k_exch[0]);
+		sge.length = sizeof(_key_exch);
+		sge.lkey = new_ctx->k_exch_mr[0]->lkey;
+
+		TEST_NZ(ibv_post_send(id->qp, &wr, &bad_wr));
+	}
+	log_info("share my registed mem rx_buffer for peer write to\n");
+}
 
 static void _on_disconnect(struct rdma_cm_id *id)
 {
