@@ -573,7 +573,7 @@ static void _build_connection(struct rdma_cm_id *id)
 
 
 
-static void _write_remote(struct rdma_cm_id *id, uint32_t len, uint32_t index)
+void _write_remote(struct rdma_cm_id *id, uint32_t len, uint32_t index)
 {
 	struct context *new_ctx = (struct context *)id->context;
 
