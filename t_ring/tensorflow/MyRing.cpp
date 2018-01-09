@@ -1284,6 +1284,15 @@ void MyRing::send_tensor_batch(struct rdma_cm_id *id, node_item*& head_ptr, int 
 }
 void MyRing::Send2RightThreadCallback()
 {
+
+}
+void MyRing::Send2LeftThreadCallback()
+{
+
+}
+/*
+void MyRing::Send2RightThreadCallback()
+{
 	int right_idx = this->getRightNeighbour(this->ring_rank);
 	printf("RDMA 2Right Connecting\n");
 	struct rdma_cm_id* send_rc_id =  RDMA_InitConnection(rdma_to_right_ip_arrs[this->ring_rank], rdma_to_right_ip_arrs[right_idx], rdma_listen_for_left_connection_port);
@@ -1342,12 +1351,14 @@ void MyRing::Send2RightThreadCallback()
 						rdma_disconnect(id);
 						return;
 					}
+
 					else if (ctx->msg->id == MSG_READY)
 					{
 						ctx->remote_idle = true;
 
 						send_tensor_batch(id,  to_right_head, batch_size);
 					}
+
 					post_receive_client(id);
 				}
 
@@ -1427,12 +1438,14 @@ void MyRing::Send2LeftThreadCallback()
 						rdma_disconnect(id);
 						return;
 					}
+
 					else if (ctx->msg->id == MSG_READY)
 					{
 						ctx->remote_idle = true;
 
 						send_tensor_batch(id,  to_left_head, batch_size);
 					}
+
 					post_receive_client(id);
 				}
 
@@ -1857,7 +1870,7 @@ int MyRing::sizeoftype(RING_TYPE dt)
 		return -1;
 	}
 	**/
-	return TYPE_SIZE[dt];
+return TYPE_SIZE[dt];
 }
 
 void* MyRing::GenAllReduceBuf(DataTuple* dtuple)
