@@ -1460,7 +1460,7 @@ void MyRing::Send2RightThreadCallback()
 			else
 			{
 				printf("\nwc = %s\n", ibv_wc_status_str(wc[index].status));
-				rc_die("poll_cq: status is not IBV_WC_SUCCESS");
+				rc_die("poll_cq4: status is not IBV_WC_SUCCESS");
 			}
 		}
 		if (mem_used)
@@ -1519,7 +1519,7 @@ void MyRing::Send2LeftThreadCallback()
 			else
 			{
 				printf("\nwc = %s\n", ibv_wc_status_str(wc[index].status));
-				rc_die("poll_cq: status is not IBV_WC_SUCCESS");
+				rc_die("poll_cq5: status is not IBV_WC_SUCCESS");
 			}
 		}
 		if (mem_used)
@@ -2748,7 +2748,7 @@ void MyRing::RDMA_ProcessRecvData(struct rdma_cm_id* rc_id)
 				else
 				{
 					printf("\nwc = %s\n", ibv_wc_status_str(wc[index].status));
-					rc_die("poll_cq: status is not IBV_WC_SUCCESS");
+					rc_die("poll_cq3: status is not IBV_WC_SUCCESS");
 				}
 			}
 
