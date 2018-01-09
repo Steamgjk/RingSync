@@ -1297,7 +1297,7 @@ node_item* MyRing::send_tensor_single(struct rdma_cm_id *id, node_item* head_ptr
 		/*release the old source*/
 		node_item* free_tp_node;
 		free_tp_node = head_ptr;
-		head_ptr = nit->next;
+		head_ptr = head_ptr->next;
 		std::free(free_tp_node);
 	}
 	/*encode msg_length and bfer*/
