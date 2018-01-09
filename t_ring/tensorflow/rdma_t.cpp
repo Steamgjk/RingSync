@@ -811,7 +811,7 @@ struct rdma_cm_id* server_wait4conn(struct rdma_event_channel *event_channel)
 		else if (event_copy.event == RDMA_CM_EVENT_ESTABLISHED)
 		{
 			//on_connection(event_copy.id);
-			_on_connection(event_copy.id);
+			_on_connection(event_copy.id, true);
 			//bs.recv_rdma_cm_id.push_back(event_copy.id);
 			recv_rdma_cm_id = event_copy.id;
 			struct sockaddr_in* client_addr = (struct sockaddr_in *)rdma_get_peer_addr(event_copy.id);
