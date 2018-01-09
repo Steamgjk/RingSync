@@ -1442,7 +1442,7 @@ void MyRing::Send2RightThreadCallback()
 		TEST_NZ(ibv_req_notify_cq(cq, 0));
 
 		int wc_num = ibv_poll_cq(cq, MAX_CONCURRENCY * 2, wc);
-
+		log_info("2Right wc_num = %d", wc_num);
 		if (wc_num < 0)
 		{
 			perror("fatal error in ibv_poll_cq, -1");
@@ -1451,6 +1451,8 @@ void MyRing::Send2RightThreadCallback()
 
 		for (int index = 0; index < wc_num; index++)
 		{
+			printf("2Right Index = %d\n", index );
+			printWCode(&(wc[index]));
 			if (wc[index].status == IBV_WC_SUCCESS)
 			{
 				to_right_head = concurrency_send_by_RDMA(&wc[index], to_right_head, mem_used);
@@ -1499,7 +1501,7 @@ void MyRing::Send2LeftThreadCallback()
 		TEST_NZ(ibv_req_notify_cq(cq, 0));
 
 		int wc_num = ibv_poll_cq(cq, MAX_CONCURRENCY * 2, wc);
-
+		log_info("2Left wc_num = %d", wc_num);
 		if (wc_num < 0)
 		{
 			perror("fatal error in ibv_poll_cq, -1");
@@ -1508,6 +1510,8 @@ void MyRing::Send2LeftThreadCallback()
 
 		for (int index = 0; index < wc_num; index++)
 		{
+			printf("2Left Index = %d\n", index );
+			printWCode(&(wc[index]));
 			if (wc[index].status == IBV_WC_SUCCESS)
 			{
 				to_left_head = concurrency_send_by_RDMA(&wc[index], to_left_head, mem_used);

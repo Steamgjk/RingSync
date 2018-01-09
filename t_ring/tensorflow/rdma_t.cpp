@@ -428,7 +428,7 @@ void *client_polling_send(struct rdma_cm_id *id)
 			else
 			{
 				printf("\nwc = %s\n", ibv_wc_status_str(wc.status));
-				rc_die("poll_cq: status is not IBV_WC_SUCCESS");
+				rc_die("poll_cq1: status is not IBV_WC_SUCCESS");
 			}
 		}
 	}
@@ -458,7 +458,7 @@ static void *send_poll_cq(void *tmp_id)
 			else
 			{
 				printf("\nwc = %s\n", ibv_wc_status_str(wc.status));
-				rc_die("poll_cq: status is not IBV_WC_SUCCESS");
+				rc_die("poll_cq2: status is not IBV_WC_SUCCESS");
 			}
 		}
 	}
