@@ -1284,10 +1284,89 @@ void MyRing::send_tensor_batch(struct rdma_cm_id *id, node_item*& head_ptr, int 
 	TEST_NZ(ibv_post_send(id->qp, &wr, &bad_wr));
 }
 **/
-void MyRing::send_tensor_single(struct rdma_cm_id *id, node_item*& head_ptr)
+node_item* MyRing::send_tensor_single(struct rdma_cm_id *id, node_item* head_ptr, uint32_t index)
 {
+	struct context *ctx = (struct context *)id->context;
+	while (head_ptr->next == nullptr)
+		std::this_thread::sleep_for(std::chrono::nanoseconds(1));
+	if (shut_down)
+	{
+		return NULL;
+	}
+	{
+		/*release the old source*/
+		node_item* free_tp_node;
+		free_tp_node = head_ptr;
+		head_ptr = nit->next;
+		std::free(free_tp_node);
+	}
+	/*encode msg_length and bfer*/
+	//uint32_t msg_len = ((msg_struct*)(nit->data_ptr))->msg_length;
 
+	char*sta = ctx->buffer[index];
+	char* data2send = head_ptr->data_ptr;
+	DataTuple* dtuple = static_cast<DataTuple*>(static_cast<void*>(data2send));
+	uint32_t data_len = sizeof(DataTuple) + (dtuple->data_num) * (sizeoftype(dtuple->data_type));
+
+	if ((data_len + sizeof(uint32_t)) > BUFFER_SIZE)
+	{
+		perror("fatal error, send msg length is too long\n");
+		exit(-1);
+	}
+
+	char* _buff = ctx->buffer[index];
+	std::memcpy(_buff, (char*)(&data_len), sizeof(uint32_t));
+	_buff += sizeof(uint32_t);
+	std::memcpy(_buff, data2send, data_len);
+	free(data2send);
+	data2send = NULL;
+	_write_remote(id, data_len + sizeof(uint32_t), index);
+
+	return head_ptr;
 }
+
+
+node_item* MyRing::concurrency_send_by_RDMA(struct ibv_wc *wc, node_item* nit, int& mem_used)
+{
+	struct rdma_cm_id *id = (struct rdma_cm_id *)(uintptr_t)wc->wr_id;
+	struct context *ctx = (struct context *)id->context;
+
+	if (wc->opcode == IBV_WC_RECV_RDMA_WITH_IMM)
+	{
+		//log_info("recv with IBV_WC_RECV_RDMA_WITH_IMM\n");
+		//log_info("imm_data is %d\n", wc->imm_data);
+		_post_receive(id, wc->imm_data);
+		nit = send_tensor_single(id, nit, wc->imm_data);
+	}
+	else if (wc->opcode == IBV_WC_RECV)
+	{
+		switch (ctx->k_exch[1]->id)
+		{
+		case MSG_MR:
+		{
+			log_info("recv MD5 is %llu\n", ctx->k_exch[1]->md5);
+			for (int index = 0; index < MAX_CONCURRENCY; index++)
+			{
+				//reserved the (buffer)key info from server.
+				ctx->peer_addr[index] = ctx->k_exch[1]->key_info[index].addr;
+				ctx->peer_rkey[index] = ctx->k_exch[1]->key_info[index].rkey;
+				struct sockaddr_in* client_addr = (struct sockaddr_in *)rdma_get_peer_addr(id);
+				printf("server[%s,%d] to ", inet_ntoa(client_addr->sin_addr), client_addr->sin_port);
+				printf("client buffer %d: %p\n", index, ctx->peer_addr[index]);
+				printf("my ach addr: %d %p\n", index, ctx->ack_mr[index]->addr);
+			}
+			/**send one tensor...**/
+			nit = send_tensor(id, nit, 0);
+			mem_used++;
+		}
+		break;
+		default:
+			break;
+		}
+	}
+	return nit;
+}
+
 /*
 node_item* concurrency_send_by_RDMA(struct ibv_wc *wc, node_item* nit, int& mem_used)
 {
