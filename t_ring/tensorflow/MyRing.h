@@ -199,7 +199,7 @@ public:
 	//void send_tensor_batch(struct rdma_cm_id *id, node_item*& head_ptr, int b_sz);
 	node_item* send_tensor_single(struct rdma_cm_id *id, node_item* head_ptr, uint32_t index);
 	node_item* concurrency_send_by_RDMA(struct ibv_wc *wc, node_item* nit, int& mem_used);
-	void* concurrency_recv_by_RDMA(struct ibv_wc *wc, uint32_t& recv_len)
+	void* concurrency_recv_by_RDMA(struct ibv_wc *wc, uint32_t& recv_len);
 #endif
 
 	~MyRing();
