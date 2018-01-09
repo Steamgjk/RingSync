@@ -38,6 +38,12 @@ const size_t BUFFER_SIZE = 512 * 1024 * 1024 + 1;
 static std::atomic_bool rdma_server_establisted(false);
 static std::atomic_bool rdma_client_establisted(false);
 
+static struct context *s_ctx = NULL;
+static pre_conn_cb_fn s_on_pre_conn_cb = NULL;
+static connect_cb_fn s_on_connect_cb = NULL;
+static completion_cb_fn s_on_completion_cb = NULL;
+static disconnect_cb_fn s_on_disconnect_cb = NULL;
+
 void rc_die(const char *reason)
 {
 	extern int errno;
