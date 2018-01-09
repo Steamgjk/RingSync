@@ -38,7 +38,7 @@
 static std::atomic_bool rdma_server_establisted(false);
 static std::atomic_bool rdma_client_establisted(false);
 
-static struct context *s_ctx = NULL;
+//static struct context *s_ctx = NULL;
 static pre_conn_cb_fn s_on_pre_conn_cb = NULL;
 static connect_cb_fn s_on_connect_cb = NULL;
 static completion_cb_fn s_on_completion_cb = NULL;
@@ -503,62 +503,58 @@ static struct ibv_pd * rc_get_pd(struct rdma_cm_id *id)
 	return ctx->pd;
 }
 
-void build_connection(struct rdma_cm_id * id)
-{
-	struct ibv_qp_init_attr qp_attr;
-
-	build_context(id->verbs);
-	build_qp_attr(&qp_attr);
-
-	TEST_NZ(rdma_create_qp(id, s_ctx->pd, &qp_attr));
-}
-
-void build_context(struct ibv_context * verbs)
-{
-	//s_ctx = NULL;
-	if (s_ctx)
-	{
-		if (s_ctx->ctx != verbs)
-			rc_die("cannot handle events in more than one context.");
-		return;
-	}
-	log_info("build context\n");
-
-	s_ctx = (struct context *)malloc(sizeof(struct context));
-
-	s_ctx->ctx = verbs;
-
-	TEST_Z(s_ctx->pd = ibv_alloc_pd(s_ctx->ctx));
-	TEST_Z(s_ctx->comp_channel = ibv_create_comp_channel(s_ctx->ctx));
-	TEST_Z(s_ctx->cq = ibv_create_cq(s_ctx->ctx, MAX_CONCURRENCY * 2 + 10, NULL, s_ctx->comp_channel, 0)); /* cq e=10 is arbitrary,need to be modified  to MAX_CONCURRENCY*/
-	TEST_NZ(ibv_req_notify_cq(s_ctx->cq, 0));
-
-	TEST_NZ(pthread_create(&s_ctx->cq_poller_thread, NULL, poll_cq, NULL));
-}
-
-void build_params(struct rdma_conn_param * params)
+static void _build_params(struct rdma_conn_param *params)
 {
 	memset(params, 0, sizeof(*params));
 
-	params->initiator_depth = params->responder_resources = 2;
-	params->rnr_retry_count = params->retry_count = 7;/* infinite retry */
+	params->initiator_depth = params->responder_resources = 1;
+	params->rnr_retry_count = 7; /* infinite retry */
+	params->retry_count = 7;
 }
 
-void build_qp_attr(struct ibv_qp_init_attr * qp_attr)
+static void _build_context(struct rdma_cm_id *id)
 {
-	memset(qp_attr, 0, sizeof(*qp_attr));
+	struct context *s_ctx = (struct context *)malloc(sizeof(struct context));
+	s_ctx->ibv_ctx = id->verbs;
+	TEST_Z(s_ctx->pd = ibv_alloc_pd(s_ctx->ibv_ctx));
+	TEST_Z(s_ctx->comp_channel = ibv_create_comp_channel(s_ctx->ibv_ctx));
+	TEST_Z(s_ctx->cq = ibv_create_cq(s_ctx->ibv_ctx, MAX_CONCURRENCY * 2 + 10, NULL, s_ctx->comp_channel, 0));
+	TEST_NZ(ibv_req_notify_cq(s_ctx->cq, 0));
+	id->context = (void*)s_ctx;
+	/*
+	if (is_server)
+	{
+		_rdma_thread_pack_* rtp = get_new_thread_pack(id, nit);
+		TEST_NZ(pthread_create(&s_ctx->cq_poller_thread, NULL, recv_poll_cq, (void*)rtp));
+		id->context = (void*)s_ctx;
+	}
+	**/
+}
 
-	qp_attr->send_cq = s_ctx->cq;
-	qp_attr->recv_cq = s_ctx->cq;
+static void _build_qp_attr(struct ibv_qp_init_attr *qp_attr, struct rdma_cm_id *id)
+{
+	struct context *ctx = (struct context *)id->context;
+	memset(qp_attr, 0, sizeof(*qp_attr));
+	qp_attr->send_cq = ctx->cq;
+	qp_attr->recv_cq = ctx->cq;
 	qp_attr->qp_type = IBV_QPT_RC;
 
 	qp_attr->cap.max_send_wr = MAX_CONCURRENCY + 2;
 	qp_attr->cap.max_recv_wr = MAX_CONCURRENCY + 2;
 	qp_attr->cap.max_send_sge = 1;
 	qp_attr->cap.max_recv_sge = 1;
-
-	return;
 }
+
+static void _build_connection(struct rdma_cm_id *id)
+{
+	struct ibv_qp_init_attr qp_attr;
+	_build_context(id);
+	_build_qp_attr(&qp_attr, id);
+
+	struct context *ctx = (struct context *)id->context;
+	TEST_NZ(rdma_create_qp(id, ctx->pd, &qp_attr));
+}
+
 
 static void on_pre_conn(struct rdma_cm_id *id, bool is_server)
 {
@@ -606,7 +602,7 @@ struct rdma_cm_id* server_wait4conn(struct rdma_event_channel *event_channel)
 	int connecting_client_cnt = 0;
 	int client_counts = 1;
 	printf("server is inited done (RDMA), waiting for %d client connecting....:)\n", client_counts);
-	build_params(&cm_params);
+	_build_params(&cm_params);
 	std::vector<node_item*> recv_chain;
 	struct rdma_cm_id*recv_rdma_cm_id = NULL;
 	struct rdma_cm_event event_copy;
@@ -622,7 +618,7 @@ struct rdma_cm_id* server_wait4conn(struct rdma_event_channel *event_channel)
 			//node_item* nit = get_new_node();
 			//recv_chain.push_back(nitn			printf("recv connection Comes\n");
 			//build_connection(event_copy.id, IS_SERVER, nit);
-			build_connection(event_copy.id);
+			_build_connection(event_copy.id);
 			//on_pre_conn(event_copy.id, IS_SERVER);
 			//change to _server_on_pre_conn
 			_server_on_pre_conn(event_copy.id);
@@ -736,7 +732,7 @@ struct rdma_cm_id* rdma_client_init_connection(char* local_ip, char* remote_ip, 
 	struct rdma_cm_event *event = NULL;
 	struct rdma_conn_param cm_params;
 	printf("before build_params\n");
-	build_params(&cm_params);
+	_build_params(&cm_params);
 	while (rdma_get_cm_event(ec, &event) == 0)
 	{
 		struct rdma_cm_event event_copy;
@@ -745,7 +741,7 @@ struct rdma_cm_id* rdma_client_init_connection(char* local_ip, char* remote_ip, 
 		if (event_copy.event == RDMA_CM_EVENT_ADDR_RESOLVED)
 		{
 			printf("RDMA_CM_EVENT_ADDR_RESOLVED\n");
-			build_connection(event_copy.id);
+			_build_connection(event_copy.id);
 			//on_pre_conn(event_copy.id, IS_CLIENT);
 			_client_on_pre_conn(event_copy.id);
 

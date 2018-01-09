@@ -63,19 +63,33 @@ typedef struct _ack
 
 struct context
 {
-	char *buffer;
 	struct ibv_context *ibv_ctx;
 	struct ibv_pd *pd;
 	struct ibv_cq *cq;
 	struct ibv_comp_channel *comp_channel;
-	struct ibv_mr *buffer_mr;
-	struct message *msg;
-	struct ibv_mr *msg_mr;
+
 	pthread_t cq_poller_thread;
-	uint64_t peer_addr;
-	uint32_t peer_rkey;
-	bool remote_idle;
+
+	//register buffer for remote to write
+	char *           buffer[MAX_CONCURRENCY];
+	struct ibv_mr *  buffer_mr[MAX_CONCURRENCY];
+
+	//register ack mem is used for write to remote
+	_ack_*			 ack[MAX_CONCURRENCY];
+	struct ibv_mr *  ack_mr[MAX_CONCURRENCY];
+
+	//indicate current status of each peer exchange
+	bool 			 is_busy[MAX_CONCURRENCY];
+	// index 0: store for local as tx
+	// index 1: used to recv the remote info
+	_key_exch*       k_exch[2];
+	struct ibv_mr*   k_exch_mr[2];
+
+	/*store the peer addr and rkey*/
+	uint64_t 		 peer_addr[MAX_CONCURRENCY];
+	uint32_t 		 peer_rkey[MAX_CONCURRENCY];
 };
+
 
 typedef struct _key_exchange_
 {
