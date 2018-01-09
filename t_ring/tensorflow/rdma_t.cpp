@@ -916,6 +916,10 @@ struct rdma_cm_id* rdma_client_init_connection(char* local_ip, char* remote_ip, 
 	struct rdma_conn_param cm_params;
 	printf("before build_params\n");
 	_build_params(&cm_params);
+
+
+
+
 	while (rdma_get_cm_event(ec, &event) == 0)
 	{
 		struct rdma_cm_event event_copy;
