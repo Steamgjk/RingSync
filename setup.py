@@ -317,7 +317,9 @@ def fully_define_extension(build_ext):
     SOURCES = ['t_ring/tensorflow/MyRing.cpp',
             't_ring/tensorflow/ring_ops.cpp']
     if have_rdma:
-        SOURCES+=['t_ring/tensorflow/rdma_t.cpp']
+        SOURCES+=['t_ring/tensorflow/rdma_t.cpp',
+        't_ring/tensorflow/rdma_server_api.cpp',
+        't_ring/tensorflow/rdma_client_api.cpp']
     COMPILE_FLAGS = ['-std=c++11', '-fPIC', '-Os'] + tf_compile_flags
     LINK_FLAGS = tf_link_flags
     LIBRARY_DIRS = []
