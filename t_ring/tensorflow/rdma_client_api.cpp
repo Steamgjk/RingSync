@@ -1,5 +1,7 @@
 #include "rdma_client_api.h"
 
+extern const size_t BUFFER_SIZE;
+
 void _client_write_remote(struct rdma_cm_id *id, uint32_t len, uint32_t index)
 {
 	struct client_context *_ctx = (struct client_context *)id->context;

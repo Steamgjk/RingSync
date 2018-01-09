@@ -11,6 +11,8 @@
 
 #define MAX_CONCURRENCY 20
 
+const size_t BUFFER_SIZE = 512 * 1024 * 1024 + 1;
+
 void log_info(const char *format, ...);
 
 typedef void (*pre_conn_cb_fn)(struct rdma_cm_id *id);
