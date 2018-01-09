@@ -1337,11 +1337,13 @@ void MyRing::Send2RightThreadCallback()
 	to_right_connected = true;
 	printf("RDMA 2Right Connected OK\n");
 	struct ibv_cq *cq = NULL;
-	struct ibv_wc wc;
+	struct ibv_wc wc[MAX_CONCURRENCY * 2];
 	//struct rdma_cm_id *id = (struct rdma_cm_id *)tmp_id;
 	struct context *ctx = (struct context *)send_rc_id->context;
 	void *ev_ctx = NULL;
 	int mem_used = 0;
+
+
 	while (!shut_down)
 	{
 		TEST_NZ(ibv_get_cq_event(ctx->comp_channel, &cq, &ev_ctx));
