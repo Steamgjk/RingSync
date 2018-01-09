@@ -1416,7 +1416,7 @@ void MyRing::Send2RightThreadCallback()
 			for (mem_used; mem_used < MAX_CONCURRENCY; mem_used++)
 			{
 				if (to_right_head->next == nullptr) break;
-				to_right_head = send_tensor_single(id, to_right_head, mem_used);
+				to_right_head = send_tensor_single(send_rc_id, to_right_head, mem_used);
 			}/*send used next buffer*/
 		}
 	}
@@ -1472,8 +1472,8 @@ void MyRing::Send2LeftThreadCallback()
 			//struct context *ctx = (struct context *)send_rc_id->context;
 			for (mem_used; mem_used < MAX_CONCURRENCY; mem_used++)
 			{
-				if (to_right_head->next == nullptr) break;
-				to_left_head = send_tensor_single(id, to_left_head, mem_used);
+				if (to_left_head->next == nullptr) break;
+				to_left_head = send_tensor_single(send_rc_id, to_left_head, mem_used);
 			}/*send used next buffer*/
 		}
 	}
