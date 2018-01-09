@@ -1409,9 +1409,9 @@ void* MyRing::concurrency_recv_by_RDMA(struct ibv_wc *wc, uint32_t& recv_len)
 				ctx->peer_addr[index] = ctx->k_exch[1]->key_info[index].addr;
 				ctx->peer_rkey[index] = ctx->k_exch[1]->key_info[index].rkey;
 				struct sockaddr_in* client_addr = (struct sockaddr_in *)rdma_get_peer_addr(id);
-				printf("client[%s,%d] to ", inet_ntoa(client_addr->sin_addr), client_addr->sin_port);
-				printf("server ack %d: %p  ", index, ctx->peer_addr[index]);
-				printf("my buffer addr: %d %p\n", index, ctx->buffer_mr[index]->addr);
+				//printf("client[%s,%d] to ", inet_ntoa(client_addr->sin_addr), client_addr->sin_port);
+				//printf("server ack %d: %p  ", index, ctx->peer_addr[index]);
+				//printf("my buffer addr: %d %p\n", index, ctx->buffer_mr[index]->addr);
 			}
 		} break;
 		default:
@@ -1422,11 +1422,13 @@ void* MyRing::concurrency_recv_by_RDMA(struct ibv_wc *wc, uint32_t& recv_len)
 }
 void MyRing::Send2RightThreadCallback()
 {
+
+
 	int right_idx = this->getRightNeighbour(this->ring_rank);
-	printf("RDMA 2Right Connecting\n");
+	//printf("RDMA 2Right Connecting\n");
 	struct rdma_cm_id* send_rc_id =  RDMA_InitConnection(rdma_to_right_ip_arrs[this->ring_rank], rdma_to_right_ip_arrs[right_idx], rdma_listen_for_left_connection_port);
 	to_right_connected = true;
-	printf("RDMA 2Right Connected OK\n");
+	//printf("RDMA 2Right Connected OK\n");
 	struct ibv_cq *cq = NULL;
 	struct ibv_wc wc[MAX_CONCURRENCY * 2];
 	//struct rdma_cm_id *id = (struct rdma_cm_id *)tmp_id;
@@ -1442,7 +1444,7 @@ void MyRing::Send2RightThreadCallback()
 		TEST_NZ(ibv_req_notify_cq(cq, 0));
 
 		int wc_num = ibv_poll_cq(cq, MAX_CONCURRENCY * 2, wc);
-		log_info("2Right wc_num = %d", wc_num);
+		//log_info("2Right wc_num = %d\n", wc_num);
 		if (wc_num < 0)
 		{
 			perror("fatal error in ibv_poll_cq, -1");
@@ -1451,7 +1453,7 @@ void MyRing::Send2RightThreadCallback()
 
 		for (int index = 0; index < wc_num; index++)
 		{
-			printf("2Right Index = %d\n", index );
+			//printf("2Right Index = %d\n", index );
 			printWCode(&(wc[index]));
 			if (wc[index].status == IBV_WC_SUCCESS)
 			{
@@ -1459,7 +1461,7 @@ void MyRing::Send2RightThreadCallback()
 			}
 			else
 			{
-				printf("\nwc = %s\n", ibv_wc_status_str(wc[index].status));
+				//printf("\nwc = %s\n", ibv_wc_status_str(wc[index].status));
 				rc_die("poll_cq4: status is not IBV_WC_SUCCESS");
 			}
 		}
@@ -1481,10 +1483,10 @@ void MyRing::Send2RightThreadCallback()
 void MyRing::Send2LeftThreadCallback()
 {
 	int left_idx = this->getLeftNeighbour(this->ring_rank);
-	printf("RDMA 2Left Connecting\n");
+	//printf("RDMA 2Left Connecting\n");
 	struct rdma_cm_id* send_rc_id =  RDMA_InitConnection(rdma_to_left_ip_arrs[this->ring_rank], rdma_to_left_ip_arrs[left_idx], rdma_listen_for_right_connection_port);
 	to_left_connected = true;
-	printf("RDMA 2Left Connected OK\n");
+	//printf("RDMA 2Left Connected OK\n");
 	struct ibv_cq *cq = NULL;
 	//struct ibv_wc wc;
 	struct ibv_wc wc[MAX_CONCURRENCY * 2];
@@ -1510,7 +1512,7 @@ void MyRing::Send2LeftThreadCallback()
 
 		for (int index = 0; index < wc_num; index++)
 		{
-			printf("2Left Index = %d\n", index );
+			//printf("2Left Index = %d\n", index );
 			printWCode(&(wc[index]));
 			if (wc[index].status == IBV_WC_SUCCESS)
 			{
@@ -1518,7 +1520,7 @@ void MyRing::Send2LeftThreadCallback()
 			}
 			else
 			{
-				printf("\nwc = %s\n", ibv_wc_status_str(wc[index].status));
+				//printf("\nwc = %s\n", ibv_wc_status_str(wc[index].status));
 				rc_die("poll_cq5: status is not IBV_WC_SUCCESS");
 			}
 		}

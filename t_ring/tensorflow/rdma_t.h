@@ -189,10 +189,6 @@ int recv4data(struct ibv_wc *wc, void*& data_ptr);
 void* recv_by_RDMA(struct ibv_wc *wc, uint32_t& recv_len);
 void _ack_remote(struct rdma_cm_id *id, uint32_t index);
 
-
-
-
-
 void rc_die(const char *reason);
 void printWCode(struct ibv_wc *wc);
 
