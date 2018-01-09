@@ -187,7 +187,7 @@ struct rdma_cm_id* server_wait4conn(struct rdma_event_channel *event_channel);
 void *polling_recv_cq(struct rdma_cm_id *id); // thread  to change
 int recv4data(struct ibv_wc *wc, void*& data_ptr);
 void* recv_by_RDMA(struct ibv_wc *wc, uint32_t& recv_len);
-
+void _ack_remote(struct rdma_cm_id *id, uint32_t index);
 
 
 

@@ -612,7 +612,7 @@ void _post_receive(struct rdma_cm_id *id, uint32_t index)
 
 	TEST_NZ(ibv_post_recv(id->qp, &wr, &bad_wr));
 }
-static void _ack_remote(struct rdma_cm_id *id, uint32_t index)
+void _ack_remote(struct rdma_cm_id *id, uint32_t index)
 {
 	struct context *new_ctx = (struct context *)id->context;
 
