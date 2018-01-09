@@ -1286,6 +1286,7 @@ void MyRing::send_tensor_single(struct rdma_cm_id *id, node_item*& head_ptr)
 {
 
 }
+/*
 node_item* concurrency_send_by_RDMA(struct ibv_wc *wc, node_item* nit, int& mem_used)
 {
 	struct rdma_cm_id *id = (struct rdma_cm_id *)(uintptr_t)wc->wr_id;
@@ -1316,7 +1317,6 @@ node_item* concurrency_send_by_RDMA(struct ibv_wc *wc, node_item* nit, int& mem_
 				printf("client buffer %d: %p\n", index, ctx->peer_addr[index]);
 				printf("my ach addr: %d %p\n", index, ctx->ack_mr[index]->addr);
 			}
-			/**send one tensor...**/
 			//nit = send_tensor(id, nit, 0);
 
 			mem_used++;
@@ -1328,7 +1328,7 @@ node_item* concurrency_send_by_RDMA(struct ibv_wc *wc, node_item* nit, int& mem_
 	}
 	return nit;
 }
-
+**/
 void MyRing::Send2RightThreadCallback()
 {
 	int right_idx = this->getRightNeighbour(this->ring_rank);
