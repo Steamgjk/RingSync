@@ -206,6 +206,19 @@ static char* data_gene(int size)
 
 static char* __send_str = "123";
 static size_t __send_len = 4;
+void* recv_by_RDMA(struct ibv_wc *wc, uint32_t& recv_len)
+{
+
+}
+int recv4data(struct ibv_wc *wc, void*& data_ptr)
+{
+	return 0;
+}
+void send_by_RDMA(struct ibv_wc *wc)
+{
+
+}
+/*
 static void send_by_RDMA(struct ibv_wc *wc)
 {
 	struct rdma_cm_id *id = (struct rdma_cm_id *)(uintptr_t)wc->wr_id;
@@ -250,6 +263,7 @@ static void send_by_RDMA(struct ibv_wc *wc)
 	}
 	return;
 }
+
 void* recv_by_RDMA(struct ibv_wc *wc, uint32_t& recv_len)
 {
 	struct rdma_cm_id *id = (struct rdma_cm_id *)(uintptr_t)wc->wr_id;
@@ -360,6 +374,7 @@ int recv4data(struct ibv_wc *wc, void*& data_ptr)
 	}
 	return size;
 }
+**/
 void printWCode(struct ibv_wc *wc)
 {
 	switch (wc->opcode)
