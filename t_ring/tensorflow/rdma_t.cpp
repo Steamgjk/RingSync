@@ -870,20 +870,20 @@ void _server_on_pre_conn(struct rdma_cm_id *id)
 	for (index = 0; index < MAX_CONCURRENCY; index++)
 	{
 		posix_memalign((void **)(&(new_ctx->buffer[index])), sysconf(_SC_PAGESIZE), BUFFER_SIZE);
-		TEST_Z(new_ctx->buffer_mr[index] = ibv_reg_mr(rc_get_pd(), new_ctx->buffer[index], BUFFER_SIZE, IBV_ACCESS_LOCAL_WRITE | IBV_ACCESS_REMOTE_WRITE));
+		TEST_Z(new_ctx->buffer_mr[index] = ibv_reg_mr(rc_get_pd(id), new_ctx->buffer[index], BUFFER_SIZE, IBV_ACCESS_LOCAL_WRITE | IBV_ACCESS_REMOTE_WRITE));
 
 		posix_memalign((void **)(&(new_ctx->ack[index])), sysconf(_SC_PAGESIZE), sizeof(_ack_));
-		TEST_Z(new_ctx->ack_mr[index] = ibv_reg_mr(rc_get_pd(), new_ctx->ack[index],
+		TEST_Z(new_ctx->ack_mr[index] = ibv_reg_mr(rc_get_pd(id), new_ctx->ack[index],
 		                                sizeof(_ack_), IBV_ACCESS_LOCAL_WRITE | IBV_ACCESS_REMOTE_WRITE));
 	}
 	log_info("register %d tx_buffer and rx_ack\n", index);
 
 	{
 		posix_memalign((void **)(&(new_ctx->k_exch[0])), sysconf(_SC_PAGESIZE), sizeof(_key_exch));
-		TEST_Z(new_ctx->k_exch_mr[0] = ibv_reg_mr(rc_get_pd(), new_ctx->k_exch[0], sizeof(_key_exch), IBV_ACCESS_LOCAL_WRITE | IBV_ACCESS_REMOTE_WRITE));
+		TEST_Z(new_ctx->k_exch_mr[0] = ibv_reg_mr(rc_get_pd(id), new_ctx->k_exch[0], sizeof(_key_exch), IBV_ACCESS_LOCAL_WRITE | IBV_ACCESS_REMOTE_WRITE));
 
 		posix_memalign((void **)(&(new_ctx->k_exch[1])), sysconf(_SC_PAGESIZE), sizeof(_key_exch));
-		TEST_Z(new_ctx->k_exch_mr[1] = ibv_reg_mr(rc_get_pd(), new_ctx->k_exch[1], sizeof(_key_exch), IBV_ACCESS_LOCAL_WRITE | IBV_ACCESS_REMOTE_WRITE));
+		TEST_Z(new_ctx->k_exch_mr[1] = ibv_reg_mr(rc_get_pd(id), new_ctx->k_exch[1], sizeof(_key_exch), IBV_ACCESS_LOCAL_WRITE | IBV_ACCESS_REMOTE_WRITE));
 
 	}
 	log_info("register rx_k_exch (index:0) and tx_k_exch (index:1)\n");
@@ -1070,21 +1070,21 @@ void _client_on_pre_conn(struct rdma_cm_id *id)
 	for (index = 0; index < MAX_CONCURRENCY; index++)
 	{
 		posix_memalign((void **)(&(new_ctx->buffer[index])), sysconf(_SC_PAGESIZE), BUFFER_SIZE);
-		TEST_Z(new_ctx->buffer_mr[index] = ibv_reg_mr(rc_get_pd(), new_ctx->buffer[index], BUFFER_SIZE, IBV_ACCESS_LOCAL_WRITE | IBV_ACCESS_REMOTE_WRITE));
+		TEST_Z(new_ctx->buffer_mr[index] = ibv_reg_mr(rc_get_pd(id), new_ctx->buffer[index], BUFFER_SIZE, IBV_ACCESS_LOCAL_WRITE | IBV_ACCESS_REMOTE_WRITE));
 
 		posix_memalign((void **)(&(new_ctx->ack[index])), sysconf(_SC_PAGESIZE), sizeof(_ack_));
-		TEST_Z(new_ctx->ack_mr[index] = ibv_reg_mr(rc_get_pd(), new_ctx->ack[index],
+		TEST_Z(new_ctx->ack_mr[index] = ibv_reg_mr(rc_get_pd(id), new_ctx->ack[index],
 		                                sizeof(_ack_), IBV_ACCESS_LOCAL_WRITE | IBV_ACCESS_REMOTE_WRITE));
 	}
 	log_info("register %d tx_buffer and rx_ack\n", index);
 
 	{
 		posix_memalign((void **)(&(new_ctx->k_exch[0])), sysconf(_SC_PAGESIZE), sizeof(_key_exch));
-		TEST_Z(new_ctx->k_exch_mr[0] = ibv_reg_mr(rc_get_pd(), new_ctx->k_exch[0], sizeof(_key_exch),
+		TEST_Z(new_ctx->k_exch_mr[0] = ibv_reg_mr(rc_get_pd(id), new_ctx->k_exch[0], sizeof(_key_exch),
 		                               IBV_ACCESS_LOCAL_WRITE | IBV_ACCESS_REMOTE_WRITE));
 
 		posix_memalign((void **)(&(new_ctx->k_exch[1])), sysconf(_SC_PAGESIZE), sizeof(_key_exch));
-		TEST_Z(new_ctx->k_exch_mr[1] = ibv_reg_mr(rc_get_pd(), new_ctx->k_exch[1], sizeof(_key_exch),
+		TEST_Z(new_ctx->k_exch_mr[1] = ibv_reg_mr(rc_get_pd(id), new_ctx->k_exch[1], sizeof(_key_exch),
 		                               IBV_ACCESS_LOCAL_WRITE | IBV_ACCESS_REMOTE_WRITE));
 	}
 
