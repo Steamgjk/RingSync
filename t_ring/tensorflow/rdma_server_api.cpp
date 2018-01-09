@@ -1,5 +1,6 @@
 #include "rdma_server_api.h"
 
+extern const size_t BUFFER_SIZE;
 void _server_ack_remote(struct rdma_cm_id *id, uint32_t index)
 {
 	struct conn_context *_ctx = (struct conn_context *)id->context;
@@ -131,8 +132,8 @@ void _server_on_completion(struct ibv_wc *wc)
 		log_info("recv with IBV_WC_RECV_RDMA_WITH_IMM\n");
 		log_info("imm_data is %d\n", wc->imm_data);
 		log_info("recv is : %10s\n", new_ctx->buffer[wc->imm_data]);
-		_ack_remote(id, wc->imm_data);
-		_post_receive(id, wc->imm_data);
+		_server_ack_remote(id, wc->imm_data);
+		_server_post_receive(id, wc->imm_data);
 
 	}
 	else
@@ -193,6 +194,6 @@ void _server_on_disconnect(struct rdma_cm_id *id)
 		free(new_ctx->buffer_mr[index]);
 		free(new_ctx->ack_mr[index]);
 	}
-	printf("finished transferring %s\n", _ctx->file_name);
+	//printf("finished transferring %s\n", _ctx->file_name);
 	free(_ctx);
 }

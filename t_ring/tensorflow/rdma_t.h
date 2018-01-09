@@ -5,6 +5,7 @@
 #include <pthread.h>
 #include <stdarg.h>
 #include <sys/time.h>
+#include <unistd.h>
 #if HAVE_RDMA
 #include <rdma/rdma_cma.h>
 
@@ -159,6 +160,8 @@ void *polling_recv_cq(struct rdma_cm_id *id); // thread  to change
 int recv4data(struct ibv_wc *wc, void*& data_ptr);
 void* recv_by_RDMA(struct ibv_wc *wc, uint32_t& recv_len);
 
+
+struct ibv_pd * rc_get_pd();
 
 
 void rc_die(const char *reason);

@@ -799,5 +799,9 @@ void test_rdma_header()
 	printf("Hello\n");
 }
 
+struct ibv_pd * rc_get_pd()
+{
+	return s_ctx->pd;
+}
 
 #endif
