@@ -556,32 +556,63 @@ static void _build_connection(struct rdma_cm_id *id)
 }
 
 
-static void on_pre_conn(struct rdma_cm_id *id, bool is_server)
+
+
+static void _on_pre_conn(struct rdma_cm_id *id)
 {
-	struct context *ctx = (struct context *)id->context;
-	posix_memalign((void **)&ctx->buffer, sysconf(_SC_PAGESIZE), BUFFER_SIZE);
-	TEST_Z(ctx->buffer_mr = ibv_reg_mr(rc_get_pd(id), ctx->buffer, BUFFER_SIZE, IBV_ACCESS_LOCAL_WRITE | IBV_ACCESS_REMOTE_WRITE));
+	struct context *new_ctx = (struct context *)id->context;
 
-	posix_memalign((void **)&ctx->msg, sysconf(_SC_PAGESIZE), sizeof(*ctx->msg));
-	TEST_Z(ctx->msg_mr = ibv_reg_mr(rc_get_pd(id), ctx->msg, sizeof(*ctx->msg), IBV_ACCESS_LOCAL_WRITE | IBV_ACCESS_REMOTE_WRITE));
 
-	if (is_server)
-		post_receive_server(id);
-	else
-		post_receive_client(id);
+	for (int index = 0; index < MAX_CONCURRENCY; index++)
+	{
+		posix_memalign((void **)(&(new_ctx->buffer[index])), sysconf(_SC_PAGESIZE), BUFFER_SIZE);
+		TEST_Z(new_ctx->buffer_mr[index] = ibv_reg_mr(rc_get_pd(id), new_ctx->buffer[index], BUFFER_SIZE, IBV_ACCESS_LOCAL_WRITE | IBV_ACCESS_REMOTE_WRITE));
+		printf("buffer %d :%p\n", index, new_ctx->buffer_mr[index]->addr);
+
+		posix_memalign((void **)(&(new_ctx->ack[index])), sysconf(_SC_PAGESIZE), sizeof(_ack_));
+		TEST_Z(new_ctx->ack_mr[index] = ibv_reg_mr(rc_get_pd(id), new_ctx->ack[index],
+		                                sizeof(_ack_), IBV_ACCESS_LOCAL_WRITE | IBV_ACCESS_REMOTE_WRITE));
+		printf("ack %d :%p\n", index, new_ctx->ack_mr[index]->addr);
+	}
+	log_info("register %d tx_buffer and rx_ack\n", MAX_CONCURRENCY);
+
+	{
+		posix_memalign((void **)(&(new_ctx->k_exch[0])), sysconf(_SC_PAGESIZE), sizeof(_key_exch));
+		TEST_Z(new_ctx->k_exch_mr[0] = ibv_reg_mr(rc_get_pd(id), new_ctx->k_exch[0], sizeof(_key_exch), IBV_ACCESS_LOCAL_WRITE | IBV_ACCESS_REMOTE_WRITE));
+
+		posix_memalign((void **)(&(new_ctx->k_exch[1])), sysconf(_SC_PAGESIZE), sizeof(_key_exch));
+		TEST_Z(new_ctx->k_exch_mr[1] = ibv_reg_mr(rc_get_pd(id), new_ctx->k_exch[1], sizeof(_key_exch), IBV_ACCESS_LOCAL_WRITE | IBV_ACCESS_REMOTE_WRITE));
+
+	}
+	log_info("register rx_k_exch (index:0) and tx_k_exch (index:1)\n");
+
+	struct ibv_recv_wr wr, *bad_wr = NULL;
+	struct ibv_sge sge;
+
+	memset(&wr, 0, sizeof(wr));
+
+	wr.wr_id = (uintptr_t)id;
+	wr.sg_list = &sge;
+	wr.num_sge = 1;
+
+	sge.addr = (uintptr_t)(new_ctx->k_exch[1]);
+	sge.length = sizeof(_key_exch);
+	sge.lkey = new_ctx->k_exch_mr[1]->lkey;
+
+
+
+	TEST_NZ(ibv_post_recv(id->qp, &wr, &bad_wr));
+
+
+	for (uint32_t index = 0; index < MAX_CONCURRENCY; index++)
+	{
+		//log_info("post recv index : %u\n", index);
+		_post_receive(id, index);
+	}
 }
 
 
-static void on_connection(struct rdma_cm_id *id)
-{
-	struct context *ctx = (struct context *)id->context;
 
-	ctx->msg->id = MSG_MR;
-	ctx->msg->data.mr.addr = (uintptr_t)ctx->buffer_mr->addr;
-	ctx->msg->data.mr.rkey = ctx->buffer_mr->rkey;
-
-	send_message(id);
-}
 
 static void _on_disconnect(struct rdma_cm_id *id)
 {
