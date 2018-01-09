@@ -1360,7 +1360,7 @@ void MyRing::Send2RightThreadCallback()
 		{
 			if (wc[index].status == IBV_WC_SUCCESS)
 			{
-				nit = concurrency_send_by_RDMA(&wc[index], nit, mem_used);
+				//nit = concurrency_send_by_RDMA(&wc[index], nit, mem_used);
 			}
 			else
 			{
@@ -1375,8 +1375,8 @@ void MyRing::Send2RightThreadCallback()
 			struct context *ctx = (struct context *)id->context;
 			for (mem_used; mem_used < MAX_CONCURRENCY; mem_used++)
 			{
-				if (nit->next == nullptr) break;
-				nit = send_tensor(id, nit, mem_used);
+				//if (nit->next == nullptr) break;
+				//nit = send_tensor(id, nit, mem_used);
 			}/*send used next buffer*/
 		}
 	}
