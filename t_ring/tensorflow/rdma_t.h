@@ -158,6 +158,12 @@ void rdma_send_data(struct ibv_wc *wc, void* data2send, size_t data_len);
 void send_tensor(struct rdma_cm_id *id, char* buff, uint32_t len);
 void post_receive_client(struct rdma_cm_id *id);
 
+void _write_remote(struct rdma_cm_id *id, uint32_t len, uint32_t index);
+void _client_post_receive(struct rdma_cm_id *id, uint32_t index);
+void _client_on_pre_conn(struct rdma_cm_id *id);
+void _client_on_connection(struct rdma_cm_id *id);
+void _client_on_completion(struct ibv_wc *wc);
+
 
 
 //Server
@@ -168,7 +174,13 @@ int recv4data(struct ibv_wc *wc, void*& data_ptr);
 void* recv_by_RDMA(struct ibv_wc *wc, uint32_t& recv_len);
 
 
-struct ibv_pd * rc_get_pd();
+void _server_ack_remote(struct rdma_cm_id *id, uint32_t index);
+void _server_post_receive(struct rdma_cm_id *id, uint32_t index);
+void _server_on_pre_conn(struct rdma_cm_id *id);
+void _server_on_completion(struct ibv_wc *wc);
+void _server_on_connection(struct rdma_cm_id *id);
+void _server_on_disconnect(struct rdma_cm_id *id);
+
 
 
 void rc_die(const char *reason);
