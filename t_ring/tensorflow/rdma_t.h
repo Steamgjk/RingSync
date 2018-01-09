@@ -104,17 +104,7 @@ struct context
 };
 
 
-typedef struct _key_exchange_
-{
-	int id;
-	uint64_t md5;
-	struct
-	{
-		uint64_t addr;
-		uint32_t rkey;
-	} key_info[MAX_CONCURRENCY];
 
-} _key_exch;
 
 typedef struct _e_
 {
