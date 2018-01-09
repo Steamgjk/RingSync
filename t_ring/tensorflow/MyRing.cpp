@@ -1412,7 +1412,7 @@ void MyRing::Send2RightThreadCallback()
 		{
 			//printf("mem_used : %d\n", mem_used);
 			//struct rdma_cm_id *id = (struct rdma_cm_id *)((wc[index])->wr_id);
-			struct context *ctx = (struct context *)send_rc_id->context;
+			//struct context *ctx = (struct context *)send_rc_id->context;
 			for (mem_used; mem_used < MAX_CONCURRENCY; mem_used++)
 			{
 				if (to_right_head->next == nullptr) break;
@@ -1469,7 +1469,7 @@ void MyRing::Send2LeftThreadCallback()
 		{
 			//printf("mem_used : %d\n", mem_used);
 			//struct rdma_cm_id *id = (struct rdma_cm_id *)((wc[index])->wr_id);
-			struct context *ctx = (struct context *)send_rc_id->context;
+			//struct context *ctx = (struct context *)send_rc_id->context;
 			for (mem_used; mem_used < MAX_CONCURRENCY; mem_used++)
 			{
 				if (to_right_head->next == nullptr) break;
