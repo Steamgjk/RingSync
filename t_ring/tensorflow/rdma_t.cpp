@@ -945,6 +945,11 @@ struct rdma_cm_id* rdma_client_init_connection(char* local_ip, char* remote_ip, 
 			struct context *ctx = (struct context *)event_copy.id->context;
 			//TEST_NZ(pthread_create(&ctx->cq_poller_thread, NULL, send_poll_cq, event_copy.id));
 			std::cout << local_ip << " has connected to server[ " << remote_ip << " , " << remote_port << " ]" << std::endl;
+			{
+
+				_on_connection(event_copy.id, false);
+
+			}
 			return event_copy.id;
 			//break;
 		}
