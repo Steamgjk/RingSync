@@ -273,6 +273,7 @@ void ring_allreduce_queue(OpKernelContext* context, const Tensor& tensor,
 	int64 left_sz = ((trs.left_dtuple)->data_num) * _type_size;
 	int64 right_sz = ((trs.right_dtuple)->data_num) * _type_size;
 
+	printf("Reduce device_id = %d\n",  device);
 #if HAVE_CUDA
 	if (trs.device != CPU_DEVICE_ID)/*for gpu*/
 	{
