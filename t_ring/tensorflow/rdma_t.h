@@ -11,7 +11,7 @@
 
 #define MAX_CONCURRENCY 20
 
-const size_t BUFFER_SIZE = 512 * 1024 * 1024 + 1;
+const size_t BUFFER_SIZE = 50 * 1024 * 1024 + 1;
 
 void log_info(const char *format, ...);
 
