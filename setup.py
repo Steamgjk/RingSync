@@ -291,7 +291,7 @@ def fully_define_extension(build_ext):
         raise DistutilsError('T_RING_GPU_ALLGATHER=%s is invalid, supported '
                              'values are "", "TCP", "RDMA".' % gpu_allgather)
 
-    gpu_broadcast = os.environ.get('BCBUE_GPU_BROADCAST')
+    gpu_broadcast = os.environ.get('T_RING_GPU_BROADCAST')
     if gpu_broadcast and gpu_broadcast != 'TCP'and gpu_broadcast != 'RDMA':
         raise DistutilsError('T_RING_GPU_BROADCAST=%s is invalid, supported '
                              'values are "", "TCP", "RDMA".' % gpu_broadcast)
@@ -328,6 +328,7 @@ def fully_define_extension(build_ext):
         INCLUDES += cuda_include_dirs
         LIBRARY_DIRS += cuda_lib_dirs
         LIBRARIES += ['cudart']
+        print("HAVE_CUDA")
 
     if have_rdma:
         MACROS += [('HAVE_RDMA', '1')]

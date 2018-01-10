@@ -461,11 +461,14 @@ void ring_broadcast_queue(OpKernelContext* context, const Tensor& tensor,
 			int64 right_sz = ((trs.right_dtuple)->data_num) * _type_size;
 			char* src_ptr = (char*)(tensor.tensor_data().data());
 			char* src_ptr_se = src_ptr + left_sz;
+			printf("Determing Whether CUDA?\n");
 
 #if HAVE_CUDA
+			printf("HAVE CUDA\n");
+			getchar();
 			if (trs.device != CPU_DEVICE_ID)/*for gpu*/
 			{
-				//printf("Check 2\n");
+				printf("In Cuda\n");
 				cudaStream_t& stream = trs.streams[trs.device];
 				if (stream == nullptr)
 				{
@@ -501,6 +504,8 @@ void ring_broadcast_queue(OpKernelContext* context, const Tensor& tensor,
 			else
 #endif
 			{
+				printf("No CUDA\n");
+				getchar();
 				std::memcpy((trs.left_dtuple)->data, src_ptr, left_sz  );
 				std::memcpy((trs.right_dtuple)->data, src_ptr + left_sz, (trs.right_dtuple)->data_num * _type_size   );
 			}
