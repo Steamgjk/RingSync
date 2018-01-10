@@ -464,8 +464,8 @@ void ring_broadcast_queue(OpKernelContext* context, const Tensor& tensor,
 			printf("Determing Whether CUDA?\n");
 
 #if HAVE_CUDA
-			printf("HAVE CUDA\n");
-			getchar();
+			printf("HAVE CUDA  device = %d \n", device);
+			//getchar();
 			if (trs.device != CPU_DEVICE_ID)/*for gpu*/
 			{
 				printf("In Cuda\n");
