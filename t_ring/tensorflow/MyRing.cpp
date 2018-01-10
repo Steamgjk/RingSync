@@ -292,14 +292,12 @@ void MyRing::FinishedTuple(void* dtp,  bool freeMem = true)
 			}
 			else
 			{
-
 				trs.left_finished = true;
 			}
 			if (trs.left_finished  && trs.right_finished)
 			{
 				canRet = true;
 				trs_ptr = &trs;
-
 			}
 
 		}
@@ -324,14 +322,14 @@ void MyRing::FinishedTuple(void* dtp,  bool freeMem = true)
 //#endif
 
 
-#if 0
-			if (trs_ptr->device != CPU_DEVICE_ID)/*for gp???u*/
+#if HAVE_CUDA
+			if (trs_ptr->device != CPU_DEVICE_ID)/*for gpu*/
 			{
-				cudaStream_t& stream = ?? ?;
+				cudaStream_t& stream =  trs_ptr->streams[trs_ptr->device];;
 				if (stream == nullptr)
 				{
 					perror("fatal error in reduce of cuda, as well when we call back.this should never be here\n");
-					trs_ptr->callback(errors::Unknown(e.tensor_ops, " failed: ", "fatal error in reduce of cuda"));
+					trs_ptr->callback(errors::Unknown(" failed: ", "fatal error in reduce of cuda"));
 					exit(0);
 				}
 				while (trs_ptr->ready_event->PollForStatus() ==
@@ -339,39 +337,53 @@ void MyRing::FinishedTuple(void* dtp,  bool freeMem = true)
 				{
 					std::this_thread::sleep_for(std::chrono::nanoseconds(100));
 				}
-				check_cuda(e, "memcpy asy from device to host",
-				           cudaMemcpyAsync((void*)(e.output->tensor_data().data()),
-				                           e.tensor_data,
-				                           e.available_nums * TYPE_SIZE[e.tensor_type],
+				char* raw_data = (char*)(trs_ptr->output->tensor_data().data());
+				size_t left_sz = (trs_ptr->left_dtuple->data_num) * sizeoftype(trs_ptr->left_dtuple->data_type);
+				size_t right_sz = (trs_ptr->right_dtuple->data_num) * sizeoftype(trs_ptr->right_dtuple->data_type);
+
+				check_cuda(*(trs_ptr), "memcpy asy from device to host",
+				           cudaMemcpyAsync((void*)(raw_data),
+				                           trs_ptr->left_dtuple->data,
+				                           left_sz,
 				                           cudaMemcpyHostToDevice,
 				                           stream));
+				char* se_data = raw_data + left_sz;
+				check_cuda(*(trs_ptr), "memcpy asy from device to host",
+				           cudaMemcpyAsync((void*)(se_data),
+				                           trs_ptr->right_dtuple->data,
+				                           right_sz,
+				                           cudaMemcpyHostToDevice,
+				                           stream));
+
+
 			}
 			else
 #endif
 
-
+			{
 
 				char* raw_data = (char*)(trs_ptr->output->tensor_data().data());
 
 
 
 #ifdef GJK_DEBUG
-			printf("FIN Check-1.9\n");
+				printf("FIN Check-1.9\n");
 #endif
 
-			size_t left_sz = (trs_ptr->left_dtuple->data_num) * sizeoftype(trs_ptr->left_dtuple->data_type);
-			size_t right_sz = (trs_ptr->right_dtuple->data_num) * sizeoftype(trs_ptr->right_dtuple->data_type);
+				size_t left_sz = (trs_ptr->left_dtuple->data_num) * sizeoftype(trs_ptr->left_dtuple->data_type);
+				size_t right_sz = (trs_ptr->right_dtuple->data_num) * sizeoftype(trs_ptr->right_dtuple->data_type);
 #ifdef GJK_DEBUG
-			printf("FIN Check1 =\n");
+				printf("FIN Check1 =\n");
 #endif
-			memcpy( raw_data, trs_ptr->left_dtuple->data, left_sz );
+				memcpy( raw_data, trs_ptr->left_dtuple->data, left_sz );
 #ifdef GJK_DEBUG
-			printf("FIN Check2 =\n");
+				printf("FIN Check2 =\n");
 #endif
-			memcpy(raw_data + left_sz, trs_ptr->right_dtuple->data, right_sz);
+				memcpy(raw_data + left_sz, trs_ptr->right_dtuple->data, right_sz);
 #ifdef GJK_DEBUG
-			printf("FIN Check3 =\n");
+				printf("FIN Check3 =\n");
 #endif
+			}
 			break;
 		}
 
