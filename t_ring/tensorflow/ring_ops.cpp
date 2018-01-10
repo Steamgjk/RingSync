@@ -83,6 +83,24 @@ namespace tensorflow
 namespace
 {
 
+#if HAVE_CUDA
+inline bool check_cuda(TensorRingStruct& trs, std::string op_name, cudaError_t result)
+{
+	//printf("In Check Cuda\n");
+	if (result != cudaSuccess)
+	{
+//#ifdef __BCUBE_DEBUG__
+		printf("%s failed: error in tensor:%s\n", op_name.c_str(), e.tensor_name.c_str());
+//#endif
+		trs.callback(errors::Unknown(op_name, " failed: ", cudaGetErrorString(result)));
+		//printf("Check Cuda 7\n");
+		return false;
+	}
+	return true;
+}
+
+#endif
+
 
 static  int TYPE_SIZE[] =
 {
