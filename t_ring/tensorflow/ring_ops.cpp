@@ -273,7 +273,7 @@ void ring_allreduce_queue(OpKernelContext* context, const Tensor& tensor,
 	int64 left_sz = ((trs.left_dtuple)->data_num) * _type_size;
 	int64 right_sz = ((trs.right_dtuple)->data_num) * _type_size;
 
-	printf("Reduce device_id = %d\n",  device);
+	//printf("Reduce device_id = %d\n",  device);
 #if HAVE_CUDA
 	if (trs.device != CPU_DEVICE_ID)/*for gpu*/
 	{
@@ -462,7 +462,7 @@ void ring_broadcast_queue(OpKernelContext* context, const Tensor& tensor,
 			int64 right_sz = ((trs.right_dtuple)->data_num) * _type_size;
 			char* src_ptr = (char*)(tensor.tensor_data().data());
 			char* src_ptr_se = src_ptr + left_sz;
-			printf("Determing Whether CUDA?\n");
+			//printf("Determing Whether CUDA?\n");
 
 #if HAVE_CUDA
 			printf("HAVE CUDA  device = %d \n", device);
@@ -505,7 +505,7 @@ void ring_broadcast_queue(OpKernelContext* context, const Tensor& tensor,
 			else
 #endif
 			{
-				printf("No CUDA\n");
+				//printf("No CUDA\n");
 				//getchar();
 				std::memcpy((trs.left_dtuple)->data, src_ptr, left_sz  );
 				std::memcpy((trs.right_dtuple)->data, src_ptr + left_sz, (trs.right_dtuple)->data_num * _type_size   );
@@ -653,7 +653,7 @@ public:
 
 REGISTER_KERNEL_BUILDER(Name("RingAllreduce").Device(DEVICE_CPU),
                         RingAllreduceOp);
-#if RING_GPU_ALLREDUCE
+#if T_RING_GPU_ALLREDUCE
 REGISTER_KERNEL_BUILDER(Name("RingAllreduce").Device(DEVICE_GPU),
                         RingAllreduceOp);
 #endif
@@ -774,7 +774,7 @@ private:
 
 REGISTER_KERNEL_BUILDER(Name("RingBroadcast").Device(DEVICE_CPU),
                         RingBroadcastOp);
-#if BCUBE_GPU_BROADCAST
+#if T_RING_GPU_BROADCAST
 REGISTER_KERNEL_BUILDER(Name("RingBroadcast").Device(DEVICE_GPU),
                         RingBroadcastOp);
 #endif
