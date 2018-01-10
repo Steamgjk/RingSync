@@ -505,7 +505,7 @@ void ring_broadcast_queue(OpKernelContext* context, const Tensor& tensor,
 #endif
 			{
 				printf("No CUDA\n");
-				getchar();
+				//getchar();
 				std::memcpy((trs.left_dtuple)->data, src_ptr, left_sz  );
 				std::memcpy((trs.right_dtuple)->data, src_ptr + left_sz, (trs.right_dtuple)->data_num * _type_size   );
 			}
