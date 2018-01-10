@@ -107,6 +107,24 @@ MyRing::MyRing(int rn, int rr)
 	this->InitBGThread();
 	printf("Finished InitBG\n");
 }
+#if HAVE_CUDA
+bool MyRing::check_cuda(TensorRingStruct& trs, std::string op_name, cudaError_t result)
+{
+	//printf("In Check Cuda\n");
+	if (result != cudaSuccess)
+	{
+//#ifdef __BCUBE_DEBUG__
+		printf("%s failed: error in tensor:%s\n", op_name.c_str(), trs.tensor_name.c_str());
+//#endif
+		trs.callback(errors::Unknown(op_name, " failed: ", cudaGetErrorString(result)));
+		//printf("Check Cuda 7\n");
+		return false;
+	}
+	return true;
+}
+
+#endif
+
 void MyRing::OutPutTrs()
 {
 	printf("++++++++++++++++++++++++++++++++\n");
@@ -304,7 +322,36 @@ void MyRing::FinishedTuple(void* dtp,  bool freeMem = true)
 			//printf("FIN Check-1/0  name=%s  dtp-name=%s output =%p\n", trs_ptr->tensor_name.c_str(), dataTuple->data_name, trs_ptr->output);
 
 //#endif
-			char* raw_data = (char*)(trs_ptr->output->tensor_data().data());
+
+
+#if 0
+			if (trs_ptr->device != CPU_DEVICE_ID)/*for gp???u*/
+			{
+				cudaStream_t& stream = ?? ?;
+				if (stream == nullptr)
+				{
+					perror("fatal error in reduce of cuda, as well when we call back.this should never be here\n");
+					trs_ptr->callback(errors::Unknown(e.tensor_ops, " failed: ", "fatal error in reduce of cuda"));
+					exit(0);
+				}
+				while (trs_ptr->ready_event->PollForStatus() ==
+				        perftools::gputools::Event::Status::kPending)
+				{
+					std::this_thread::sleep_for(std::chrono::nanoseconds(100));
+				}
+				check_cuda(e, "memcpy asy from device to host",
+				           cudaMemcpyAsync((void*)(e.output->tensor_data().data()),
+				                           e.tensor_data,
+				                           e.available_nums * TYPE_SIZE[e.tensor_type],
+				                           cudaMemcpyHostToDevice,
+				                           stream));
+			}
+			else
+#endif
+
+
+
+				char* raw_data = (char*)(trs_ptr->output->tensor_data().data());
 
 
 
