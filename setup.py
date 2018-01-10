@@ -332,7 +332,7 @@ def fully_define_extension(build_ext):
         LIBRARY_DIRS += cuda_lib_dirs
         LIBRARIES += ['cudart']
         print("HAVE_CUDA")
-    else;
+    else:
         print("NO CUDA")
 
     if have_rdma:
