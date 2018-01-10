@@ -37,6 +37,8 @@
 #include "tensorflow/core/framework/shape_inference.h"
 #include "rdma_t.h"
 
+#define CPU_DEVICE_ID -1
+
 #define EIGEN_USE_THREADS
 
 #if HAVE_CUDA
