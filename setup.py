@@ -277,6 +277,7 @@ def get_rdma_dirs(build_ext):
 
 
 def fully_define_extension(build_ext):
+    print("FULLY DEFINE Extension")
     check_tf_version()
 
     tf_compile_flags, tf_link_flags = get_tf_flags(build_ext)
