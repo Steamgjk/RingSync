@@ -90,7 +90,7 @@ inline bool check_cuda(TensorRingStruct& trs, std::string op_name, cudaError_t r
 	if (result != cudaSuccess)
 	{
 //#ifdef __BCUBE_DEBUG__
-		printf("%s failed: error in tensor:%s\n", op_name.c_str(), e.tensor_name.c_str());
+		printf("%s failed: error in tensor:%s\n", op_name.c_str(), trs.tensor_name.c_str());
 //#endif
 		trs.callback(errors::Unknown(op_name, " failed: ", cudaGetErrorString(result)));
 		//printf("Check Cuda 7\n");
