@@ -201,6 +201,9 @@ public:
 	node_item* concurrency_send_by_RDMA(struct ibv_wc *wc, node_item* nit, int& mem_used);
 	void* concurrency_recv_by_RDMA(struct ibv_wc *wc, uint32_t& recv_len);
 #endif
+#if HAVE_CUDA
+	bool check_cuda(TensorRingStruct& trs, std::string op_name, cudaError_t result);
+#endif
 
 	~MyRing();
 private:
