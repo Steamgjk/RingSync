@@ -171,8 +171,6 @@ Status DataTypeToRingType(DataType tf_dtype, RING_TYPE* ring_dtype)
 // Check that Ring is initialized.
 Status CheckInitialized()
 {
-
-
 	if (NULL == mring || (!mring->get2LeftConnected()) || (!mring->get2RightConnected()) )
 	{
 		return errors::FailedPrecondition(
@@ -180,7 +178,6 @@ Status CheckInitialized()
 	}
 
 	return Status::OK();
-
 }
 
 // ring must be initialized and the background thread must be running before this function is called.
@@ -253,25 +250,6 @@ void ring_allreduce_queue(OpKernelContext* context, const Tensor& tensor,
 	(trs.right_dtuple)->toRight = true;
 
 
-
-	//FUTURE
-	//e.tensor_shape = std::move(_tensor_shape);
-	/*
-		{
-			e.available_nums = tensor.NumElements();
-			e.block_size = (e.available_nums + 17) / 18;
-			e.tensor_size = 18 * e.block_size;
-			auto _type_size = TYPE_SIZE[dtype];
-			e.tensor_data = std::malloc(e.tensor_size * _type_size);
-			assert(e.tensor_data != nullptr);
-			std::memcpy(e.tensor_data, (const void*)tensor.tensor_data().data(),
-			            _type_size * e.available_nums);
-		}
-		e.tensor_type = dtype;
-		e.tensor_ops = ALLREDUCE;
-	**/
-
-
 	//e.tensor_data = nullptr;
 	(trs.left_dtuple)->data = nullptr;
 	(trs.right_dtuple)->data = nullptr;
@@ -293,8 +271,53 @@ void ring_allreduce_queue(OpKernelContext* context, const Tensor& tensor,
 	(trs.right_dtuple)->data = std::malloc(((trs.right_dtuple)->data_num) * _type_size);
 
 	int64 left_sz = ((trs.left_dtuple)->data_num) * _type_size;
-	std::memcpy((trs.left_dtuple)->data, src_ptr, left_sz  );
-	std::memcpy((trs.right_dtuple)->data, src_ptr + left_sz, (trs.right_dtuple)->data_num * _type_size  );
+	int64 right_sz = ((trs.right_dtuple)->data_num) * _type_size;
+
+#if HAVE_CUDA
+	if (trs.device != CPU_DEVICE_ID)/*for gpu*/
+	{
+		//printf("Check 2\n");
+		cudaStream_t& stream = trs.streams[trs.device];
+		if (stream == nullptr)
+		{
+			//printf("Check 4\n");
+			auto res = check_cuda(trs, "create cuda stream",
+			                      cudaStreamCreate(&stream));
+			if (res == false)
+			{
+				perror("error in create stream of cuda\n");
+				return;
+			}
+		}
+		//printf("enque PollForStatus before\n");
+		while (trs.ready_event->PollForStatus() ==
+		        perftools::gputools::Event::Status::kPending)
+		{
+			std::this_thread::sleep_for(std::chrono::nanoseconds(100));
+		}
+		//printf("enque PollForStatus after\n");
+		check_cuda(trs, "memcpy asy from device to host",
+		           cudaMemcpyAsync((trs.left_dtuple)->data,
+		                           (const void*)src_ptr,
+		                           left_sz,
+		                           cudaMemcpyDeviceToHost,
+		                           stream));
+		char* src_ptr_se = src_ptr + left_sz;
+		check_cuda(trs, "memcpy asy from device to host",
+		           cudaMemcpyAsync((trs.right_dtuple)->data,
+		                           (const void*)src_ptr_se,
+		                           right_sz,
+		                           cudaMemcpyDeviceToHost,
+		                           stream));
+		//printf("Check 6\n");
+	}
+	else
+#endif
+	{
+
+		std::memcpy((trs.left_dtuple)->data, src_ptr, left_sz  );
+		std::memcpy((trs.right_dtuple)->data, src_ptr + left_sz, (trs.right_dtuple)->data_num * _type_size  );
+	}
 
 	{
 		/*
@@ -430,15 +453,57 @@ void ring_broadcast_queue(OpKernelContext* context, const Tensor& tensor,
 			(trs.left_dtuple)->data = (void*)std::malloc((trs.left_dtuple)->data_num * _type_size);
 			assert((trs.left_dtuple)->data != nullptr);
 			//printf("left_data = %p\n", (trs.left_dtuple)->data );
-			char* src_ptr = (char*)(tensor.tensor_data().data());
-
-			int64 left_sz = ((trs.left_dtuple)->data_num) * _type_size;
-			std::memcpy((trs.left_dtuple)->data, src_ptr, left_sz  );
-
 			(trs.right_dtuple)->data = (void*)std::malloc((trs.right_dtuple)->data_num * _type_size);
 			assert((trs.right_dtuple)->data != nullptr);
 
-			std::memcpy((trs.right_dtuple)->data, src_ptr + left_sz, (trs.right_dtuple)->data_num * _type_size   );
+
+			int64 left_sz = ((trs.left_dtuple)->data_num) * _type_size;
+			int64 right_sz = ((trs.right_dtuple)->data_num) * _type_size;
+			char* src_ptr = (char*)(tensor.tensor_data().data());
+			char* src_ptr_se = src_ptr + left_sz;
+
+#if HAVE_CUDA
+			if (trs.device != CPU_DEVICE_ID)/*for gpu*/
+			{
+				//printf("Check 2\n");
+				cudaStream_t& stream = trs.streams[trs.device];
+				if (stream == nullptr)
+				{
+					//printf("Check 4\n");
+					auto res = check_cuda(trs, "create cuda stream",
+					                      cudaStreamCreate(&stream));
+					if (res == false)
+					{
+						perror("error in create stream of cuda\n");
+						return;
+					}
+				}
+				//printf("enque PollForStatus before\n");
+				while (trs.ready_event->PollForStatus() ==
+				        perftools::gputools::Event::Status::kPending)
+				{
+					std::this_thread::sleep_for(std::chrono::nanoseconds(100));
+				}
+				//printf("enque PollForStatus after\n");
+				check_cuda(trs, "memcpy asy from device to host",
+				           cudaMemcpyAsync((trs.left_dtuple)->data,
+				                           (const void*)src_ptr,
+				                           left_sz,
+				                           cudaMemcpyDeviceToHost,
+				                           stream));
+				check_cuda(trs, "memcpy asy from device to host",
+				           cudaMemcpyAsync((trs.right_dtuple)->data,
+				                           (const void*)src_ptr_se,
+				                           right_sz,
+				                           cudaMemcpyDeviceToHost,
+				                           stream));
+			}
+			else
+#endif
+			{
+				std::memcpy((trs.left_dtuple)->data, src_ptr, left_sz  );
+				std::memcpy((trs.right_dtuple)->data, src_ptr + left_sz, (trs.right_dtuple)->data_num * _type_size   );
+			}
 			//printf("right_data = %p\n", (trs.right_dtuple)->data );
 
 			//e.data = (void*)std::malloc(tensor.tensor_data().size());

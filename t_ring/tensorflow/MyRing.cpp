@@ -458,6 +458,18 @@ void MyRing::FinishedTuple(void* dtp,  bool freeMem = true)
 				trs_ptr = &(vit->second);
 				trs_ptr->callback(Status::OK());
 				Release_src(trs_ptr, freeMem);
+
+#if HAVE_CUDA
+				if (trs_ptr->device != CPU_DEVICE_ID)
+				{
+					//printf("before synchronous cuda stream\n");
+					cudaStream_t& stream = trs_ptr->streams[trs_ptr->device];
+					if (false == check_cuda( (*trs_ptr), "cudaStreamSynchronize asy from device to host", cudaStreamSynchronize(stream)))
+						return ;
+					//printf("after synchronous cuda stream\n");
+				}
+#endif
+
 				trs_map.erase(vit);
 			}
 
