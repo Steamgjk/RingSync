@@ -347,6 +347,7 @@ void MyRing::FinishedTuple(void* dtp,  bool freeMem = true)
 				                           left_sz,
 				                           cudaMemcpyHostToDevice,
 				                           stream));
+
 				char* se_data = raw_data + left_sz;
 				check_cuda(*(trs_ptr), "memcpy asy from device to host",
 				           cudaMemcpyAsync((void*)(se_data),
@@ -354,6 +355,8 @@ void MyRing::FinishedTuple(void* dtp,  bool freeMem = true)
 				                           right_sz,
 				                           cudaMemcpyHostToDevice,
 				                           stream));
+				if (false == check_cuda( *(trs_ptr), "cudaStreamSynchronize asy from device to host", cudaStreamSynchronize(stream)))
+					return ;
 
 
 			}
@@ -456,8 +459,7 @@ void MyRing::FinishedTuple(void* dtp,  bool freeMem = true)
 			if (vit != trs_map.end())
 			{
 				trs_ptr = &(vit->second);
-				trs_ptr->callback(Status::OK());
-				Release_src(trs_ptr, freeMem);
+
 
 #if HAVE_CUDA
 				if (trs_ptr->device != CPU_DEVICE_ID)
@@ -469,6 +471,8 @@ void MyRing::FinishedTuple(void* dtp,  bool freeMem = true)
 					//printf("after synchronous cuda stream\n");
 				}
 #endif
+				trs_ptr->callback(Status::OK());
+				Release_src(trs_ptr, freeMem);
 
 				trs_map.erase(vit);
 			}

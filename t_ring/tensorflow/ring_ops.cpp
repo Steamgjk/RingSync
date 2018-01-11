@@ -310,6 +310,8 @@ void ring_allreduce_queue(OpKernelContext* context, const Tensor& tensor,
 		                           right_sz,
 		                           cudaMemcpyDeviceToHost,
 		                           stream));
+		if (false == check_cuda( trs, "cudaStreamSynchronize asy from device to host", cudaStreamSynchronize(stream)))
+			return ;
 		//printf("Check 6\n");
 	}
 	else
@@ -501,6 +503,8 @@ void ring_broadcast_queue(OpKernelContext* context, const Tensor& tensor,
 				                           right_sz,
 				                           cudaMemcpyDeviceToHost,
 				                           stream));
+				if (false == check_cuda( trs, "cudaStreamSynchronize asy from device to host", cudaStreamSynchronize(stream)))
+					return ;
 			}
 			else
 #endif
