@@ -1,0 +1,64 @@
+_5_1_32RingBroadcast_conv_layer1_Conv_weights_0_to_1 --Send2RightThreadCallback:Finished
+RingBroadcast_fully_connected_biases_0_to_1 --Send2RightThreadCallback:Finished
+RingBroadcast_fully_connected_1_biases_0_to_1 --Send2RightThreadCallback:Finished
+RingBroadcast_conv_layer1_Conv_biases_0_to_1 --Send2RightThreadCallback:Finished
+RingBroadcast_fully_connected_biases_RMSProp_1_0_to_1 --Send2RightThreadCallback:Finished
+RingBroadcast_global_step_0_to_1 --Send2RightThreadCallback:Finished
+RingBroadcast_conv_layer2_Conv_biases_0_to_1 --Send2RightThreadCallback:Finished
+_10RingBroadcast_fully_connected_1_weights_0_to_1 --Send2RightThreadCallback:Finished
+_10RingBroadcast_fully_connected_1_weights_RMSProp_1_0_to_1 --Send2RightThreadCallback:Finished
+RingBroadcast_conv_layer1_Conv_biases_RMSProp_1_0_to_1 --Send2RightThreadCallback:Finished
+_5_1_32RingBroadcast_conv_layer1_Conv_weights_RMSProp_1_0_to_1 --Send2RightThreadCallback:Finishe                                                                                                      d
+RingBroadcast_fully_connected_1_biases_RMSProp_0_to_1 --Send2RightThreadCallback:Finished
+_5_1_32RingBroadcast_conv_layer1_Conv_weights_RMSProp_0_to_1 --Send2RightThreadCallback:Finished                                                                                                       
+RingBroadcast_fully_connected_1_biases_RMSProp_1_0_to_1 --Send2RightThreadCallback:Finished
+RingBroadcast_fully_connected_biases_RMSProp_0_to_1 --Send2RightThreadCallback:Finished
+RingBroadcast_conv_layer2_Conv_biases_RMSProp_0_to_1 --Send2RightThreadCallback:Finished
+RingBroadcast_conv_layer2_Conv_biases_RMSProp_1_0_to_1 --Send2RightThreadCallback:Finished
+RingBroadcast_conv_layer1_Conv_biases_RMSProp_0_to_1 --Send2RightThreadCallback:Finished
+_10RingBroadcast_fully_connected_1_weights_RMSProp_0_to_1 --Send2RightThreadCallback:Finished
+_5_32_64RingBroadcast_conv_layer2_Conv_weights_0_to_1 --Send2RightThreadCallback:Finished
+_5_32_64RingBroadcast_conv_layer2_Conv_weights_RMSProp_0_to_1 --Send2RightThreadCallback:Finished                                                                                                      
+_5_32_64RingBroadcast_conv_layer2_Conv_weights_RMSProp_1_0_to_1 --Send2RightThreadCallback:Finish                                                                                                      ed
+_1024RingBroadcast_fully_connected_weights_0_to_1 --Send2RightThreadCallback:Finished
+_1024RingBroadcast_fully_connected_weights_RMSProp_1_0_to_1 --Send2RightThreadCallback:Finished
+_1024RingBroadcast_fully_connected_weights_RMSProp_0_to_1 --Send2RightThreadCallback:Finished
+
+
+
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+_5_1_32RingBroadcast_conv_layer1_Conv_weights_0_to_1 Recved and Insert
+RingBroadcast_fully_connected_1_biases_0_to_1 Recved and Insert
+RingBroadcast_fully_connected_biases_RMSProp_1_0_to_1 Recved and Insert
+RingBroadcast_conv_layer2_Conv_biases_0_to_1 Recved and Insert
+_10RingBroadcast_fully_connected_1_weights_RMSProp_1_0_to_1 Recved and Insert
+_5_1_32RingBroadcast_conv_layer1_Conv_weights_RMSProp_1_0_to_1 Recved and Insert
+_5_1_32RingBroadcast_conv_layer1_Conv_weights_RMSProp_0_to_1 Recved and Insert
+RingBroadcast_fully_connected_biases_RMSProp_0_to_1 Recved and Insert
+RingBroadcast_conv_layer2_Conv_biases_RMSProp_1_0_to_1 Recved and Insert
+_10RingBroadcast_fully_connected_1_weights_RMSProp_0_to_1 Recved and Insert
+_5_32_64RingBroadcast_conv_layer2_Conv_weights_RMSProp_0_to_1 Recved and Insert
+_1024RingBroadcast_fully_connected_weights_0_to_1 Recved and Insert
+_1024RingBroadcast_fully_connected_weights_RMSProp_0_to_1 Recved and Insert
+
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+_5_1_32RingBroadcast_conv_layer1_Conv_weights_0_to_1 Recved and Insert
+RingBroadcast_fully_connected_biases_RMSProp_1_0_to_1 Recved and Insert
+_10RingBroadcast_fully_connected_1_weights_RMSProp_1_0_to_1 Recved and Insert
+_5_1_32RingBroadcast_conv_layer1_Conv_weights_RMSProp_0_to_1 Recved and Insert
+RingBroadcast_conv_layer2_Conv_biases_RMSProp_1_0_to_1 Recved and Insert
+_5_32_64RingBroadcast_conv_layer2_Conv_weights_RMSProp_0_to_1 Recved and Insert
+_1024RingBroadcast_fully_connected_weights_RMSProp_0_to_1 Recved and Insert
+
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+RingBroadcast_conv_layer2_Conv_biases_RMSProp_1_0_to_1 Recved and Insert
+_10RingBroadcast_fully_connected_1_weights_RMSProp_1_0_to_1 Recved and Insert
+_1024RingBroadcast_fully_connected_weights_RMSProp_0_to_1 Recved and Insert
+
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+_5_1_32RingBroadcast_conv_layer1_Conv_weights_0_to_1 Recved and Insert
+_10RingBroadcast_fully_connected_1_weights_RMSProp_1_0_to_1 Recved and Insert
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+_5_1_32RingBroadcast_conv_layer1_Conv_weights_0_to_1 Recved and Insert
+
+
