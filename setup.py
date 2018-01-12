@@ -44,14 +44,14 @@ def check_tf_version():
         if tf.__version__ < '1.1.0':
             raise DistutilsPlatformError(
                 'Your TensorFlow version %s is outdated.  '
-                'Ring requires tensorflow>=1.1.0' % tf.__version__)
+                'Bcube requires tensorflow>=1.1.0' % tf.__version__)
     except ImportError:
         raise DistutilsPlatformError(
             'import tensorflow failed, is it installed?\n\n%s' % traceback.format_exc())
     except AttributeError:
         # This means that tf.__version__ was not exposed, which makes it *REALLY* old.
         raise DistutilsPlatformError(
-            'Your TensorFlow version is outdated.  Ring requires tensorflow>=1.1.0')
+            'Your TensorFlow version is outdated.  Bcube requires tensorflow>=1.1.0')
 
 
 def get_tf_include_dirs():
@@ -202,12 +202,12 @@ def get_cuda_dirs(build_ext):
     except (CompileError, LinkError):
         raise DistutilsPlatformError(
             'CUDA library was not found (see error above).\n'
-            'Please specify correct CUDA location with the RING_CUDA_HOME '
-            'environment variable or combination of T_RING_CUDA_INCLUDE and '
-            'T_RING_CUDA_LIB environment variables.\n\n'
-            'T_RING_CUDA_HOME - path where CUDA include and lib directories can be found\n'
-            'T_RING_CUDA_INCLUDE - path to CUDA include directory\n'
-            'T_RING_CUDA_LIB - path to CUDA lib directory')
+            'Please specify correct CUDA location with the BCUBE_CUDA_HOME '
+            'environment variable or combination of BCUBE_CUDA_INCLUDE and '
+            'BCUBE_CUDA_LIB environment variables.\n\n'
+            'BCUBE_CUDA_HOME - path where CUDA include and lib directories can be found\n'
+            'BCUBE_CUDA_INCLUDE - path to CUDA include directory\n'
+            'BCUBE_CUDA_LIB - path to CUDA lib directory')
 
     return cuda_include_dirs, cuda_lib_dirs
 
@@ -246,34 +246,28 @@ def get_rdma_dirs(build_ext):
             void test() 
             {
                 char *buffer =NULL;
-                struct ibv_mr *mr;
-                uint32_t my_key;
-                uint64_t my_addr;
                 struct ibv_pd * pd = NULL;
                 rdma_create_event_channel();
-                mr = ibv_reg_mr(
+                ibv_reg_mr(
                   pd, 
                   buffer, 
                   1024, 
                   IBV_ACCESS_REMOTE_WRITE);
-                my_key = mr->rkey;
-                my_addr = (uint64_t)mr->addr;
             }
             '''))
     except (CompileError, LinkError):
         raise DistutilsPlatformError(
             'RDMA library was not found (see error above).\n'
-            'Please specify correct RDMA location with the T_RING_RDMA_HOME '
-            'environment variable or combination of T_RING_RDMA_INCLUDE and '
-            'T_RING_RDMA_LIB environment variables.\n\n'
-            'T_RING_RDMA_HOME - path where RDMA include and lib directories can be found\n'
-            'T_RING_RDMA_INCLUDE - path to RDMA include directory\n'
-            'T_RING_RDMA_LIB - path to RDMA lib directory')
+            'Please specify correct RDMA location with the BCUBE_RDMA_HOME '
+            'environment variable or combination of BCUBE_RDMA_INCLUDE and '
+            'BCUBE_RDMA_LIB environment variables.\n\n'
+            'BCUBE_RDMA_HOME - path where RDMA include and lib directories can be found\n'
+            'BCUBE_RDMA_INCLUDE - path to RDMA include directory\n'
+            'BCUBE_RDMA_LIB - path to RDMA lib directory')
 
     for lib in rdma_lib:
         rdma_link_flags.append('-l%s' % lib)
     return rdma_include_dirs, rdma_lib_dirs, rdma_link_flags
-
 
 
 def fully_define_extension(build_ext):
@@ -291,7 +285,7 @@ def fully_define_extension(build_ext):
         raise DistutilsError('T_RING_GPU_ALLGATHER=%s is invalid, supported '
                              'values are "", "TCP", "RDMA".' % gpu_allgather)
 
-    gpu_broadcast = os.environ.get('BCBUE_GPU_BROADCAST')
+    gpu_broadcast = os.environ.get('T_RING_GPU_BROADCAST')
     if gpu_broadcast and gpu_broadcast != 'TCP'and gpu_broadcast != 'RDMA':
         raise DistutilsError('T_RING_GPU_BROADCAST=%s is invalid, supported '
                              'values are "", "TCP", "RDMA".' % gpu_broadcast)
@@ -318,7 +312,8 @@ def fully_define_extension(build_ext):
             't_ring/tensorflow/ring_ops.cpp']
     if have_rdma:
         SOURCES+=['t_ring/tensorflow/rdma_t.cpp']
-    COMPILE_FLAGS = ['-std=c++11', '-fPIC', '-Os'] + tf_compile_flags
+    #COMPILE_FLAGS = ['-std=c++11', '-fPIC', '-Os'] + tf_compile_flags
+    COMPILE_FLAGS = ['-std=c++11','-fPIC', '-Os'] + tf_compile_flags
     LINK_FLAGS = tf_link_flags
     LIBRARY_DIRS = []
     LIBRARIES = []
@@ -353,6 +348,15 @@ def fully_define_extension(build_ext):
     tensorflow_ring_lib.library_dirs = LIBRARY_DIRS
     tensorflow_ring_lib.libraries = LIBRARIES
 
+    print(tensorflow_ring_lib.define_macros)
+    print(tensorflow_ring_lib.include_dirs)
+    print(tensorflow_ring_lib.sources)
+    print(tensorflow_ring_lib.extra_compile_args)
+    #print(tensorflow_bcube_lib.compile_args)
+    print(tensorflow_ring_lib.extra_link_args)
+    print(tensorflow_ring_lib.library_dirs)
+    print(tensorflow_ring_lib.libraries)
+
 
 # run the customize_compiler
 class custom_build_ext(build_ext):
@@ -368,7 +372,7 @@ setup(name='t_ring',
       author='Jinkun Geng @ Tsinghua University.',
       long_description=textwrap.dedent('''\
           Ring is a distributed training framework for TensorFlow. 
-          The goal of Ring is to make distributed Deep Learning
+          The goal of Bcube is to make distributed Deep Learning
           fast and easy to use.'''),
       url='https://nasp.cs.tsinghua.edu.cn',
       classifiers=[
