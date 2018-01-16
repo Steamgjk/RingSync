@@ -164,10 +164,11 @@ def test(sess, images, labels, predict, x_input):
 
 
 def main(_):
-    # Initialize Bcube.
+    # Initialize
+    print "ok1"
     tr.init()
     train_images, train_labels, test_images, test_labels = load_data()
-
+    print "ok2"
     global_step = tf.Variable(0, name="global_step", trainable=False)
     with tf.name_scope('input'):
         # input #
@@ -175,17 +176,17 @@ def main(_):
         # output #
         ans = tf.placeholder(shape=None, dtype=tf.float32)
         ans = tf.squeeze(tf.cast(ans, tf.float32))
-
+    print "ok3"
     # use VGG16 network
     vgg = VGG16()
     # params for converting to answer-label-size
     w = tf.Variable(tf.truncated_normal([512, 10], 0.0, 1.0) * 0.01, name='w_last')
     b = tf.Variable(tf.truncated_normal([10], 0.0, 1.0) * 0.01, name='b_last')
-        
+    print "ok4"    
     fmap = vgg.build(x_input, is_training=True)
     predict = tf.nn.softmax(tf.add(tf.matmul(fmap, w), b))
     loss = tf.reduce_mean(-tf.reduce_sum(ans * tf.log(predict), reduction_indices=[1]))
-
+    print "ok5"
     with tf.name_scope('train'):
         optimizer = tf.train.GradientDescentOptimizer(learning_rate)
         #add our code
