@@ -165,7 +165,7 @@ def test(sess, images, labels, predict, x_input):
 
 def main(_):
     # Initialize
-    print "ok1"
+    print 'ok1'
     tr.init()
     train_images, train_labels, test_images, test_labels = load_data()
     print "ok2"
