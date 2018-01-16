@@ -14,13 +14,44 @@
 # ==============================================================================
 #!/usr/bin/env python
 
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+
 import tensorflow as tf
 import t_ring.tensorflow as tr
+
+# escape tensorflow warning
+import os
+os.environ['TF_CPP_MIN_LOG_LEVEL']='2'
+
+import sys
+import re
+import pickle
+import tensorflow as tf
+import numpy as np
+import datetime
+import time
+import math
+
+from vgg16 import *
+from util import *
+
 layers = tf.contrib.layers
 learn = tf.contrib.learn
 
 tf.logging.set_verbosity(tf.logging.INFO)
 
+# global variables
+DATASET_NUM = 10000
+BATCH = 100
+EPOCH = 32
+learning_rate = 0.05
+loss_loop = DATASET_NUM/BATCH/10
+
+images = []
+labels = []
+global epoch_loss
 
 def conv_model(feature, target, mode):
     """2-layer convolution model."""
@@ -62,10 +93,114 @@ def conv_model(feature, target, mode):
     return tf.argmax(logits, 1), loss
 
 
-def main(_):
-    # Initialize Bcube.
-    tr.init()
+def gen_onehot_list(label=0):
+    """
+    generate one-hot label-list based on ans-index
+    e.g. if ans is 3, return [0, 0, 0, 1, 0, 0, 0, 0, 0, 0]
 
+    Args: answer-index
+    Returns: one-hot list
+    """
+    return [1 if l==label else 0 for l in range(0, 10)]
+
+
+def load_data():
+    """
+    open cifar-dataset
+    segregate images-data and answers-label to images and labels
+    """
+    with open('dataset/data_batch_1', 'rb') as f:
+        data = pickle.load(f)
+        slicer = int(DATASET_NUM*0.8)
+        train_images = np.array(data['data'][:slicer]) / 255
+        train_labels = np.array(data['labels'][:slicer])
+        test_images = np.array(data['data'][slicer:]) / 255
+        test_labels = np.array(data['labels'][slicer:])
+        reshaped_train_images = np.array([x.reshape([32, 32, 3]) for x in train_images])
+        reshaped_train_labels = np.array([gen_onehot_list(i) for i in train_labels])
+        reshaped_test_images = np.array([x.reshape([32, 32, 3]) for x in test_images])
+        reshaped_test_labels = np.array([gen_onehot_list(i) for i in test_labels])
+
+    return reshaped_train_images, reshaped_train_labels, reshaped_test_images, reshaped_test_labels
+        
+
+def get_next_batch(images, labels, max_length, length=BATCH, is_training=True):
+    """
+    extract next batch-images
+
+    Returns: batch sized BATCH
+    """
+    if is_training:
+        indicies = np.random.choice(max_length, length)
+        next_batch = images[indicies]
+        next_labels = labels[indicies]
+    else:
+        indicies = np.random.choice(max_length, length)
+        next_batch = images[indicies]
+        next_labels = labels[indicies]
+
+    return np.array(next_batch), np.array(next_labels)
+
+def test(sess, images, labels, predict, x_input):
+    """
+    do test
+    """
+    images, labels = get_next_batch(images, labels, max_length=len(labels), length=100, is_training=False)
+    result = sess.run(predict, feed_dict={x_input: images})
+
+    correct = 0
+    total = 100
+
+    for i in range(len(labels)):
+        pred_max = result[i].argmax()
+        ans = labels[i].argmax()
+
+        if ans == pred_max:
+            correct += 1
+
+    correct_float = float(correct)
+    print(str(correct_float/total))
+
+
+def main(_):
+    # Initialize
+    print("ok")
+    tr.init()
+    train_images, train_labels, test_images, test_labels = load_data()
+    print("ok2")
+    global_step = tf.Variable(0, name="global_step", trainable=False)
+    with tf.name_scope('input'):
+        # input #
+        x_input = tf.placeholder(shape=[None, 32, 32, 3], dtype=tf.float32)
+        # output #
+        ans = tf.placeholder(shape=None, dtype=tf.float32)
+        ans = tf.squeeze(tf.cast(ans, tf.float32))
+    print("ok3")
+    # use VGG16 network
+    vgg = VGG16()
+    # params for converting to answer-label-size
+    w = tf.Variable(tf.truncated_normal([512, 10], 0.0, 1.0) * 0.01, name='w_last')
+    b = tf.Variable(tf.truncated_normal([10], 0.0, 1.0) * 0.01, name='b_last')
+    print("ok4")  
+    fmap = vgg.build(x_input, is_training=True)
+    predict = tf.nn.softmax(tf.add(tf.matmul(fmap, w), b))
+    loss = tf.reduce_mean(-tf.reduce_sum(ans * tf.log(predict), reduction_indices=[1]))
+    print("ok5")
+    with tf.name_scope('train'):
+        optimizer = tf.train.GradientDescentOptimizer(learning_rate)
+        #add our code
+        optimizer =  tr.DistributedOptimizer(optimizer)
+        '''
+        if FLAGS.sync_replicas:
+            optimizer = tf.train.SyncReplicasOptimizer(
+                optimizer,
+                replicas_to_aggregate = num_workers,
+                total_num_replicas = num_workers,
+                name = "vgg16_sync_replicas")
+        '''
+        train_step = optimizer.minimize(loss, global_step = global_step)
+
+    print("ok7")
 '''
     # Download and load MNIST dataset.
     mnist = learn.datasets.mnist.read_data_sets('MNIST-data-%d' % tr.rank())
