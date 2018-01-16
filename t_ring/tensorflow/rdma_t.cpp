@@ -654,12 +654,12 @@ static void _on_pre_conn(struct rdma_cm_id *id)
 	{
 		posix_memalign((void **)(&(new_ctx->buffer[index])), sysconf(_SC_PAGESIZE), BUFFER_SIZE);
 		TEST_Z(new_ctx->buffer_mr[index] = ibv_reg_mr(rc_get_pd(id), new_ctx->buffer[index], BUFFER_SIZE, IBV_ACCESS_LOCAL_WRITE | IBV_ACCESS_REMOTE_WRITE));
-		printf("buffer %d :%p\n", index, new_ctx->buffer_mr[index]->addr);
+		//printf("buffer %d :%p\n", index, new_ctx->buffer_mr[index]->addr);
 
 		posix_memalign((void **)(&(new_ctx->ack[index])), sysconf(_SC_PAGESIZE), sizeof(_ack_));
 		TEST_Z(new_ctx->ack_mr[index] = ibv_reg_mr(rc_get_pd(id), new_ctx->ack[index],
 		                                sizeof(_ack_), IBV_ACCESS_LOCAL_WRITE | IBV_ACCESS_REMOTE_WRITE));
-		printf("ack %d :%p\n", index, new_ctx->ack_mr[index]->addr);
+		//printf("ack %d :%p\n", index, new_ctx->ack_mr[index]->addr);
 	}
 	log_info("register %d tx_buffer and rx_ack\n", MAX_CONCURRENCY);
 
