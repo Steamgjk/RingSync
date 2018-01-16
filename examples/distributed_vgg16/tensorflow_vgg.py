@@ -201,6 +201,35 @@ def main(_):
         train_step = optimizer.minimize(loss, global_step = global_step)
 
     print("ok7")
+
+    #add our code
+    hooks = [tr.BroadcastGlobalVariablesHook(0),
+             tf.train.StopAtStepHook(last_step=10000),
+             tf.train.LoggingTensorHook(tensors={'step': global_step, 'loss': loss}, every_n_iter=10),
+             ]
+    # Pin GPU to be used to process local rank (one GPU per process)
+    config = tf.ConfigProto()
+    config.gpu_options.allow_growth = True
+    #config.gpu_options.visible_device_list = str(bq.local_rank())
+
+    # Save checkpoints only on worker 0 to prevent other workers from corrupting them.
+    #checkpoint_dir = './checkpoints' if tr.rank() == 0 else None
+    checkpoint_dir = None
+    # The MonitoredTrainingSession takes care of session initialization,
+    # restoring from a checkpoint, saving to a checkpoint, and closing when done
+    # or an error occurs.
+    with tf.train.MonitoredTrainingSession(checkpoint_dir=checkpoint_dir,
+                                           hooks=hooks,
+                                           config=config) as mon_sess:
+        while not mon_sess.should_stop():
+            # Run a training step synchronously.
+            batch, actuals = get_next_batch(train_images, train_labels, len(train_labels))
+            _, step = mon_sess.run([train_step, global_step], feed_dict={x_input: batch, ans: actuals})
+
+            #image_, label_ = mnist.train.next_batch(100)
+            #mon_sess.run(train_op, feed_dict={image: image_, label: label_})
+
+
 '''
     # Download and load MNIST dataset.
     mnist = learn.datasets.mnist.read_data_sets('MNIST-data-%d' % tr.rank())
