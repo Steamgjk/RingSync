@@ -201,7 +201,7 @@ def main(_):
         '''
         train_step = optimizer.minimize(loss, global_step = global_step)
 
-    print "dddd"
+    print("ok7")
 '''
     # Download and load MNIST dataset.
     mnist = learn.datasets.mnist.read_data_sets('MNIST-data-%d' % tr.rank())
