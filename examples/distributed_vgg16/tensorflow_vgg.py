@@ -225,8 +225,8 @@ def main(_):
         while not mon_sess.should_stop():
             # Run a training step synchronously.
             batch, actuals = get_next_batch(train_images, train_labels, len(train_labels))
-            #_, step = mon_sess.run([train_step, global_step], feed_dict={x_input: batch, ans: actuals})
-            _, step = mon_sess.run(train_step, feed_dict={x_input: batch, ans: actuals})
+            _, step = mon_sess.run([train_step, global_step], feed_dict={x_input: batch, ans: actuals})
+            #_, step = mon_sess.run(train_step, feed_dict={x_input: batch, ans: actuals})
 
             #image_, label_ = mnist.train.next_batch(100)
             #mon_sess.run(train_op, feed_dict={image: image_, label: label_})
