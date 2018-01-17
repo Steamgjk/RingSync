@@ -279,7 +279,7 @@ void ring_allreduce_queue(OpKernelContext* context, const Tensor& tensor,
 	{
 		//printf("Check 2\n");
 		//cudaStream_t& stream = trs.streams[trs.device];
-		cudaStream_t& stream = MyRing::streams[trs.device];
+		cudaStream_t& stream = mring->streams[trs.device];
 		if (stream == nullptr)
 		{
 			printf("Check 4  trs_name = %s device= %d \n", trs.tensor_name.c_str(), trs.device);
@@ -477,7 +477,7 @@ void ring_broadcast_queue(OpKernelContext* context, const Tensor& tensor,
 				//printf("In Cuda\n");
 				//cudaStream_t& stream = trs.streams[trs.device];
 				//printf("Is here\n");
-				cudaStream_t& stream = MyRing::streams[trs.device];
+				cudaStream_t& stream = mring->streams[trs.device];
 				//printf("ok\n");
 				if (stream == nullptr)
 				{
