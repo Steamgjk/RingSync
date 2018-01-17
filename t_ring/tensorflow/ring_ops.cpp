@@ -315,6 +315,9 @@ void ring_allreduce_queue(OpKernelContext* context, const Tensor& tensor,
 		                           stream));
 		if (false == check_cuda( trs, "cudaStreamSynchronize asy from device to host", cudaStreamSynchronize(stream)))
 			return ;
+
+		//if (false == check_cuda( trs, "cudaStreamDestroy  from device to host", cudaStreamDestroy(stream)))
+		//return ;
 		//printf("Check 6\n");
 	}
 	else
@@ -514,6 +517,9 @@ void ring_broadcast_queue(OpKernelContext* context, const Tensor& tensor,
 				                           stream));
 				if (false == check_cuda( trs, "Right cudaStreamSynchronize asy from device to host", cudaStreamSynchronize(stream)))
 					return ;
+				//if (false == check_cuda( trs, "cudaStreamDestroy  from device to host", cudaStreamDestroy(stream)))
+				//	return ;
+
 			}
 			else
 #endif

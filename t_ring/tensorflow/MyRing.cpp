@@ -365,6 +365,10 @@ void MyRing::FinishedTuple(void* dtp,  bool freeMem = true)
 				if (false == check_cuda( *(trs_ptr), "cudaStreamSynchronize asy from device to host", cudaStreamSynchronize(stream)))
 					return ;
 
+				if (false == check_cuda( *(trs_ptr), "cudaStreamDestroy  from device to host", cudaStreamDestroy(stream)))
+					return ;
+				printf("Destroy stream\n");
+
 
 			}
 			else
