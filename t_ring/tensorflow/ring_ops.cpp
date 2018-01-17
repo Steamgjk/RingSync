@@ -281,8 +281,8 @@ void ring_allreduce_queue(OpKernelContext* context, const Tensor& tensor,
 		cudaStream_t& stream = trs.streams[trs.device];
 		if (stream == nullptr)
 		{
-			//printf("Check 4\n");
-			auto res = check_cuda(trs, "create cuda stream",
+			printf("Check 4  device= %d \n", trs.device);
+			auto res = check_cuda(trs, "create cuda stream-1",
 			                      cudaStreamCreate(&stream));
 			if (res == false)
 			{
