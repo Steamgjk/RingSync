@@ -476,12 +476,12 @@ void ring_broadcast_queue(OpKernelContext* context, const Tensor& tensor,
 			{
 				//printf("In Cuda\n");
 				//cudaStream_t& stream = trs.streams[trs.device];
-				printf("Is here\n");
+				//printf("Is here\n");
 				cudaStream_t& stream = MyRing::streams[trs.device];
-				printf("ok\n");
+				//printf("ok\n");
 				if (stream == nullptr)
 				{
-					printf("Check 4\n");
+					printf("Check 4  device = %d\n", trs.device);
 					auto res = check_cuda(trs, "create cuda stream",
 					                      cudaStreamCreate(&stream));
 					if (res == false)
@@ -496,7 +496,7 @@ void ring_broadcast_queue(OpKernelContext* context, const Tensor& tensor,
 				{
 					std::this_thread::sleep_for(std::chrono::nanoseconds(100));
 				}
-				printf("src_ptr = %p  left_sz = %ld src_ptr_se = %p  right_sz=%ld\n", src_ptr, left_sz, src_ptr_se, right_sz);
+				printf("element_nums= %d  _type_size=%d  src_ptr = %p  left_sz = %ld src_ptr_se = %p  right_sz=%ld\n", element_nums, _type_size, src_ptr, left_sz, src_ptr_se, right_sz);
 				check_cuda(trs, "Left memcpy asy from device to host",
 				           cudaMemcpyAsync((trs.left_dtuple)->data,
 				                           (const void*)src_ptr,
