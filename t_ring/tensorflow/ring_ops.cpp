@@ -468,16 +468,18 @@ void ring_broadcast_queue(OpKernelContext* context, const Tensor& tensor,
 			//printf("Determing Whether CUDA?\n");
 
 #if HAVE_CUDA
-			printf("HAVE CUDA  device = %d \n", device);
+			//printf("HAVE CUDA  device = %d \n", device);
 			//getchar();
 			if (trs.device != CPU_DEVICE_ID)/*for gpu*/
 			{
-				printf("In Cuda\n");
+				//printf("In Cuda\n");
 				//cudaStream_t& stream = trs.streams[trs.device];
+				printf("Is here\n");
 				cudaStream_t& stream = MyRing::streams[trs.device];
+				printf("ok\n");
 				if (stream == nullptr)
 				{
-					//printf("Check 4\n");
+					printf("Check 4\n");
 					auto res = check_cuda(trs, "create cuda stream",
 					                      cudaStreamCreate(&stream));
 					if (res == false)
@@ -486,7 +488,7 @@ void ring_broadcast_queue(OpKernelContext* context, const Tensor& tensor,
 						return;
 					}
 				}
-				//printf("enque PollForStatus before\n");
+				printf("enque PollForStatus before\n");
 				while (trs.ready_event->PollForStatus() ==
 				        perftools::gputools::Event::Status::kPending)
 				{
