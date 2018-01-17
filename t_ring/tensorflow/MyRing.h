@@ -121,7 +121,9 @@ struct TensorRingStruct
 	GPU_EVENT_IF_CUDA ready_event;// Event indicating that data is ready.
 	Status_callback callback;
 #endif
-
+#if HAVE_CUDA
+	static std::unordered_map<int, cudaStream_t> streams;
+#endif
 
 };
 

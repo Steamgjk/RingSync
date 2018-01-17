@@ -329,8 +329,8 @@ void MyRing::FinishedTuple(void* dtp,  bool freeMem = true)
 			if (trs_ptr->device != CPU_DEVICE_ID)/*for gpu*/
 			{
 				printf("In FIN check1\n");
-				//cudaStream_t& stream =  trs_ptr->streams[trs_ptr->device];;
-				cudaStream_t& stream =  streams[trs_ptr->device];;
+				cudaStream_t& stream =  trs_ptr->streams[trs_ptr->device];;
+				//cudaStream_t& stream =  streams[trs_ptr->device];;
 				printf("In FIN check2\n");
 				if (stream == nullptr)
 				{
@@ -472,8 +472,8 @@ void MyRing::FinishedTuple(void* dtp,  bool freeMem = true)
 				if (trs_ptr->device != CPU_DEVICE_ID)
 				{
 					printf("before synchronous cuda stream\n");
-					//cudaStream_t& stream = trs_ptr->streams[trs_ptr->device];
-					cudaStream_t& stream = streams[trs_ptr->device];
+					cudaStream_t& stream = trs_ptr->streams[trs_ptr->device];
+					//cudaStream_t& stream = streams[trs_ptr->device];
 					printf("in fin check2\n");
 					if (false == check_cuda( (*trs_ptr), "cudaStreamSynchronize asy from device to host", cudaStreamSynchronize(stream)))
 						return ;
