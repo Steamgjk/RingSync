@@ -90,7 +90,7 @@ inline bool check_cuda(TensorRingStruct& trs, std::string op_name, cudaError_t r
 	if (result != cudaSuccess)
 	{
 //#ifdef __BCUBE_DEBUG__
-		printf("%s failed: error in tensor:%s  result = %d  %s\n", op_name.c_str(), trs.tensor_name.c_str(), result, cudaGetErrorString(result) );
+		//printf("%s failed: error in tensor:%s  result = %d  %s\n", op_name.c_str(), trs.tensor_name.c_str(), result, cudaGetErrorString(result) );
 //#endif
 		trs.callback(errors::Unknown(op_name, " failed: ", cudaGetErrorString(result)));
 		//printf("Check Cuda 7\n");
@@ -282,7 +282,7 @@ void ring_allreduce_queue(OpKernelContext* context, const Tensor& tensor,
 		//cudaStream_t& stream = mring->streams[trs.device];
 		if (stream == nullptr)
 		{
-			printf("Check 4  trs_name = %s device= %d \n", trs.tensor_name.c_str(), trs.device);
+			//printf("Check 4  trs_name = %s device= %d \n", trs.tensor_name.c_str(), trs.device);
 			auto res = check_cuda(trs, "create cuda stream-1",
 			                      cudaStreamCreate(&stream));
 			if (res == false)
@@ -499,7 +499,7 @@ void ring_broadcast_queue(OpKernelContext* context, const Tensor& tensor,
 				{
 					std::this_thread::sleep_for(std::chrono::nanoseconds(100));
 				}
-				printf("element_nums= %d  _type_size=%d  src_ptr = %p  left_sz = %ld src_ptr_se = %p  right_sz=%ld\n", element_nums, _type_size, src_ptr, left_sz, src_ptr_se, right_sz);
+				//printf("element_nums= %d  _type_size=%d  src_ptr = %p  left_sz = %ld src_ptr_se = %p  right_sz=%ld\n", element_nums, _type_size, src_ptr, left_sz, src_ptr_se, right_sz);
 				check_cuda(trs, "Left memcpy asy from device to host",
 				           cudaMemcpyAsync((trs.left_dtuple)->data,
 				                           (const void*)src_ptr,
