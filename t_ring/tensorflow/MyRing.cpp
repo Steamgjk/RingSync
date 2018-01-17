@@ -353,8 +353,8 @@ void MyRing::FinishedTuple(void* dtp,  bool freeMem = true)
 				                           left_sz,
 				                           cudaMemcpyHostToDevice,
 				                           stream));
-				if (false == check_cuda( *(trs_ptr), "cudaStreamSynchronize asy from device to host", cudaStreamSynchronize(stream)))
-					return ;
+				//if (false == check_cuda( *(trs_ptr), "cudaStreamSynchronize asy from device to host", cudaStreamSynchronize(stream)))
+				//	return ;
 				char* se_data = raw_data + left_sz;
 				check_cuda(*(trs_ptr), "memcpy asy from device to host",
 				           cudaMemcpyAsync((void*)(se_data),
@@ -365,9 +365,7 @@ void MyRing::FinishedTuple(void* dtp,  bool freeMem = true)
 				if (false == check_cuda( *(trs_ptr), "cudaStreamSynchronize asy from device to host", cudaStreamSynchronize(stream)))
 					return ;
 
-				if (false == check_cuda( *(trs_ptr), "cudaStreamDestroy  from device to host", cudaStreamDestroy(stream)))
-					return ;
-				printf("Destroy stream\n");
+
 
 
 			}
@@ -482,6 +480,9 @@ void MyRing::FinishedTuple(void* dtp,  bool freeMem = true)
 					if (false == check_cuda( (*trs_ptr), "cudaStreamSynchronize asy from device to host", cudaStreamSynchronize(stream)))
 						return ;
 					//printf("after synchronous cuda stream\n");
+					if (false == check_cuda( *(trs_ptr), "cudaStreamDestroy  from device to host", cudaStreamDestroy(stream)))
+						return ;
+					printf("Destroy stream\n");
 				}
 #endif
 				trs_ptr->callback(Status::OK());
