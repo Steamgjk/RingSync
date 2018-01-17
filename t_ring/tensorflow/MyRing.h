@@ -122,10 +122,9 @@ struct TensorRingStruct
 	Status_callback callback;
 #endif
 
-#if HAVE_CUDA
-	std::unordered_map<int, cudaStream_t> streams;
-#endif
+
 };
+
 
 static  int TYPE_SIZE[] =
 {
@@ -147,6 +146,9 @@ using namespace std;
 class MyRing
 {
 public:
+#if HAVE_CUDA
+	static std::unordered_map<int, cudaStream_t> streams;
+#endif
 	MyRing(int rn, int rr);
 
 	int sizeoftype(RING_TYPE dt);

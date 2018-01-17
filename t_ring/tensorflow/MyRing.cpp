@@ -19,6 +19,9 @@ constexpr char* MyRing::rdma_to_left_ip_arrs[MAX_NUM];
 const int MyRing::rdma_listen_for_left_connection_port;
 const int MyRing::rdma_listen_for_right_connection_port;
 const int MyRing::batch_size;
+
+std::unordered_map<int, cudaStream_t> MyRing::streams;
+
 //#define GJK_DEBUG 1
 int MyRing::ring_rank;
 int MyRing::ring_num;
@@ -325,7 +328,8 @@ void MyRing::FinishedTuple(void* dtp,  bool freeMem = true)
 #if HAVE_CUDA
 			if (trs_ptr->device != CPU_DEVICE_ID)/*for gpu*/
 			{
-				cudaStream_t& stream =  trs_ptr->streams[trs_ptr->device];;
+				//cudaStream_t& stream =  trs_ptr->streams[trs_ptr->device];;
+				cudaStream_t& stream =  MyRing::streams[trs_ptr->device];;
 				if (stream == nullptr)
 				{
 					perror("fatal error in reduce of cuda, as well when we call back.this should never be here\n");
@@ -465,7 +469,9 @@ void MyRing::FinishedTuple(void* dtp,  bool freeMem = true)
 				if (trs_ptr->device != CPU_DEVICE_ID)
 				{
 					//printf("before synchronous cuda stream\n");
-					cudaStream_t& stream = trs_ptr->streams[trs_ptr->device];
+					//cudaStream_t& stream = trs_ptr->streams[trs_ptr->device];
+					cudaStream_t& stream = MyRing::streams[trs_ptr->device];
+
 					if (false == check_cuda( (*trs_ptr), "cudaStreamSynchronize asy from device to host", cudaStreamSynchronize(stream)))
 						return ;
 					//printf("after synchronous cuda stream\n");
