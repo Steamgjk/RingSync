@@ -484,7 +484,7 @@ void ring_broadcast_queue(OpKernelContext* context, const Tensor& tensor,
 				//printf("ok\n");
 				if (stream == nullptr)
 				{
-					printf("Check 4  device = %d\n", trs.device);
+					//printf("Check 4  device = %d\n", trs.device);
 					auto res = check_cuda(trs, "create cuda stream",
 					                      cudaStreamCreate(&stream));
 					if (res == false)
