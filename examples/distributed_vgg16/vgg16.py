@@ -25,42 +25,42 @@ class VGG16:
         # flag: is_training? for tensorflow-graph
         self.train_phase = tf.constant(is_training) if is_training else None
 
-        with tf.device('/gpu:0'):
-            self.conv1_1 = self.convolution(input, 'conv1_1')
-            self.conv1_2 = self.convolution(self.conv1_1, 'conv1_2')
-            self.pool1 = self.pooling(self.conv1_2, 'pool1')
+    #with tf.device('/gpu:0'):
+        self.conv1_1 = self.convolution(input, 'conv1_1')
+        self.conv1_2 = self.convolution(self.conv1_1, 'conv1_2')
+        self.pool1 = self.pooling(self.conv1_2, 'pool1')
 
-        with tf.device('/gpu:1'):
-            self.conv2_1 = self.convolution(self.pool1, 'conv2_1')
-            self.conv2_2 = self.convolution(self.conv2_1, 'conv2_2')
-            self.pool2 = self.pooling(self.conv2_2, 'pool2')
+    #with tf.device('/gpu:1'):
+        self.conv2_1 = self.convolution(self.pool1, 'conv2_1')
+        self.conv2_2 = self.convolution(self.conv2_1, 'conv2_2')
+        self.pool2 = self.pooling(self.conv2_2, 'pool2')
 
-        with tf.device('/gpu:0'):
-            self.conv3_1 = self.convolution(self.pool2, 'conv3_1')
-            self.conv3_2 = self.convolution(self.conv3_1, 'conv3_2')
-            self.conv3_3 = self.convolution(self.conv3_2, 'conv3_3')
-            self.pool3 = self.pooling(self.conv3_3, 'pool3')
+    #with tf.device('/gpu:0'):
+        self.conv3_1 = self.convolution(self.pool2, 'conv3_1')
+        self.conv3_2 = self.convolution(self.conv3_1, 'conv3_2')
+        self.conv3_3 = self.convolution(self.conv3_2, 'conv3_3')
+        self.pool3 = self.pooling(self.conv3_3, 'pool3')
 
-        with tf.device('/gpu:1'):
-            self.conv4_1 = self.convolution(self.pool3, 'conv4_1')
-            self.conv4_2 = self.convolution(self.conv4_1, 'conv4_2')
-            self.conv4_3 = self.convolution(self.conv4_2, 'conv4_3')
-            self.pool4 = self.pooling(self.conv4_3, 'pool4')
+    #with tf.device('/gpu:1'):
+        self.conv4_1 = self.convolution(self.pool3, 'conv4_1')
+        self.conv4_2 = self.convolution(self.conv4_1, 'conv4_2')
+        self.conv4_3 = self.convolution(self.conv4_2, 'conv4_3')
+        self.pool4 = self.pooling(self.conv4_3, 'pool4')
 
-        with tf.device('/gpu:0'):
-            self.conv5_1 = self.convolution(self.pool4, 'conv5_1')
-            self.conv5_2 = self.convolution(self.conv5_1, 'conv5_2')
-            self.conv5_3 = self.convolution(self.conv5_2, 'conv5_3')
-            self.pool5 = self.pooling(self.conv5_3, 'pool5')
+    #with tf.device('/gpu:0'):
+        self.conv5_1 = self.convolution(self.pool4, 'conv5_1')
+        self.conv5_2 = self.convolution(self.conv5_1, 'conv5_2')
+        self.conv5_3 = self.convolution(self.conv5_2, 'conv5_3')
+        self.pool5 = self.pooling(self.conv5_3, 'pool5')
 
-        with tf.device('/gpu:1'):
-            self.fc6 = self.fully_connection(self.pool5, tf.nn.relu, 'cifar')
+    #with tf.device('/gpu:1'):
+        self.fc6 = self.fully_connection(self.pool5, tf.nn.relu, 'cifar')
 
-        with tf.device('/gpu:0'):
-            self.fc7 = self.fully_connection(self.fc6, tf.nn.relu, 'fc7')
+    #with tf.device('/gpu:0'):
+        self.fc7 = self.fully_connection(self.fc6, tf.nn.relu, 'fc7')
 
-        with tf.device('/gpu:1'):
-            self.fc8 = self.fully_connection(self.fc7, tf.nn.relu, 'fc8')
+    #with tf.device('/gpu:1'):
+        self.fc8 = self.fully_connection(self.fc7, tf.nn.relu, 'fc8')
 
         self.prob = self.fc6
 
