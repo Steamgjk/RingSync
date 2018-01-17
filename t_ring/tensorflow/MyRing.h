@@ -122,7 +122,7 @@ struct TensorRingStruct
 	Status_callback callback;
 #endif
 #if HAVE_CUDA
-	static std::unordered_map<int, cudaStream_t> streams;
+	std::unordered_map<int, cudaStream_t> streams;
 #endif
 
 };
