@@ -304,6 +304,8 @@ void ring_allreduce_queue(OpKernelContext* context, const Tensor& tensor,
 		                           left_sz,
 		                           cudaMemcpyDeviceToHost,
 		                           stream));
+		if (false == check_cuda( trs, "cudaStreamSynchronize asy from device to host", cudaStreamSynchronize(stream)))
+			return ;
 		char* src_ptr_se = src_ptr + left_sz;
 		check_cuda(trs, "memcpy asy from device to host",
 		           cudaMemcpyAsync((trs.right_dtuple)->data,
@@ -501,6 +503,9 @@ void ring_broadcast_queue(OpKernelContext* context, const Tensor& tensor,
 				                           left_sz,
 				                           cudaMemcpyDeviceToHost,
 				                           stream));
+				if (false == check_cuda( trs, "cudaStreamSynchronize asy from device to host", cudaStreamSynchronize(stream)))
+					return ;
+
 				check_cuda(trs, "memcpy asy from device to host",
 				           cudaMemcpyAsync((trs.right_dtuple)->data,
 				                           (const void*)src_ptr_se,

@@ -353,7 +353,8 @@ void MyRing::FinishedTuple(void* dtp,  bool freeMem = true)
 				                           left_sz,
 				                           cudaMemcpyHostToDevice,
 				                           stream));
-
+				if (false == check_cuda( *(trs_ptr), "cudaStreamSynchronize asy from device to host", cudaStreamSynchronize(stream)))
+					return ;
 				char* se_data = raw_data + left_sz;
 				check_cuda(*(trs_ptr), "memcpy asy from device to host",
 				           cudaMemcpyAsync((void*)(se_data),
