@@ -218,13 +218,15 @@ def main(_):
     # The MonitoredTrainingSession takes care of session initialization,
     # restoring from a checkpoint, saving to a checkpoint, and closing when done
     # or an error occurs.
+    print("ok 9")
     with tf.train.MonitoredTrainingSession(checkpoint_dir=checkpoint_dir,
                                            hooks=hooks,
                                            config=config) as mon_sess:
         while not mon_sess.should_stop():
             # Run a training step synchronously.
             batch, actuals = get_next_batch(train_images, train_labels, len(train_labels))
-            _, step = mon_sess.run([train_step, global_step], feed_dict={x_input: batch, ans: actuals})
+            #_, step = mon_sess.run([train_step, global_step], feed_dict={x_input: batch, ans: actuals})
+            _, step = mon_sess.run(train_step, feed_dict={x_input: batch, ans: actuals})
 
             #image_, label_ = mnist.train.next_batch(100)
             #mon_sess.run(train_op, feed_dict={image: image_, label: label_})
