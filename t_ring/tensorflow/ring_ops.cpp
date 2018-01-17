@@ -90,7 +90,7 @@ inline bool check_cuda(TensorRingStruct& trs, std::string op_name, cudaError_t r
 	if (result != cudaSuccess)
 	{
 //#ifdef __BCUBE_DEBUG__
-		printf("%s failed: error in tensor:%s\n", op_name.c_str(), trs.tensor_name.c_str());
+		printf("%s failed: error in tensor:%s  result = %d  %s\n", op_name.c_str(), trs.tensor_name.c_str(), result, cudaGetErrorString(result) );
 //#endif
 		trs.callback(errors::Unknown(op_name, " failed: ", cudaGetErrorString(result)));
 		//printf("Check Cuda 7\n");
@@ -281,7 +281,7 @@ void ring_allreduce_queue(OpKernelContext* context, const Tensor& tensor,
 		cudaStream_t& stream = trs.streams[trs.device];
 		if (stream == nullptr)
 		{
-			printf("Check 4  device= %d \n", trs.device);
+			printf("Check 4  trs_name = %s device= %d \n", trs.tensor_name.c_str(), trs.device);
 			auto res = check_cuda(trs, "create cuda stream-1",
 			                      cudaStreamCreate(&stream));
 			if (res == false)
