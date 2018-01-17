@@ -490,29 +490,29 @@ void ring_broadcast_queue(OpKernelContext* context, const Tensor& tensor,
 						return;
 					}
 				}
-				printf("enque PollForStatus before\n");
+				//printf("enque PollForStatus before\n");
 				while (trs.ready_event->PollForStatus() ==
 				        perftools::gputools::Event::Status::kPending)
 				{
 					std::this_thread::sleep_for(std::chrono::nanoseconds(100));
 				}
-				//printf("enque PollForStatus after\n");
-				check_cuda(trs, "memcpy asy from device to host",
+				printf("src_ptr = %p  left_sz = %ld src_ptr_se = %p  right_sz=%ld\n", src_ptr, left_sz, src_ptr_se, right_sz);
+				check_cuda(trs, "Left memcpy asy from device to host",
 				           cudaMemcpyAsync((trs.left_dtuple)->data,
 				                           (const void*)src_ptr,
 				                           left_sz,
 				                           cudaMemcpyDeviceToHost,
 				                           stream));
-				if (false == check_cuda( trs, "cudaStreamSynchronize asy from device to host", cudaStreamSynchronize(stream)))
+				if (false == check_cuda( trs, "Left cudaStreamSynchronize asy from device to host", cudaStreamSynchronize(stream)))
 					return ;
 
-				check_cuda(trs, "memcpy asy from device to host",
+				check_cuda(trs, "Right memcpy asy from device to host",
 				           cudaMemcpyAsync((trs.right_dtuple)->data,
 				                           (const void*)src_ptr_se,
 				                           right_sz,
 				                           cudaMemcpyDeviceToHost,
 				                           stream));
-				if (false == check_cuda( trs, "cudaStreamSynchronize asy from device to host", cudaStreamSynchronize(stream)))
+				if (false == check_cuda( trs, "Right cudaStreamSynchronize asy from device to host", cudaStreamSynchronize(stream)))
 					return ;
 			}
 			else
