@@ -74,7 +74,8 @@ def main(_):
     with tf.train.MonitoredTrainingSession(checkpoint_dir=checkpoint_dir,
                                            hooks=hooks,
                                            config=config) as mon_sess:
-        while not mon_sess.should_stop():
+        #while not mon_sess.should_stop():
+        for i in range(10000):
             # Run a training step synchronously.
             batch, actuals = get_next_batch(train_images, train_labels, len(train_labels))
 
