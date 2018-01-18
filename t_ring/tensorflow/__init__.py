@@ -86,7 +86,7 @@ def broadcast_global_variables(root_rank):
     Arguments:
         root_rank: rank of the process from which global variables will be broadcasted
         to all other processes.
-    """
+    """ 
     return tf.group(*[tf.assign(var, broadcast(var, root_rank))
                       for var in tf.global_variables()])
 
@@ -122,7 +122,11 @@ class BroadcastGlobalVariablesHook(tf.train.SessionRunHook):
                 self.bcast_op = broadcast_global_variables(self.root_rank)
 
     def after_create_session(self, session, coord):
-        session.run(self.bcast_op)
+        #session.run(self.bcast_op)
+        a = tf.constant(5.0)
+        b = tf.constant(6.0)
+        c = a * b
+        session.run(c)
 
 
 class DistributedOptimizer(tf.train.Optimizer):
