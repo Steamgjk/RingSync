@@ -186,7 +186,7 @@ void ring_allreduce_queue(OpKernelContext* context, const Tensor& tensor,
                           const std::string name, const int device,
                           StatusCallback callback)
 {
-	printf("ring_allreduce_queue\n");
+	//printf("ring_allreduce_queue\n");
 	RING_TYPE dtype;
 	Status status = DataTypeToRingType(tensor.dtype(), &dtype);
 	if (!status.ok())
@@ -264,7 +264,7 @@ void ring_allreduce_queue(OpKernelContext* context, const Tensor& tensor,
 	(trs.left_dtuple)->data_num = NumofEle / 2;
 	(trs.right_dtuple)->data_num = NumofEle  - (trs.left_dtuple)->data_num ;
 
-	printf("IN OPS   na,e=%s  left_num = %d   right_num =%d\n", trs.tensor_name.c_str(), (trs.left_dtuple)->data_num, (trs.right_dtuple)->data_num);
+	//printf("IN OPS   na,e=%s  left_num = %d   right_num =%d\n", trs.tensor_name.c_str(), (trs.left_dtuple)->data_num, (trs.right_dtuple)->data_num);
 
 	(trs.left_dtuple)->data = std::malloc(((trs.left_dtuple)->data_num) * _type_size);
 	(trs.right_dtuple)->data = std::malloc(((trs.right_dtuple)->data_num) * _type_size);

@@ -232,9 +232,9 @@ void MyRing::FinishedTuple(void* dtp,  bool freeMem = true)
 	len -= 5; //_to_0
 	strncpy(tensor_name, (dataTuple->data_name), len );
 	tensor_name[len] = '\0';
-//#ifdef GJK_DEBUG
+#ifdef GJK_DEBUG
 	printf("FIN tensor_name = %s\n", tensor_name);
-//#endif
+#endif
 	TensorRingStruct* trs_ptr = NULL;
 	bool canRet = false;
 	string kstr = tensor_name;
