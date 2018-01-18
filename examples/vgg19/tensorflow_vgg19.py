@@ -78,7 +78,8 @@ def main(_):
             batch, actuals = get_next_batch(train_images, train_labels, len(train_labels))
 
             _, step = mon_sess.run([train_step,global_step], feed_dict={images: batch1, true_out: [img1_true_result], train_mode: True})
-
+            print("step  ")
+            print(step)
             # test classification again, should have a higher probability about tiger
             #prob = mon_sess.run(vgg.prob, feed_dict={images: batch1, train_mode: False})
 

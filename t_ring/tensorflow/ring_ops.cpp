@@ -186,7 +186,7 @@ void ring_allreduce_queue(OpKernelContext* context, const Tensor& tensor,
                           const std::string name, const int device,
                           StatusCallback callback)
 {
-
+	printf("ring_allreduce_queue\n");
 	RING_TYPE dtype;
 	Status status = DataTypeToRingType(tensor.dtype(), &dtype);
 	if (!status.ok())
@@ -226,9 +226,7 @@ void ring_allreduce_queue(OpKernelContext* context, const Tensor& tensor,
 	//if omitted gjk
 	//e.tensor = tensor;
 	//e.output = output;
-#if _show_res__
-	printf("allreduce tensor_name is %s ||  %S\n", _shape2string_2left.c_str(), _shape2string_2right.c_str());
-#endif
+
 	//e.ready_event = ready_event;
 	//e.device = device;
 	//e.callback = callback;
@@ -265,7 +263,8 @@ void ring_allreduce_queue(OpKernelContext* context, const Tensor& tensor,
 	int NumofEle = tensor.NumElements();
 	(trs.left_dtuple)->data_num = NumofEle / 2;
 	(trs.right_dtuple)->data_num = NumofEle  - (trs.left_dtuple)->data_num ;
-	//printf("IN OPS   na,e=%s  left_num = %d   right_num =%d\n", trs.tensor_name.c_str(), (trs.left_dtuple)->data_num, (trs.right_dtuple)->data_num);
+
+	printf("IN OPS   na,e=%s  left_num = %d   right_num =%d\n", trs.tensor_name.c_str(), (trs.left_dtuple)->data_num, (trs.right_dtuple)->data_num);
 
 	(trs.left_dtuple)->data = std::malloc(((trs.left_dtuple)->data_num) * _type_size);
 	(trs.right_dtuple)->data = std::malloc(((trs.right_dtuple)->data_num) * _type_size);
@@ -353,6 +352,7 @@ void ring_broadcast_queue(OpKernelContext* context, const Tensor& tensor,
 {
 
 	{
+		printf("ring_broadcast_queue\n");
 		callback(Status::OK());
 		return;
 	}
