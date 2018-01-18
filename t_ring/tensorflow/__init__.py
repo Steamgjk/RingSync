@@ -88,7 +88,7 @@ def broadcast_global_variables(root_rank):
         to all other processes.
     """
     return tf.group(*[tf.assign(var, broadcast(var, root_rank))
-                      for var in tf.trainable_variables()])
+                      for var in tf.global_variables()])
 
 
 class BroadcastGlobalVariablesHook(tf.train.SessionRunHook):
