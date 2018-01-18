@@ -122,12 +122,13 @@ class BroadcastGlobalVariablesHook(tf.train.SessionRunHook):
                 self.bcast_op = broadcast_global_variables(self.root_rank)
 
     def after_create_session(self, session, coord):
-        #session.run(self.bcast_op)
+        session.run(self.bcast_op)
+        '''
         a = tf.constant(5.0)
         b = tf.constant(6.0)
         c = a * b
         session.run(c)
-
+        '''
 
 class DistributedOptimizer(tf.train.Optimizer):
     """An optimizer that wraps another tf.Optimizer, using an allreduce to
