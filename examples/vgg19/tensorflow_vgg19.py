@@ -44,10 +44,10 @@ def main(_):
 
     print("ok5")
     with tf.name_scope('train'):
-        cost = tf.reduce_sum((vgg.prob - true_out) ** 2)
+        loss = tf.reduce_sum((vgg.prob - true_out) ** 2)
         optimizer = tf.train.GradientDescentOptimizer(0.0001)
         optimizer =  tr.DistributedOptimizer(optimizer)
-        train_step = optimizer.minimize(cost,  global_step = global_step)
+        train_step = optimizer.minimize(loss,  global_step = global_step)
 
     print("ok7")
 
