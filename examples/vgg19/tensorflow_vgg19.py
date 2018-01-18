@@ -54,7 +54,7 @@ def main(_):
     #add our code
     hooks = [tr.BroadcastGlobalVariablesHook(0),
              tf.train.StopAtStepHook(last_step=10000),
-             tf.train.LoggingTensorHook(tensors={'step': global_step, 'loss': loss}, every_n_iter=10),
+             tf.train.LoggingTensorHook(tensors={'step': global_step, 'loss': loss}, every_n_iter=1),
              ]
     # Pin GPU to be used to process local rank (one GPU per process)
     config = tf.ConfigProto()
@@ -77,9 +77,8 @@ def main(_):
             # Run a training step synchronously.
             batch, actuals = get_next_batch(train_images, train_labels, len(train_labels))
 
-            _, step = mon_sess.run([train_step,global_step], feed_dict={images: batch1, true_out: [img1_true_result], train_mode: True})
-            print("step  ")
-            print(step)
+            mon_sess.run(train_step, feed_dict={images: batch1, true_out: [img1_true_result], train_mode: True})
+
             # test classification again, should have a higher probability about tiger
             #prob = mon_sess.run(vgg.prob, feed_dict={images: batch1, train_mode: False})
 
