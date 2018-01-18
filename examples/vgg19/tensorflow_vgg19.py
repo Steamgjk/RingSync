@@ -20,6 +20,7 @@ def get_next_batch(train_images, train_labels, data_len):
 
 def main(_):
     tr.init()
+    global_step = tf.Variable(0, name="global_step", trainable=False)
     with tf.name_scope('input'):
         sess = tf.Session()
 
@@ -46,7 +47,7 @@ def main(_):
         cost = tf.reduce_sum((vgg.prob - true_out) ** 2)
         optimizer = tf.train.GradientDescentOptimizer(0.0001)
         optimizer =  tr.DistributedOptimizer(optimizer)
-        train_step = optimizer.minimize(cost)
+        train_step = optimizer.minimize(cost,  global_step = global_step)
 
     print("ok7")
 
@@ -76,7 +77,7 @@ def main(_):
             # Run a training step synchronously.
             batch, actuals = get_next_batch(train_images, train_labels, len(train_labels))
 
-            _, step = mon_sess.run(train_step, feed_dict={images: batch1, true_out: [img1_true_result], train_mode: True})
+            _, step = mon_sess.run([train_step,global_step], feed_dict={images: batch1, true_out: [img1_true_result], train_mode: True})
 
             # test classification again, should have a higher probability about tiger
             #prob = mon_sess.run(vgg.prob, feed_dict={images: batch1, train_mode: False})
