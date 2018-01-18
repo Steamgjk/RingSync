@@ -20,7 +20,7 @@ def get_next_batch(train_images, train_labels, data_len):
 
 def main(_):
     tr.init()
-    global_step = tf.Variable(0, name="global_step", trainable=False)
+    global_step = tf.contrib.framework.get_or_create_global_step()
     with tf.name_scope('input'):
         sess = tf.Session()
 
@@ -74,8 +74,8 @@ def main(_):
     with tf.train.MonitoredTrainingSession(checkpoint_dir=checkpoint_dir,
                                            hooks=hooks,
                                            config=config) as mon_sess:
-        #while not mon_sess.should_stop():
-        for i in range(10000):
+        while not mon_sess.should_stop():
+        #for i in range(10000):
             # Run a training step synchronously.
             batch, actuals = get_next_batch(train_images, train_labels, len(train_labels))
 
