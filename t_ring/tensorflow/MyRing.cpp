@@ -1400,7 +1400,7 @@ node_item* MyRing::send_tensor_single(struct rdma_cm_id *id, node_item* head_ptr
 	if ((data_len + sizeof(uint32_t)) > BUFFER_SIZE)
 	{
 		perror("fatal error, send msg length is too long \n");
-		printf("data_len = %ld BUFFER_SIZE=%d\n", data_len, BUFFER_SIZE );
+		printf("data_len = %ld BUFFER_SIZE=%d name=%s\n", data_len, BUFFER_SIZE, dtuple->data_name );
 		exit(-1);
 	}
 
