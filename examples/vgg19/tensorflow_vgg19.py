@@ -70,6 +70,7 @@ def main(_):
     train_images = []
     train_labels = [] 
     print("ok 9")
+    cnt = 0
     with tf.train.MonitoredTrainingSession(checkpoint_dir=checkpoint_dir,
                                            hooks=hooks,
                                            config=config) as mon_sess:
@@ -78,10 +79,11 @@ def main(_):
             batch, actuals = get_next_batch(train_images, train_labels, len(train_labels))
 
             mon_sess.run(train_step, feed_dict={images: batch1, true_out: [img1_true_result], train_mode: True})
-
+            cnt = cnt +1
             # test classification again, should have a higher probability about tiger
             #prob = mon_sess.run(vgg.prob, feed_dict={images: batch1, train_mode: False})
-
+        print("DONE")
+        print(cnt)
 
 if __name__ == "__main__":
     print("OK1")
