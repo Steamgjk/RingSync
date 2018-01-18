@@ -342,6 +342,7 @@ void ring_allgather_queue(OpKernelContext* context, const Tensor& tensor,
                           GPU_EVENT_IF_CUDA ready_event, const std::string name, const int device,
                           StatusCallback callback)
 {
+	printf("ring_allgather_queue\n");
 
 	return;
 }
