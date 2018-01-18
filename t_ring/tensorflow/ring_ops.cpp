@@ -352,11 +352,13 @@ void ring_broadcast_queue(OpKernelContext* context, const Tensor& tensor,
                           const std::string name, const int device, StatusCallback callback)
 {
 
-	{
-		printf("ring_broadcast_queue\n");
-		callback(Status::OK());
-		return;
-	}
+	/*
+		{
+			printf("ring_broadcast_queue\n");
+			callback(Status::OK());
+			return;
+		}
+		**/
 	RING_TYPE dtype;
 	Status status = DataTypeToRingType(tensor.dtype(), &dtype);
 	if (!status.ok())
