@@ -77,10 +77,14 @@ def main(_):
         while not mon_sess.should_stop():
         #for i in range(10000):
             # Run a training step synchronously.
+            print("start")
+            print(cnt)
             batch, actuals = get_next_batch(train_images, train_labels, len(train_labels))
 
             mon_sess.run(train_step, feed_dict={images: batch1, true_out: [img1_true_result], train_mode: True})
             cnt = cnt +1
+            print("FIN")
+            print(cnt)
             # test classification again, should have a higher probability about tiger
             #prob = mon_sess.run(vgg.prob, feed_dict={images: batch1, train_mode: False})
         print("DONE")
