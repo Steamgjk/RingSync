@@ -13,6 +13,9 @@ img1_true_result = [1 if i == 292 else 0 for i in range(1000)]  # 1-hot result f
 
 learning_rate = 0.05
 
+
+tf.logging.set_verbosity(tf.logging.INFO)
+
 batch1 = img1.reshape((1, 224, 224, 3))
 def get_next_batch(train_images, train_labels, data_len):
     actual = [img1_true_result]
