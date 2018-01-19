@@ -36,12 +36,13 @@ def get_next_batch(batch_size=1):
         return batch_images, batch_labels
 def main(_):
     tr.init()
+    batch_size = 10
     global_step = tf.Variable(0, name="global_step", trainable=False)
     with tf.name_scope('input'):
         sess = tf.Session()
 
-        images = tf.placeholder(tf.float32, [1, 224, 224, 3])
-        true_out = tf.placeholder(tf.float32, [1, 1000])
+        images = tf.placeholder(tf.float32, [batch_size, 224, 224, 3])
+        true_out = tf.placeholder(tf.float32, [batch_size, 1000])
         train_mode = tf.placeholder(tf.bool)
 
         #vgg = vgg19.Vgg19('./vgg19.npy')
@@ -95,7 +96,7 @@ def main(_):
             # Run a training step synchronously.
             #print("start")
             #print(cnt)
-            batch, actuals = get_next_batch(10)
+            batch, actuals = get_next_batch(batch_size)
 
             mon_sess.run(train_step, feed_dict={images: batch1, true_out: actuals, train_mode: True})
             cnt = cnt +1
