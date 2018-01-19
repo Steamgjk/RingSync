@@ -70,7 +70,7 @@ def main(_):
     #add our code
     hooks = [tr.BroadcastGlobalVariablesHook(0),
              tf.train.StopAtStepHook(last_step=10000),
-             tf.train.LoggingTensorHook(tensors={'step': global_step, 'loss': loss}, every_n_iter=10),
+             tf.train.LoggingTensorHook(tensors={'step': global_step, 'loss': loss}, every_n_iter=1),
              ]
     # Pin GPU to be used to process local rank (one GPU per process)
     config = tf.ConfigProto()
