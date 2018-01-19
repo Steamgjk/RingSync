@@ -7,7 +7,7 @@ import t_ring.tensorflow as tr
 
 import vgg19_trainable as vgg19
 import utils
-
+import numpy as np
 img1 = utils.load_image("./test_data/tiger.jpeg")
 img1_true_result = [1 if i == 292 else 0 for i in range(1000)]  # 1-hot result for tiger
 
@@ -17,10 +17,29 @@ learning_rate = 0.05
 tf.logging.set_verbosity(tf.logging.INFO)
 
 batch1 = img1.reshape((1, 224, 224, 3))
-def get_next_batch(train_images, train_labels, data_len):
+'''
+def get_next_batch(train_images, train_labels, data_len,batch_size = 1):
     actual = [img1_true_result]
     return batch1,actual
+'''
+def get_next_batch(batch_size=1):
 
+        batch_images = []
+        batch_labels = []
+
+        for i in range(batch_size):
+            # random class choice 
+            # (randomly choose a folder of image of the same class from a list of previously sorted wnids)
+            class_index = random.randint(0, 999)
+
+            folder = wnid_labels[class_index]
+            batch_images.append(img1)
+            batch_labels.append(img1_true_result)
+            print("%d" %i)
+
+        np.vstack(batch_images)
+        np.vstack(batch_labels)
+        return batch_images, batch_labels
 def main(_):
     tr.init()
     global_step = tf.Variable(0, name="global_step", trainable=False)
@@ -84,7 +103,7 @@ def main(_):
             #print(cnt)
             batch, actuals = get_next_batch(train_images, train_labels, len(train_labels))
 
-            mon_sess.run(train_step, feed_dict={images: batch1, true_out: [img1_true_result], train_mode: True})
+            mon_sess.run(train_step, feed_dict={images: batch1, true_out: actuals, train_mode: True})
             cnt = cnt +1
             #print("FIN")
             #print(cnt)
