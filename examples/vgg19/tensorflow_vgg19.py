@@ -30,7 +30,6 @@ def get_next_batch(batch_size=1):
         for i in range(batch_size):
             batch_images.append(img1)
             batch_labels.append(img1_true_result)
-            print("%d" %i)
 
         np.vstack(batch_images)
         np.vstack(batch_labels)
