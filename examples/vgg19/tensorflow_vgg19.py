@@ -28,11 +28,6 @@ def get_next_batch(batch_size=1):
         batch_labels = []
 
         for i in range(batch_size):
-            # random class choice 
-            # (randomly choose a folder of image of the same class from a list of previously sorted wnids)
-            class_index = random.randint(0, 999)
-
-            folder = wnid_labels[class_index]
             batch_images.append(img1)
             batch_labels.append(img1_true_result)
             print("%d" %i)
