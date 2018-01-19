@@ -95,7 +95,7 @@ def main(_):
             # Run a training step synchronously.
             #print("start")
             #print(cnt)
-            batch, actuals = get_next_batch(1)
+            batch, actuals = get_next_batch(10)
 
             mon_sess.run(train_step, feed_dict={images: batch1, true_out: actuals, train_mode: True})
             cnt = cnt +1
