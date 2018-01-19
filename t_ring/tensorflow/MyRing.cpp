@@ -1378,8 +1378,8 @@ node_item* MyRing::send_tensor_single(struct rdma_cm_id *id, node_item* head_ptr
 {
 	struct context *ctx = (struct context *)id->context;
 	while (head_ptr->next == nullptr)
-		//std::this_thread::sleep_for(std::chrono::nanoseconds(1));
-		sleep(1);
+		std::this_thread::sleep_for(std::chrono::nanoseconds(10000));
+	//sleep(1);
 	if (shut_down)
 	{
 		return NULL;
