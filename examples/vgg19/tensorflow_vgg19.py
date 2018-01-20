@@ -9,7 +9,7 @@ import vgg19_trainable as vgg19
 import utils
 import numpy as np
 
-batch_size = 64
+batch_size = 32
 
 img1 = utils.load_image("./test_data/tiger.jpeg")
 img1_true_result = [1 if i == 292 else 0 for i in range(1000)]  # 1-hot result for tiger
