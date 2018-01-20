@@ -9,7 +9,7 @@ import vgg19_trainable as vgg19
 import utils
 import numpy as np
 
-batch_size = 100
+batch_size = 64
 
 img1 = utils.load_image("./test_data/tiger.jpeg")
 img1_true_result = [1 if i == 292 else 0 for i in range(1000)]  # 1-hot result for tiger
@@ -19,7 +19,7 @@ learning_rate = 0.05
 
 tf.logging.set_verbosity(tf.logging.INFO)
 
-batch1 = img1.reshape((1, 224, 224, 3))
+
 '''
 def get_next_batch(train_images, train_labels, data_len,batch_size = 1):
     actual = [img1_true_result]
