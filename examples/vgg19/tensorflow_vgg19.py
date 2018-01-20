@@ -9,7 +9,7 @@ import vgg19_trainable as vgg19
 import utils
 import numpy as np
 
-batch_size = 10
+batch_size = 100
 
 img1 = utils.load_image("./test_data/tiger.jpeg")
 img1_true_result = [1 if i == 292 else 0 for i in range(1000)]  # 1-hot result for tiger
@@ -119,7 +119,7 @@ def main(_):
             #print(cnt)
             batch, actuals = get_next_batch(batch_size)
 
-            mon_sess.run(train_step, feed_dict={images: batch1, true_out: actuals, train_mode: True})
+            mon_sess.run(train_step, feed_dict={images: batch, true_out: actuals, train_mode: True})
             cnt = cnt +1
             #print("FIN")
             #print(cnt)
