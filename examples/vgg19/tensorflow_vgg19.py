@@ -75,8 +75,9 @@ def main(_):
 
         sess.run(tf.global_variables_initializer())
 
+        batch = get_next_batch(batch_size)
         # test classification
-        prob = sess.run(vgg.prob, feed_dict={images: batch1, train_mode: False})
+        prob = sess.run(vgg.prob, feed_dict={images: batch, train_mode: False})
         #utils.print_prob(prob[0], './synset.txt')
 
 
