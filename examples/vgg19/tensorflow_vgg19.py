@@ -8,8 +8,9 @@ import t_ring.tensorflow as tr
 import vgg19_trainable as vgg19
 import utils
 import numpy as np
+import time
 
-batch_size = 100
+batch_size = int(raw_input("batch_size ="))
 
 img1 = utils.load_image("./test_data/tiger.jpeg")
 img1_true_result = [1 if i == 292 else 0 for i in range(1000)]  # 1-hot result for tiger
@@ -110,18 +111,27 @@ def main(_):
     train_labels = [] 
     print("ok 9")
     cnt = 0
+    start_t = 0
+    end_t = 0
     with tf.train.MonitoredTrainingSession(checkpoint_dir=checkpoint_dir,
                                            hooks=hooks,
                                            config=config) as mon_sess:
+        start_t = time.time()
         while not mon_sess.should_stop():
         #for i in range(10000):
             # Run a training step synchronously.
             #print("start")
             #print(cnt)
+            
             batch, actuals = get_next_batch(batch_size)
 
             mon_sess.run(train_step, feed_dict={images: batch, true_out: actuals, train_mode: True})
             cnt = cnt +1
+            if(cnt % 100 == 0):
+                end_t = time.time()
+                inter_val = end_t - start_t
+                start_t = end_t
+                print("cnt = %d interval = %d" %(cnt, inter_val))
             #print("FIN")
             #print(cnt)
             # test classification again, should have a higher probability about tiger
