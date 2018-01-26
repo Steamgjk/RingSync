@@ -678,7 +678,7 @@ public:
 
 REGISTER_KERNEL_BUILDER(Name("RingAllreduce").Device(DEVICE_CPU),
                         RingAllreduceOp);
-#if T_RING_GPU_ALLREDUCE
+#if T_RING_GPU_ALLREDUCE_OFF
 REGISTER_KERNEL_BUILDER(Name("RingAllreduce").Device(DEVICE_GPU),
                         RingAllreduceOp);
 #endif
@@ -735,7 +735,7 @@ public:
 
 REGISTER_KERNEL_BUILDER(Name("RingAllgather").Device(DEVICE_CPU),
                         RingAllgatherOp);
-#if RING_GPU_ALLGATHER
+#if RING_GPU_ALLGATHER_OFF
 REGISTER_KERNEL_BUILDER(Name("RingAllgather").Device(DEVICE_GPU),
                         RingAllgatherOp);
 #endif
@@ -799,7 +799,7 @@ private:
 
 REGISTER_KERNEL_BUILDER(Name("RingBroadcast").Device(DEVICE_CPU),
                         RingBroadcastOp);
-#if T_RING_GPU_BROADCAST
+#if T_RING_GPU_BROADCAST_OFF
 REGISTER_KERNEL_BUILDER(Name("RingBroadcast").Device(DEVICE_GPU),
                         RingBroadcastOp);
 #endif

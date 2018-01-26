@@ -20,7 +20,12 @@ const int MyRing::rdma_listen_for_left_connection_port;
 const int MyRing::rdma_listen_for_right_connection_port;
 const int MyRing::batch_size;
 
+
+#if HAVE_CUDA
+
 std::unordered_map<int, cudaStream_t> MyRing::streams;
+
+#endif
 
 //#define GJK_DEBUG 1
 int MyRing::ring_rank;
