@@ -9,7 +9,8 @@
 #if HAVE_RDMA
 #include <rdma/rdma_cma.h>
 
-#define MAX_CONCURRENCY 20
+//#define MAX_CONCURRENCY 20
+#define MAX_CONCURRENCY 5
 
 const size_t BUFFER_SIZE = 250 * 1024 * 1024 + 1;
 //205521408
