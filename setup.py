@@ -319,7 +319,7 @@ def fully_define_extension(build_ext):
     LIBRARIES = []
 
     if have_cuda:
-        MACROS += [('HAVE_CUDA', '1')]
+        MACROS += [('HAVE_CUDA', '0')]
         INCLUDES += cuda_include_dirs
         LIBRARY_DIRS += cuda_lib_dirs
         LIBRARIES += ['cudart']
