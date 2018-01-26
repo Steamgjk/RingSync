@@ -16,10 +16,12 @@
 
 import tensorflow as tf
 import t_ring.tensorflow as tr
+import time
 layers = tf.contrib.layers
 learn = tf.contrib.learn
 
 tf.logging.set_verbosity(tf.logging.INFO)
+batch_size = int(raw_input('batch size = '))
 
 
 def conv_model(feature, target, mode):
@@ -104,13 +106,23 @@ def main(_):
     # The MonitoredTrainingSession takes care of session initialization,
     # restoring from a checkpoint, saving to a checkpoint, and closing when done
     # or an error occurs.
+    start_t = time.time()
+    cnt=0
     with tf.train.MonitoredTrainingSession(checkpoint_dir=checkpoint_dir,
                                            hooks=hooks,
                                            config=config) as mon_sess:
         while not mon_sess.should_stop():
             # Run a training step synchronously.
-            image_, label_ = mnist.train.next_batch(100)
+            if cnt==0:
+                start_t = time.time()
+            image_, label_ = mnist.train.next_batch(batch_size)
             mon_sess.run(train_op, feed_dict={image: image_, label: label_})
+            cnt = cnt +1
+            if (cnt % 1000 == 0):
+                edt = time.time()
+                time_period = edt - start_t
+                print("cnt = %d  time_period = %f seconds" %(cnt, time_period))
+                start_t = time.time()
 
 
 if __name__ == "__main__":
