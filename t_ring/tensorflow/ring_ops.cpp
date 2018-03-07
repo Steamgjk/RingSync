@@ -199,7 +199,7 @@ void ring_allreduce_queue(OpKernelContext* context, const Tensor& tensor,
 
 	std::vector<int64_t> _tensor_shape;
 	std::string _shape2string, _shape2string_2left, _shape2string_2right ;
-	printf("Name: %s (", tensor.name());
+	printf("Name: %s (", name.c_str());
 	for (int i = 0; i < tensor.shape().dims(); i++)
 	{
 		auto tmp_size = tensor.shape().dim_size(i);
