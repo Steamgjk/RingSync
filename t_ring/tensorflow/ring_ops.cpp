@@ -209,7 +209,7 @@ void ring_allreduce_queue(OpKernelContext* context, const Tensor& tensor,
 		_tensor_shape.push_back(tensor.shape().dim_size(i));
 		_shape2string += ("_" + std::to_string(tmp_size));
 	}
-	printf(") %d\n" product);
+	printf(") %d\n", product);
 	//tensor_table_entry e;
 	TensorRingStruct trs;
 	trs.left_dtuple = (DataTuple*)malloc(sizeof(DataTuple));
