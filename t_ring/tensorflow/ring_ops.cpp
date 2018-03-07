@@ -200,14 +200,16 @@ void ring_allreduce_queue(OpKernelContext* context, const Tensor& tensor,
 	std::vector<int64_t> _tensor_shape;
 	std::string _shape2string, _shape2string_2left, _shape2string_2right ;
 	printf("Name: %s (", name.c_str());
+	int product = 1;
 	for (int i = 0; i < tensor.shape().dims(); i++)
 	{
 		auto tmp_size = tensor.shape().dim_size(i);
 		printf("%d\t", tmp_size);
+		product *= tmp_size;
 		_tensor_shape.push_back(tensor.shape().dim_size(i));
 		_shape2string += ("_" + std::to_string(tmp_size));
 	}
-	printf(")\n");
+	printf(") %d\n" product);
 	//tensor_table_entry e;
 	TensorRingStruct trs;
 	trs.left_dtuple = (DataTuple*)malloc(sizeof(DataTuple));
