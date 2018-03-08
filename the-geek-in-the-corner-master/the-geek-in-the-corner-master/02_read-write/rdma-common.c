@@ -191,9 +191,8 @@ void on_completion(struct ibv_wc *wc)
 
   if (wc->status != IBV_WC_SUCCESS)
   {
-
-    die("on_completion: status is not IBV_WC_SUCCESS.");
-    printf("  WC-SUCCESS %d  %d", IBV_WC_SUCCESS, wc->status );
+    printf("  WC-SUCCESS %d  %d\n", IBV_WC_SUCCESS, wc->status );
+    die("on_completion: status is not IBV_WC_SUCCESS111.");
   }
 
   if (wc->opcode & IBV_WC_RECV)
