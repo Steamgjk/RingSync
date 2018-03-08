@@ -1,6 +1,7 @@
 #ifndef RDMA_COMMON_H
 #define RDMA_COMMON_H
 
+#define TIMEOUT_IN_MS 500
 #include <netdb.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -17,7 +18,7 @@ typedef void (*completion_cb_fn)(struct ibv_wc *wc);
 typedef void (*disconnect_cb_fn)(struct rdma_cm_id *id);
 
 void rc_init(pre_conn_cb_fn, connect_cb_fn, completion_cb_fn, disconnect_cb_fn);
-void rc_client_loop(const char *host, const char *port, void *context);
+//void rc_client_loop(const char *host, const char *port, void *context);
 void rc_disconnect(struct rdma_cm_id *id);
 void rc_die(const char *message);
 struct ibv_pd * rc_get_pd();

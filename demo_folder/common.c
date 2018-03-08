@@ -1,6 +1,6 @@
 #include "common.h"
 
-const int TIMEOUT_IN_MS = 500;
+//const int TIMEOUT_IN_MS = 500;
 
 struct context
 {
