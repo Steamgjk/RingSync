@@ -1,7 +1,6 @@
 #include <fcntl.h>
 #include <libgen.h>
 
-#include "common.h"
 #include "messages.h"
 
 struct client_context

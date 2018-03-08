@@ -1,7 +1,6 @@
 #include <fcntl.h>
 #include <sys/stat.h>
 
-#include "common.h"
 #include "messages.h"
 
 #define MAX_FILE_NAME 256
