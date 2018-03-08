@@ -190,7 +190,7 @@ void on_completion(struct ibv_wc *wc)
   struct connection *conn = (struct connection *)(uintptr_t)wc->wr_id;
 
   if (wc->status != IBV_WC_SUCCESS)
-    die("on_completion: status is not IBV_WC_SUCCESS.  %d  %d", IBV_WC_SUCCESS, wc->status );
+    die("on_completion: status is not IBV_WC_SUCCESS.  WC-SUCCESS %d  %d", IBV_WC_SUCCESS, wc->status );
 
   if (wc->opcode & IBV_WC_RECV)
   {
