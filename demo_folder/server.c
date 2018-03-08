@@ -158,9 +158,9 @@ static void on_completion(struct ibv_wc *wc)
     {
       ssize_t ret;
 
-      printf("received %i bytes.\n", size);
+      printf("received %i bytes.  buf = %s\n", size, ctx->buffer);
 
-      ret = write(ctx->fd, ctx->buffer, size);
+      //ret = write(ctx->fd, ctx->buffer, size);
 
       if (ret != size)
         rc_die("write() failed");
@@ -176,12 +176,12 @@ static void on_completion(struct ibv_wc *wc)
       memcpy(ctx->file_name, ctx->buffer, (size > MAX_FILE_NAME) ? MAX_FILE_NAME : size);
       ctx->file_name[size - 1] = '\0';
 
-      printf("opening file %s\n", ctx->file_name);
+      printf(" file id  %s\n", ctx->file_name);
 
-      ctx->fd = open(ctx->file_name, O_WRONLY | O_CREAT | O_EXCL, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+      //ctx->fd = open(ctx->file_name, O_WRONLY | O_CREAT | O_EXCL, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
 
-      if (ctx->fd == -1)
-        rc_die("open() failed");
+      //if (ctx->fd == -1)
+      //rc_die("open() failed");
 
       post_receive(id);
 
