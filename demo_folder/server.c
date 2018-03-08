@@ -18,6 +18,21 @@ struct conn_context
   char file_name[MAX_FILE_NAME];
 };
 
+static pre_conn_cb_fn s_on_pre_conn_cb = NULL;
+static connect_cb_fn s_on_connect_cb = NULL;
+static completion_cb_fn s_on_completion_cb = NULL;
+static disconnect_cb_fn s_on_disconnect_cb = NULL;
+
+void rc_init(pre_conn_cb_fn pc, connect_cb_fn conn, completion_cb_fn comp, disconnect_cb_fn disc)
+{
+  s_on_pre_conn_cb = pc;
+  s_on_connect_cb = conn;
+  s_on_completion_cb = comp;
+  s_on_disconnect_cb = disc;
+}
+
+
+
 static void send_message(struct rdma_cm_id *id)
 {
   struct conn_context *ctx = (struct conn_context *)id->context;
