@@ -13,10 +13,7 @@ struct context
 };
 
 static struct context *s_ctx = NULL;
-static pre_conn_cb_fn s_on_pre_conn_cb = NULL;
-static connect_cb_fn s_on_connect_cb = NULL;
-static completion_cb_fn s_on_completion_cb = NULL;
-static disconnect_cb_fn s_on_disconnect_cb = NULL;
+
 
 //here
 
@@ -74,71 +71,6 @@ void build_qp_attr(struct ibv_qp_init_attr *qp_attr)
   qp_attr->cap.max_recv_sge = 1;
 }
 
-void event_loop(struct rdma_event_channel *ec, int exit_on_disconnect)
-{
-  struct rdma_cm_event *event = NULL;
-  struct rdma_conn_param cm_params;
-
-  build_params(&cm_params);
-
-  while (rdma_get_cm_event(ec, &event) == 0)
-  {
-    struct rdma_cm_event event_copy;
-
-    memcpy(&event_copy, event, sizeof(*event));
-    rdma_ack_cm_event(event);
-
-    if (event_copy.event == RDMA_CM_EVENT_ADDR_RESOLVED)
-    {
-      build_connection(event_copy.id);
-
-      if (s_on_pre_conn_cb)
-        s_on_pre_conn_cb(event_copy.id);
-
-      TEST_NZ(rdma_resolve_route(event_copy.id, TIMEOUT_IN_MS));
-
-    }
-    else if (event_copy.event == RDMA_CM_EVENT_ROUTE_RESOLVED)
-    {
-      TEST_NZ(rdma_connect(event_copy.id, &cm_params));
-
-    }
-    else if (event_copy.event == RDMA_CM_EVENT_CONNECT_REQUEST)
-    {
-      build_connection(event_copy.id);
-
-      if (s_on_pre_conn_cb)
-        s_on_pre_conn_cb(event_copy.id);
-
-      TEST_NZ(rdma_accept(event_copy.id, &cm_params));
-
-    }
-    else if (event_copy.event == RDMA_CM_EVENT_ESTABLISHED)
-    {
-      if (s_on_connect_cb)
-        s_on_connect_cb(event_copy.id);
-
-    }
-    else if (event_copy.event == RDMA_CM_EVENT_DISCONNECTED)
-    {
-      rdma_destroy_qp(event_copy.id);
-
-      if (s_on_disconnect_cb)
-        s_on_disconnect_cb(event_copy.id);
-
-      rdma_destroy_id(event_copy.id);
-
-      if (exit_on_disconnect)
-        break;
-
-    }
-    else
-    {
-      rc_die("unknown event\n");
-    }
-  }
-}
-
 void * poll_cq(void *ctx)
 {
   struct ibv_cq *cq;
@@ -162,13 +94,7 @@ void * poll_cq(void *ctx)
   return NULL;
 }
 
-void rc_init(pre_conn_cb_fn pc, connect_cb_fn conn, completion_cb_fn comp, disconnect_cb_fn disc)
-{
-  s_on_pre_conn_cb = pc;
-  s_on_connect_cb = conn;
-  s_on_completion_cb = comp;
-  s_on_disconnect_cb = disc;
-}
+
 
 
 void rc_disconnect(struct rdma_cm_id *id)
