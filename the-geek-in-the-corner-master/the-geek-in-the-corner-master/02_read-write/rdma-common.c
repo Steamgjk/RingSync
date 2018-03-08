@@ -2,18 +2,22 @@
 
 static const int RDMA_BUFFER_SIZE = 1024;
 
-struct message {
-  enum {
+struct message
+{
+  enum
+  {
     MSG_MR,
     MSG_DONE
   } type;
 
-  union {
+  union
+  {
     struct ibv_mr mr;
   } data;
 };
 
-struct context {
+struct context
+{
   struct ibv_context *ctx;
   struct ibv_pd *pd;
   struct ibv_cq *cq;
@@ -22,7 +26,8 @@ struct context {
   pthread_t cq_poller_thread;
 };
 
-struct connection {
+struct connection
+{
   struct rdma_cm_id *id;
   struct ibv_qp *qp;
 
@@ -41,14 +46,16 @@ struct connection {
   char *rdma_local_region;
   char *rdma_remote_region;
 
-  enum {
+  enum
+  {
     SS_INIT,
     SS_MR_SENT,
     SS_RDMA_SENT,
     SS_DONE_SENT
   } send_state;
 
-  enum {
+  enum
+  {
     RS_INIT,
     RS_MR_RECV,
     RS_DONE_RECV
@@ -99,7 +106,8 @@ void build_connection(struct rdma_cm_id *id)
 
 void build_context(struct ibv_context *verbs)
 {
-  if (s_ctx) {
+  if (s_ctx)
+  {
     if (s_ctx->ctx != verbs)
       die("cannot handle events in more than one context.");
 
@@ -182,12 +190,14 @@ void on_completion(struct ibv_wc *wc)
   struct connection *conn = (struct connection *)(uintptr_t)wc->wr_id;
 
   if (wc->status != IBV_WC_SUCCESS)
-    die("on_completion: status is not IBV_WC_SUCCESS.");
+    die("on_completion: status is not IBV_WC_SUCCESS.  %d  %d", IBV_WC_SUCCESS, wc->status );
 
-  if (wc->opcode & IBV_WC_RECV) {
+  if (wc->opcode & IBV_WC_RECV)
+  {
     conn->recv_state++;
 
-    if (conn->recv_msg->type == MSG_MR) {
+    if (conn->recv_msg->type == MSG_MR)
+    {
       memcpy(&conn->peer_mr, &conn->recv_msg->data.mr, sizeof(conn->peer_mr));
       post_receives(conn); /* only rearm for MSG_MR */
 
@@ -195,12 +205,15 @@ void on_completion(struct ibv_wc *wc)
         send_mr(conn);
     }
 
-  } else {
+  }
+  else
+  {
     conn->send_state++;
     printf("send completed successfully.\n");
   }
 
-  if (conn->send_state == SS_MR_SENT && conn->recv_state == RS_MR_RECV) {
+  if (conn->send_state == SS_MR_SENT && conn->recv_state == RS_MR_RECV)
+  {
     struct ibv_send_wr wr, *bad_wr = NULL;
     struct ibv_sge sge;
 
@@ -228,7 +241,9 @@ void on_completion(struct ibv_wc *wc)
     conn->send_msg->type = MSG_DONE;
     send_message(conn);
 
-  } else if (conn->send_state == SS_DONE_SENT && conn->recv_state == RS_DONE_RECV) {
+  }
+  else if (conn->send_state == SS_DONE_SENT && conn->recv_state == RS_DONE_RECV)
+  {
     printf("remote buffer: %s\n", get_peer_message_region(conn));
     rdma_disconnect(conn->id);
   }
@@ -244,7 +259,8 @@ void * poll_cq(void *ctx)
   struct ibv_cq *cq;
   struct ibv_wc wc;
 
-  while (1) {
+  while (1)
+  {
     TEST_NZ(ibv_get_cq_event(s_ctx->comp_channel, &cq, &ctx));
     ibv_ack_cq_events(cq, 1);
     TEST_NZ(ibv_req_notify_cq(cq, 0));
@@ -282,28 +298,28 @@ void register_memory(struct connection *conn)
   conn->rdma_remote_region = malloc(RDMA_BUFFER_SIZE);
 
   TEST_Z(conn->send_mr = ibv_reg_mr(
-    s_ctx->pd, 
-    conn->send_msg, 
-    sizeof(struct message), 
-    IBV_ACCESS_LOCAL_WRITE));
+                           s_ctx->pd,
+                           conn->send_msg,
+                           sizeof(struct message),
+                           IBV_ACCESS_LOCAL_WRITE));
 
   TEST_Z(conn->recv_mr = ibv_reg_mr(
-    s_ctx->pd, 
-    conn->recv_msg, 
-    sizeof(struct message), 
-    IBV_ACCESS_LOCAL_WRITE | ((s_mode == M_WRITE) ? IBV_ACCESS_REMOTE_WRITE : IBV_ACCESS_REMOTE_READ)));
+                           s_ctx->pd,
+                           conn->recv_msg,
+                           sizeof(struct message),
+                           IBV_ACCESS_LOCAL_WRITE | ((s_mode == M_WRITE) ? IBV_ACCESS_REMOTE_WRITE : IBV_ACCESS_REMOTE_READ)));
 
   TEST_Z(conn->rdma_local_mr = ibv_reg_mr(
-    s_ctx->pd, 
-    conn->rdma_local_region, 
-    RDMA_BUFFER_SIZE, 
-    IBV_ACCESS_LOCAL_WRITE));
+                                 s_ctx->pd,
+                                 conn->rdma_local_region,
+                                 RDMA_BUFFER_SIZE,
+                                 IBV_ACCESS_LOCAL_WRITE));
 
   TEST_Z(conn->rdma_remote_mr = ibv_reg_mr(
-    s_ctx->pd, 
-    conn->rdma_remote_region, 
-    RDMA_BUFFER_SIZE, 
-    IBV_ACCESS_LOCAL_WRITE | ((s_mode == M_WRITE) ? IBV_ACCESS_REMOTE_WRITE : IBV_ACCESS_REMOTE_READ)));
+                                  s_ctx->pd,
+                                  conn->rdma_remote_region,
+                                  RDMA_BUFFER_SIZE,
+                                  IBV_ACCESS_LOCAL_WRITE | ((s_mode == M_WRITE) ? IBV_ACCESS_REMOTE_WRITE : IBV_ACCESS_REMOTE_READ)));
 }
 
 void send_message(struct connection *conn)
