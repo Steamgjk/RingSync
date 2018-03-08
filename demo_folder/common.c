@@ -2,7 +2,8 @@
 
 const int TIMEOUT_IN_MS = 500;
 
-struct context {
+struct context
+{
   struct ibv_context *ctx;
   struct ibv_pd *pd;
   struct ibv_cq *cq;
@@ -17,10 +18,7 @@ static connect_cb_fn s_on_connect_cb = NULL;
 static completion_cb_fn s_on_completion_cb = NULL;
 static disconnect_cb_fn s_on_disconnect_cb = NULL;
 
-static void build_context(struct ibv_context *verbs);
-static void build_qp_attr(struct ibv_qp_init_attr *qp_attr);
-static void event_loop(struct rdma_event_channel *ec, int exit_on_disconnect);
-static void * poll_cq(void *);
+//here
 
 void build_connection(struct rdma_cm_id *id)
 {
@@ -34,7 +32,8 @@ void build_connection(struct rdma_cm_id *id)
 
 void build_context(struct ibv_context *verbs)
 {
-  if (s_ctx) {
+  if (s_ctx)
+  {
     if (s_ctx->ctx != verbs)
       rc_die("cannot handle events in more than one context.");
 
@@ -82,13 +81,15 @@ void event_loop(struct rdma_event_channel *ec, int exit_on_disconnect)
 
   build_params(&cm_params);
 
-  while (rdma_get_cm_event(ec, &event) == 0) {
+  while (rdma_get_cm_event(ec, &event) == 0)
+  {
     struct rdma_cm_event event_copy;
 
     memcpy(&event_copy, event, sizeof(*event));
     rdma_ack_cm_event(event);
 
-    if (event_copy.event == RDMA_CM_EVENT_ADDR_RESOLVED) {
+    if (event_copy.event == RDMA_CM_EVENT_ADDR_RESOLVED)
+    {
       build_connection(event_copy.id);
 
       if (s_on_pre_conn_cb)
@@ -96,10 +97,14 @@ void event_loop(struct rdma_event_channel *ec, int exit_on_disconnect)
 
       TEST_NZ(rdma_resolve_route(event_copy.id, TIMEOUT_IN_MS));
 
-    } else if (event_copy.event == RDMA_CM_EVENT_ROUTE_RESOLVED) {
+    }
+    else if (event_copy.event == RDMA_CM_EVENT_ROUTE_RESOLVED)
+    {
       TEST_NZ(rdma_connect(event_copy.id, &cm_params));
 
-    } else if (event_copy.event == RDMA_CM_EVENT_CONNECT_REQUEST) {
+    }
+    else if (event_copy.event == RDMA_CM_EVENT_CONNECT_REQUEST)
+    {
       build_connection(event_copy.id);
 
       if (s_on_pre_conn_cb)
@@ -107,11 +112,15 @@ void event_loop(struct rdma_event_channel *ec, int exit_on_disconnect)
 
       TEST_NZ(rdma_accept(event_copy.id, &cm_params));
 
-    } else if (event_copy.event == RDMA_CM_EVENT_ESTABLISHED) {
+    }
+    else if (event_copy.event == RDMA_CM_EVENT_ESTABLISHED)
+    {
       if (s_on_connect_cb)
         s_on_connect_cb(event_copy.id);
 
-    } else if (event_copy.event == RDMA_CM_EVENT_DISCONNECTED) {
+    }
+    else if (event_copy.event == RDMA_CM_EVENT_DISCONNECTED)
+    {
       rdma_destroy_qp(event_copy.id);
 
       if (s_on_disconnect_cb)
@@ -122,7 +131,9 @@ void event_loop(struct rdma_event_channel *ec, int exit_on_disconnect)
       if (exit_on_disconnect)
         break;
 
-    } else {
+    }
+    else
+    {
       rc_die("unknown event\n");
     }
   }
@@ -133,12 +144,14 @@ void * poll_cq(void *ctx)
   struct ibv_cq *cq;
   struct ibv_wc wc;
 
-  while (1) {
+  while (1)
+  {
     TEST_NZ(ibv_get_cq_event(s_ctx->comp_channel, &cq, &ctx));
     ibv_ack_cq_events(cq, 1);
     TEST_NZ(ibv_req_notify_cq(cq, 0));
 
-    while (ibv_poll_cq(cq, 1, &wc)) {
+    while (ibv_poll_cq(cq, 1, &wc))
+    {
       if (wc.status == IBV_WC_SUCCESS)
         s_on_completion_cb(&wc);
       else
