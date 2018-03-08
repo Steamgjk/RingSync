@@ -170,29 +170,7 @@ void rc_init(pre_conn_cb_fn pc, connect_cb_fn conn, completion_cb_fn comp, disco
   s_on_disconnect_cb = disc;
 }
 
-void rc_client_loop(const char *host, const char *port, void *context)
-{
-  struct addrinfo *addr;
-  struct rdma_cm_id *conn = NULL;
-  struct rdma_event_channel *ec = NULL;
-  struct rdma_conn_param cm_params;
 
-  TEST_NZ(getaddrinfo(host, port, NULL, &addr));
-
-  TEST_Z(ec = rdma_create_event_channel());
-  TEST_NZ(rdma_create_id(ec, &conn, NULL, RDMA_PS_TCP));
-  TEST_NZ(rdma_resolve_addr(conn, NULL, addr->ai_addr, TIMEOUT_IN_MS));
-
-  freeaddrinfo(addr);
-
-  conn->context = context;
-
-  build_params(&cm_params);
-
-  event_loop(ec, 1); // exit on disconnect
-
-  rdma_destroy_event_channel(ec);
-}
 
 void rc_server_loop(const char *port)
 {
