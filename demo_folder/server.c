@@ -18,6 +18,15 @@ struct conn_context
   char file_name[MAX_FILE_NAME];
 };
 
+struct context
+{
+  struct ibv_context *ctx;
+  struct ibv_pd *pd;
+  struct ibv_cq *cq;
+  struct ibv_comp_channel *comp_channel;
+  pthread_t cq_poller_thread;
+};
+
 static struct context *s_ctx = NULL;
 static pre_conn_cb_fn s_on_pre_conn_cb = NULL;
 static connect_cb_fn s_on_connect_cb = NULL;
