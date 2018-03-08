@@ -171,28 +171,6 @@ void rc_init(pre_conn_cb_fn pc, connect_cb_fn conn, completion_cb_fn comp, disco
 }
 
 
-
-void rc_server_loop(const char *port)
-{
-  struct sockaddr_in6 addr;
-  struct rdma_cm_id *listener = NULL;
-  struct rdma_event_channel *ec = NULL;
-
-  memset(&addr, 0, sizeof(addr));
-  addr.sin6_family = AF_INET6;
-  addr.sin6_port = htons(atoi(port));
-
-  TEST_Z(ec = rdma_create_event_channel());
-  TEST_NZ(rdma_create_id(ec, &listener, NULL, RDMA_PS_TCP));
-  TEST_NZ(rdma_bind_addr(listener, (struct sockaddr *)&addr));
-  TEST_NZ(rdma_listen(listener, 10)); /* backlog=10 is arbitrary */
-
-  event_loop(ec, 0); // don't exit on disconnect
-
-  rdma_destroy_id(listener);
-  rdma_destroy_event_channel(ec);
-}
-
 void rc_disconnect(struct rdma_cm_id *id)
 {
   rdma_disconnect(id);

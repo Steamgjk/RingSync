@@ -86,16 +86,20 @@ static void on_completion(struct ibv_wc *wc)
   struct rdma_cm_id *id = (struct rdma_cm_id *)(uintptr_t)wc->wr_id;
   struct conn_context *ctx = (struct conn_context *)id->context;
 
-  if (wc->opcode == IBV_WC_RECV_RDMA_WITH_IMM) {
+  if (wc->opcode == IBV_WC_RECV_RDMA_WITH_IMM)
+  {
     uint32_t size = ntohl(wc->imm_data);
 
-    if (size == 0) {
+    if (size == 0)
+    {
       ctx->msg->id = MSG_DONE;
       send_message(id);
 
       // don't need post_receive() since we're done with this connection
 
-    } else if (ctx->file_name[0]) {
+    }
+    else if (ctx->file_name[0])
+    {
       ssize_t ret;
 
       printf("received %i bytes.\n", size);
@@ -110,7 +114,9 @@ static void on_completion(struct ibv_wc *wc)
       ctx->msg->id = MSG_READY;
       send_message(id);
 
-    } else {
+    }
+    else
+    {
       memcpy(ctx->file_name, ctx->buffer, (size > MAX_FILE_NAME) ? MAX_FILE_NAME : size);
       ctx->file_name[size - 1] = '\0';
 
@@ -145,6 +151,32 @@ static void on_disconnect(struct rdma_cm_id *id)
 
   free(ctx);
 }
+
+
+
+
+void rc_server_loop(const char *port)
+{
+  struct sockaddr_in6 addr;
+  struct rdma_cm_id *listener = NULL;
+  struct rdma_event_channel *ec = NULL;
+
+  memset(&addr, 0, sizeof(addr));
+  addr.sin6_family = AF_INET6;
+  addr.sin6_port = htons(atoi(port));
+
+  TEST_Z(ec = rdma_create_event_channel());
+  TEST_NZ(rdma_create_id(ec, &listener, NULL, RDMA_PS_TCP));
+  TEST_NZ(rdma_bind_addr(listener, (struct sockaddr *)&addr));
+  TEST_NZ(rdma_listen(listener, 10)); /* backlog=10 is arbitrary */
+
+  event_loop(ec, 0); // don't exit on disconnect
+
+  rdma_destroy_id(listener);
+  rdma_destroy_event_channel(ec);
+}
+
+
 
 int main(int argc, char **argv)
 {
