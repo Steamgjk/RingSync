@@ -25,7 +25,7 @@ typedef void (*disconnect_cb_fn)(struct rdma_cm_id *id);
 //void rc_server_loop(const char *port);
 
 
-void log_info(const char *format, ...);
+//void log_info(const char *format, ...);
 //void build_connection(struct rdma_cm_id * id);
 //void build_context(struct ibv_context * verbs);
 //void build_params(struct rdma_conn_param * params);
