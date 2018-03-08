@@ -162,8 +162,8 @@ static void on_completion(struct ibv_wc *wc)
 
       //ret = write(ctx->fd, ctx->buffer, size);
 
-      if (ret != size)
-        rc_die("write() failed");
+      //if (ret != size)
+      //rc_die("write() failed");
 
       post_receive(id);
 
