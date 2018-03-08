@@ -18,10 +18,43 @@ struct client_context
   int fd;
   const char *file_name;
 };
+static struct context *s_ctx = NULL;
 static pre_conn_cb_fn s_on_pre_conn_cb = NULL;
 static connect_cb_fn s_on_connect_cb = NULL;
 static completion_cb_fn s_on_completion_cb = NULL;
 static disconnect_cb_fn s_on_disconnect_cb = NULL;
+
+void build_connection(struct rdma_cm_id * id);
+void build_context(struct ibv_context * verbs);
+void build_params(struct rdma_conn_param * params);
+void build_qp_attr(struct ibv_qp_init_attr * qp_attr);
+void event_loop(struct rdma_event_channel * ec, int exit_on_disconnect);
+void * poll_cq(void *ctx);
+
+void rc_init(pre_conn_cb_fn, connect_cb_fn, completion_cb_fn, disconnect_cb_fn);
+void rc_client_loop(const char *host, const char *port, void *context);
+void rc_disconnect(struct rdma_cm_id *id);
+void rc_die(const char *message);
+struct ibv_pd * rc_get_pd();
+void rc_server_loop(const char *port);
+
+
+
+void rc_disconnect(struct rdma_cm_id *id)
+{
+  rdma_disconnect(id);
+}
+
+void rc_die(const char *reason)
+{
+  fprintf(stderr, "%s\n", reason);
+  exit(EXIT_FAILURE);
+}
+struct ibv_pd * rc_get_pd()
+{
+  return s_ctx->pd;
+}
+
 
 void rc_init(pre_conn_cb_fn pc, connect_cb_fn conn, completion_cb_fn comp, disconnect_cb_fn disc)
 {
