@@ -156,7 +156,7 @@ static void on_completion(struct ibv_wc *wc)
     }
     else if (ctx->file_name[0])
     {
-      ssize_t ret;
+      //ssize_t ret;
 
       printf("received %i bytes.  buf = %s\n", size, ctx->buffer);
 
