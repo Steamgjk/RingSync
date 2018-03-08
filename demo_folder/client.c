@@ -243,7 +243,7 @@ void build_context(struct ibv_context *verbs)
   TEST_NZ(ibv_req_notify_cq(s_ctx->cq, 0));
 
   printf("OK! Not Polling\n");
-  TEST_NZ(pthread_create(&s_ctx->cq_poller_thread, NULL, poll_cq, NULL));
+  //TEST_NZ(pthread_create(&s_ctx->cq_poller_thread, NULL, poll_cq, NULL));
 }
 
 void build_params(struct rdma_conn_param *params)
