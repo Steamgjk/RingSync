@@ -213,6 +213,8 @@ void * poll_cq(void *ctx)
       else
         rc_die("poll_cq: status is not IBV_WC_SUCCESS");
     }
+    printf("sleeping 1s...\n");
+    sleep(1);
   }
 
   return NULL;
@@ -240,6 +242,7 @@ void build_context(struct ibv_context *verbs)
   TEST_Z(s_ctx->cq = ibv_create_cq(s_ctx->ctx, 10, NULL, s_ctx->comp_channel, 0)); /* cqe=10 is arbitrary */
   TEST_NZ(ibv_req_notify_cq(s_ctx->cq, 0));
 
+  printf("OK! Not Polling\n");
   TEST_NZ(pthread_create(&s_ctx->cq_poller_thread, NULL, poll_cq, NULL));
 }
 
@@ -337,6 +340,7 @@ void event_loop(struct rdma_event_channel *ec, int exit_on_disconnect)
     {
       rc_die("unknown event\n");
     }
+    printf("Return to event loop...\n");
   }
 }
 
