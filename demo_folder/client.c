@@ -200,12 +200,14 @@ void * poll_cq(void *ctx)
 
   while (1)
   {
+    printf("polling cq ...\n");
     TEST_NZ(ibv_get_cq_event(s_ctx->comp_channel, &cq, &ctx));
     ibv_ack_cq_events(cq, 1);
     TEST_NZ(ibv_req_notify_cq(cq, 0));
 
     while (ibv_poll_cq(cq, 1, &wc))
     {
+      printf("wc status = %d  SUCCESS %d\n", wc.status, IBV_WC_SUCCESS );
       if (wc.status == IBV_WC_SUCCESS)
         s_on_completion_cb(&wc);
       else
@@ -316,16 +318,14 @@ void event_loop(struct rdma_event_channel *ec, int exit_on_disconnect)
     }
     else if (event_copy.event == RDMA_CM_EVENT_ESTABLISHED)
     {
-      if (s_on_connect_cb)
-        s_on_connect_cb(event_copy.id);
+      printf("RDMA_CM_EVENT_ESTABLISHED\n");
+//      if (s_on_connect_cb)
+      //      s_on_connect_cb(event_copy.id);
 
     }
     else if (event_copy.event == RDMA_CM_EVENT_DISCONNECTED)
     {
       rdma_destroy_qp(event_copy.id);
-
-      if (s_on_disconnect_cb)
-        s_on_disconnect_cb(event_copy.id);
 
       rdma_destroy_id(event_copy.id);
 
