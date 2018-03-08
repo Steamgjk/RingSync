@@ -71,30 +71,6 @@ void build_qp_attr(struct ibv_qp_init_attr *qp_attr)
   qp_attr->cap.max_recv_sge = 1;
 }
 
-void * poll_cq(void *ctx)
-{
-  struct ibv_cq *cq;
-  struct ibv_wc wc;
-
-  while (1)
-  {
-    TEST_NZ(ibv_get_cq_event(s_ctx->comp_channel, &cq, &ctx));
-    ibv_ack_cq_events(cq, 1);
-    TEST_NZ(ibv_req_notify_cq(cq, 0));
-
-    while (ibv_poll_cq(cq, 1, &wc))
-    {
-      if (wc.status == IBV_WC_SUCCESS)
-        s_on_completion_cb(&wc);
-      else
-        rc_die("poll_cq: status is not IBV_WC_SUCCESS");
-    }
-  }
-
-  return NULL;
-}
-
-
 
 
 void rc_disconnect(struct rdma_cm_id *id)

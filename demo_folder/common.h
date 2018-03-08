@@ -26,12 +26,12 @@ struct ibv_pd * rc_get_pd();
 
 
 void log_info(const char *format, ...);
-void build_connection(struct rdma_cm_id * id);
-void build_context(struct ibv_context * verbs);
-void build_params(struct rdma_conn_param * params);
-void build_qp_attr(struct ibv_qp_init_attr * qp_attr);
+//void build_connection(struct rdma_cm_id * id);
+//void build_context(struct ibv_context * verbs);
+//void build_params(struct rdma_conn_param * params);
+//void build_qp_attr(struct ibv_qp_init_attr * qp_attr);
 //void event_loop(struct rdma_event_channel * ec, int exit_on_disconnect);
-void * poll_cq(void *ctx);
+//void * poll_cq(void *ctx);
 
 
 #endif
