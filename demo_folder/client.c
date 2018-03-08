@@ -286,11 +286,11 @@ void event_loop(struct rdma_event_channel *ec, int exit_on_disconnect)
   struct rdma_conn_param cm_params;
 
   build_params(&cm_params);
-
+  printf("Before While ...\n");
   while (rdma_get_cm_event(ec, &event) == 0)
   {
     struct rdma_cm_event event_copy;
-
+    printf("event = %d \n", event_copy.event  );
     memcpy(&event_copy, event, sizeof(*event));
     rdma_ack_cm_event(event);
 
@@ -342,6 +342,7 @@ void event_loop(struct rdma_event_channel *ec, int exit_on_disconnect)
     }
     printf("Return to event loop...\n");
   }
+  printf("After While...\n");
 }
 
 
@@ -363,9 +364,9 @@ void rc_client_loop(const char *host, const char *port, void *context)
   conn->context = context;
 
   build_params(&cm_params);
-
+  printf("Before event_loop\n");
   event_loop(ec, 1); // exit on disconnect
-
+  printf("After event_loop\n");
   rdma_destroy_event_channel(ec);
 }
 
