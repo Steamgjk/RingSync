@@ -417,7 +417,7 @@ static int client_remote_memory_ops()
 	// Post work request
 	debug("Trying to perform RDMA read... dst = %s\n", dst);
 	getchar();
-	while (true)
+	while (1 == 1)
 	{
 		ret = ibv_post_send(client_qp, &rdma_read_wr, &bad_wr);
 		sleep(1);
