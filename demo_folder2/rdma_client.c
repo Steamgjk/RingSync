@@ -359,16 +359,18 @@ static int client_remote_memory_ops()
 	rdma_write_wr.wr.rdma.remote_addr = server_metadata_attr.address;
 	rdma_write_wr.wr.rdma.rkey = server_metadata_attr.stag.local_stag;
 
-	debug("Trying to perform RDMA write\n");
+	debug("Trying to perform RDMA write...\n");
+	getchar();
 	ret = ibv_post_send(client_qp, &rdma_write_wr, &bad_wr);
 	if (ret)
 	{
 		rdma_error("Failed to do rdma write, errno: %d\n", -ret);
 		return -ret;
 	}
-	debug("Performed RMDA write\n");
+	debug("Performed RMDA write...\n");
+	getchar();
 
-
+	debug("before Prepare dst Reigster = %s len =%d\n", dst, strlen(dst) );
 	/**************************
 	 * Send RDMA read request *
 	 **************************/
@@ -402,7 +404,8 @@ static int client_remote_memory_ops()
 	rdma_read_wr.wr.rdma.rkey = server_metadata_attr.stag.local_stag;
 
 	// Post work request
-	debug("Trying to perform RDMA read\n");
+	debug("Trying to perform RDMA read...\n");
+	getchar();
 	ret = ibv_post_send(client_qp, &rdma_read_wr, &bad_wr);
 	if (ret)
 	{
