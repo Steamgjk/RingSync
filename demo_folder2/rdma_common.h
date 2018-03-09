@@ -100,7 +100,7 @@ struct ibv_mr* rdma_buffer_alloc(struct ibv_pd *pd,
                                  enum ibv_access_flags permission);
 
 struct ibv_mr* rdma_buffer_alloc1(struct ibv_pd *pd, void* buf, uint32_t size,
-                                  enum ibv_access_flags permission)
+                                  enum ibv_access_flags permission);
 
 /* Frees a previously allocated RDMA buffer. The buffer must be allocated by
  * calling rdma_buffer_alloc();
