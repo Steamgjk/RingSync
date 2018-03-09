@@ -35,7 +35,6 @@ static int check_src_dst()
 	debug("src: '%s'\n", src);
 	debug("dst: '%s'\n", dst);
 
-	printf("src   %s    dst  %s  \n", src, dst );
 	int ret =  memcmp((void*) src, (void*) dst, strlen(src));
 	printf("ret = %d errno = %d \n", ret, errno);
 
@@ -369,8 +368,13 @@ static int client_remote_memory_ops()
 	}
 	debug("Performed RMDA write...\n");
 	getchar();
-
-	debug("before Prepare dst Reigster = %s len =%d\n", dst, strlen(dst) );
+	int i = 0;
+	for (i = 0; i < strlen(dst) - 2; i++)
+	{
+		dst[i] = '1';
+	}
+	dst[strlen[dst] - 1] = '\0';
+	debug("before Prepare  Reigster dst = %s len =%d\n", dst, strlen(dst) );
 	/**************************
 	 * Send RDMA read request *
 	 **************************/
@@ -404,9 +408,12 @@ static int client_remote_memory_ops()
 	rdma_read_wr.wr.rdma.rkey = server_metadata_attr.stag.local_stag;
 
 	// Post work request
-	debug("Trying to perform RDMA read...\n");
+	debug("Trying to perform RDMA read... dst = %s\n", dst);
 	getchar();
 	ret = ibv_post_send(client_qp, &rdma_read_wr, &bad_wr);
+	debug("After post RDMA read... dst = %s\n", dst);
+	getchar();
+	debug("After post RDMA read2... dst = %s\n", dst);
 	if (ret)
 	{
 		rdma_error("Failed to do rdma read, errno: %d\n", -ret);

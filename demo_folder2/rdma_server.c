@@ -25,6 +25,7 @@ static struct rdma_buffer_attr client_metadata_attr, server_metadata_attr;
 static struct ibv_recv_wr client_recv_wr, *bad_client_recv_wr = NULL;
 static struct ibv_sge client_recv_sge;
 
+static void* buf_for_rwrite = NULL;
 /* When we call this function cm_client_id must be set to a valid identifier.
  * This is where, we prepare client connection before we accept it. This
  * mainly involve pre-posting a receive buffer to receive client side
@@ -312,7 +313,9 @@ static int send_server_metadata_to_client()
 	printf("The client has requested buffer length of : %d bytes\n", client_metadata_attr.length);
 
 	// Allocate buffer to be used by client for RDMA.
-	server_buffer_mr = rdma_buffer_alloc(pd, client_metadata_attr.length, // 4KB
+	buf_for_rwrite = calloc(client_metadata_attr.length, 0);
+	printf("Before register buf = %s   %p\n", buf_for_rwrite, buf_for_rwrite);
+	server_buffer_mr = rdma_buffer_alloc(pd, buf_for_rwrite, client_metadata_attr.length, // 4KB
 	                                     (IBV_ACCESS_REMOTE_READ |
 	                                      IBV_ACCESS_LOCAL_WRITE | // Must be set when REMOTE_WRITE is set.
 	                                      IBV_ACCESS_REMOTE_WRITE));
@@ -358,6 +361,12 @@ static int send_server_metadata_to_client()
 
 	// Send WR to client.
 	ret = ibv_post_send(client_qp, &server_send_wr, &bad_wr);
+	printf("After  post send \n");
+	while (1)
+	{
+		printf("buf_for_rwrite = %s\n", buf_for_rwrite );
+		sleep(1);
+	}
 	if (ret)
 	{
 		rdma_error("Failed to send server metadata, errno: %d\n", -ret);

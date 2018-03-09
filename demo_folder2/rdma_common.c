@@ -78,6 +78,30 @@ struct ibv_mr* rdma_buffer_alloc(struct ibv_pd *pd, uint32_t size,
 	return mr;
 }
 
+struct ibv_mr* rdma_buffer_alloc(struct ibv_pd *pd, void* buf, uint32_t size,
+                                 enum ibv_access_flags permission)
+{
+	struct ibv_mr *mr = NULL;
+	if (!pd)
+	{
+		rdma_error("Protection domain is NULL \n");
+		return NULL;
+	}
+	if (!buf)
+	{
+		rdma_error("failed to allocate buffer, -ENOMEM\n");
+		return NULL;
+	}
+	debug("Buffer allocated: %p , len: %u \n", buf, size);
+	mr = rdma_buffer_register(pd, buf, size, permission);
+	if (!mr)
+	{
+		free(buf);
+	}
+	return mr;
+}
+
+
 struct ibv_mr *rdma_buffer_register(struct ibv_pd *pd,
                                     void *addr, uint32_t length,
                                     enum ibv_access_flags permission)
