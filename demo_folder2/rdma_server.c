@@ -315,10 +315,10 @@ static int send_server_metadata_to_client()
 	// Allocate buffer to be used by client for RDMA.
 	buf_for_rwrite = calloc(client_metadata_attr.length, 0);
 	printf("Before register buf = %s   %p\n", buf_for_rwrite, buf_for_rwrite);
-	server_buffer_mr = rdma_buffer_alloc(pd, buf_for_rwrite, client_metadata_attr.length, // 4KB
-	                                     (IBV_ACCESS_REMOTE_READ |
-	                                      IBV_ACCESS_LOCAL_WRITE | // Must be set when REMOTE_WRITE is set.
-	                                      IBV_ACCESS_REMOTE_WRITE));
+	server_buffer_mr = rdma_buffer_alloc1(pd, buf_for_rwrite, client_metadata_attr.length, // 4KB
+	                                      (IBV_ACCESS_REMOTE_READ |
+	                                       IBV_ACCESS_LOCAL_WRITE | // Must be set when REMOTE_WRITE is set.
+	                                       IBV_ACCESS_REMOTE_WRITE));
 
 	// Prepare memory region which will be sent to client,
 	// holding information required to access buffer allocated above.

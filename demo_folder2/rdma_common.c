@@ -78,8 +78,8 @@ struct ibv_mr* rdma_buffer_alloc(struct ibv_pd *pd, uint32_t size,
 	return mr;
 }
 
-struct ibv_mr* rdma_buffer_alloc(struct ibv_pd *pd, void* buf, uint32_t size,
-                                 enum ibv_access_flags permission)
+struct ibv_mr* rdma_buffer_alloc1(struct ibv_pd *pd, void* buf, uint32_t size,
+                                  enum ibv_access_flags permission)
 {
 	struct ibv_mr *mr = NULL;
 	if (!pd)
