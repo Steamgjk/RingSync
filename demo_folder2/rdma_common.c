@@ -37,6 +37,7 @@ void show_rdma_buffer_attr(struct rdma_buffer_attr *attr)
 	       (void*) attr->address,
 	       (unsigned int) attr->length,
 	       attr->stag.local_stag);
+	/*
 	char* content = calloc((unsigned int) attr->length + 1, 0 );
 	if (content)
 	{
@@ -48,6 +49,7 @@ void show_rdma_buffer_attr(struct rdma_buffer_attr *attr)
 	{
 		printf("Calloc Failed\n");
 	}
+	**/
 
 	printf("---------------------------------------------------------\n");
 }
