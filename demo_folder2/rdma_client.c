@@ -361,12 +361,18 @@ static int client_remote_memory_ops()
 	debug("Trying to perform RDMA write...\n");
 	getchar();
 	ret = ibv_post_send(client_qp, &rdma_write_wr, &bad_wr);
+	debug("Performed RMDA write...\n");
+	strncpy(src, "change", strlen(src));
+	debug("Trying to perform RDMA write2...\n");
+	getchar();
+	ret = ibv_post_send(client_qp, &rdma_write_wr, &bad_wr);
+
 	if (ret)
 	{
 		rdma_error("Failed to do rdma write, errno: %d\n", -ret);
 		return -ret;
 	}
-	debug("Performed RMDA write...\n");
+	debug("Performed RMDA write2...\n");
 	getchar();
 	int i = 0;
 	for (i = 0; i < strlen(dst) - 2; i++)
