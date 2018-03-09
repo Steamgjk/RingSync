@@ -369,8 +369,19 @@ static int send_server_metadata_to_client()
 		sleep(1);
 		printf("changinig...\n");
 		i++;
-		i %= 5;
-		buf_for_rwrite[i] = i;
+		i %= 3;
+		if (i == 0)
+		{
+			strcpy(buf_for_rwrite, "00000", strlen(buf_for_rwrite));
+		}
+		else if (i == 1)
+		{
+			strcpy(buf_for_rwrite, "11111", strlen(buf_for_rwrite));
+		}
+		else
+		{
+			strcpy(buf_for_rwrite, "22222", strlen(buf_for_rwrite));
+		}
 	}
 	if (ret)
 	{
