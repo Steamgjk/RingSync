@@ -586,7 +586,7 @@ int main(int argc, char **argv)
 		rdma_error("Failed to finish remote memory ops, ret = %d \n", ret);
 		return ret;
 	}
-	if (check_src_dst())
+	if (check_src_dst() != 0)
 	{
 		rdma_error("src and dst buffers do not match \n");
 	}
