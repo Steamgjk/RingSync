@@ -420,11 +420,12 @@ static int client_remote_memory_ops()
 	while (true)
 	{
 		ret = ibv_post_send(client_qp, &rdma_read_wr, &bad_wr);
+		sleep(1);
 		debug("After post RDMA read... dst = %s\n", dst);
-		getchar();
-		debug("After post RDMA read2... dst = %s\n", dst);
-	}
 
+	}
+	getchar();
+	debug("After post RDMA read2... dst = %s\n", dst);
 	if (ret)
 	{
 		rdma_error("Failed to do rdma read, errno: %d\n", -ret);
