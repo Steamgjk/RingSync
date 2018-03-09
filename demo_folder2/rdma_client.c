@@ -213,6 +213,7 @@ static int client_pre_post_recv_buffer()
 	bzero(&server_recv_wr, sizeof(server_recv_wr));
 	server_recv_wr.sg_list = &server_recv_sge;
 	server_recv_wr.num_sge = 1;
+	//why not server_recv_wr.opcode = IBV_WR_RECV??
 	ret = ibv_post_recv(client_qp /* which QP */,
 	                    &server_recv_wr /* receive work request*/,
 	                    &bad_server_recv_wr /* error WRs */);
@@ -416,10 +417,14 @@ static int client_remote_memory_ops()
 	// Post work request
 	debug("Trying to perform RDMA read... dst = %s\n", dst);
 	getchar();
-	ret = ibv_post_send(client_qp, &rdma_read_wr, &bad_wr);
-	debug("After post RDMA read... dst = %s\n", dst);
-	getchar();
-	debug("After post RDMA read2... dst = %s\n", dst);
+	while (true)
+	{
+		ret = ibv_post_send(client_qp, &rdma_read_wr, &bad_wr);
+		debug("After post RDMA read... dst = %s\n", dst);
+		getchar();
+		debug("After post RDMA read2... dst = %s\n", dst);
+	}
+
 	if (ret)
 	{
 		rdma_error("Failed to do rdma read, errno: %d\n", -ret);
