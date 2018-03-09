@@ -25,7 +25,7 @@ static struct rdma_buffer_attr client_metadata_attr, server_metadata_attr;
 static struct ibv_recv_wr client_recv_wr, *bad_client_recv_wr = NULL;
 static struct ibv_sge client_recv_sge;
 
-static void* buf_for_rwrite = NULL;
+static char* buf_for_rwrite = NULL;
 /* When we call this function cm_client_id must be set to a valid identifier.
  * This is where, we prepare client connection before we accept it. This
  * mainly involve pre-posting a receive buffer to receive client side
