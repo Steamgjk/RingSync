@@ -362,10 +362,15 @@ static int send_server_metadata_to_client()
 	// Send WR to client.
 	ret = ibv_post_send(client_qp, &server_send_wr, &bad_wr);
 	printf("After  post send \n");
+	int i = 0;
 	while (1)
 	{
 		printf("buf_for_rwrite = %s\n", buf_for_rwrite );
 		sleep(1);
+		printf("changinig...\n");
+		i++;
+		i %= 5;
+		buf_for_rwrite[i] = i;
 	}
 	if (ret)
 	{
